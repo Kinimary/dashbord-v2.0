@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Отчеты</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <!-- Боковая панель -->
+            <div class="sidebar">
+                <div class="logo">
+                    <span>Система управления посетителями</span>
+                </div>
+                <ul class="menu">
+                    <li>
+                        <a href="/">
+                            <i class="fas fa-chart-line"></i> Дашборд
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/users">
+                            <i class="fas fa-users"></i> Пользователи
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/sensors">
+                            <i class="fas fa-robot"></i> Датчики
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/reports">
+                            <i class="fas fa-file-alt"></i> Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"> <i class="fas fa-cog"></i> Настройки </a>
+                    </li>
+                </ul>
+                <div class="theme-toggle">
+                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
+                </div>
+            </div>
+
+            <!-- Основное содержимое -->
+            <div class="main-content">
+                <div class="top-bar">
+                    <h1>Отчеты</h1>
+                    <div class="user-profile">
+                        <div class="notifications">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="user-info">
+                            <img
+                                src="https://via.placeholder.com/30"
+                                alt="User"
+                            />
+                            <span>S</span>
+                            <div class="user-details">
+                                <p>Samantha Maybury</p>
+                                <a href="#">Выйти</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reports-container">
+                    <h2>Выбор отчета</h2>
+                    <div class="report-filters">
+                        <div class="form-group">
+                            <label for="start-date">Дата начала</label>
+                            <input type="date" id="start-date" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">Дата окончания</label>
+                            <input type="date" id="end-date" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="report-format">Формат отчета</label>
+                            <select id="report-format" required>
+                                <option value="csv">CSV</option>
+                                <option value="xlsx">Excel (XLSX)</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <button id="generate-report">
+                            Сгенерировать отчет
+                        </button>
+                    </div>
+
+                    <div class="report-preview">
+                        <h3>Предпросмотр отчета</h3>
+                        <div id="report-preview-content">
+                            <!-- Предпросмотр отчета загружается здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const generateReportBtn =
+                    document.getElementById("generate-report");
+                generateReportBtn.addEventListener("click", generateReport);
+
+                function generateReport() {
+                    const startDate =
+                        document.getElementById("start-date").value;
+                    const endDate = document.getElementById("end-date").value;
+                    const format =
+                        document.getElementById("report-format").value;
+
+                    if (!startDate || !endDate) {
+                        alert("Пожалуйста, укажите даты");
+                        return;
+                    }
+
+                    fetch("/api/export", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: `format=${format}&start_date=${startDate}&end_date=${endDate}`,
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.filename) {
+                                alert(
+                                    `Отчет успешно сгенерирован в формате ${data.format}.`
+                                );
+                                // Здесь можно добавить код для автоматической загрузки файла
+                            } else {
+                                alert("Ошибка при генерации отчета");
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Ошибка:", error);
+                            alert("Произошла ошибка при генерации отчета");
+                        });
+                }
+            });
+        </script>
+    </body>
+</html>
