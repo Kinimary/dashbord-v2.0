@@ -11,6 +11,10 @@ from handlers.sensors import sensors
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = 'your-secret-key-change-in-production'
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'visitor_app:'
+app.config['SESSION_FILE_DIR'] = './flask_session'
 Session(app)
 
 app.register_blueprint(reports, url_prefix='/reports')
@@ -87,11 +91,15 @@ init_db()
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        print(f"Login required check - session: {session}")  # Отладочная информация
+        print(f"User ID in session: {'user_id' in session}")  # Отладочная информация
         if 'user_id' not in session:
+            print("Redirecting to login - no user_id in session")  # Отладочная информация
             # Если это AJAX запрос, возвращаем JSON
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({'error': 'Unauthorized', 'redirect': '/login'}), 401
             return redirect(url_for('login'))
+        print("User authenticated, proceeding")  # Отладочная информация
         return f(*args, **kwargs)
     return decorated_function
 
@@ -151,29 +159,38 @@ def api_login():
     username = data.get('username')
     password = data.get('password')
 
+    print(f"Login attempt: {username}")  # Отладочная информация
+
     # Простая проверка для демонстрации
     # В реальном приложении используйте хэширование паролей
     if username == 'admin' and password == 'admin':
+        session.permanent = True
         session['user_id'] = 1
         session['username'] = username
         session['user_role'] = 'admin'
+        print(f"Session set for admin: {session}")  # Отладочная информация
         return jsonify({'success': True, 'redirect': '/'})
     elif username == 'manager' and password == 'manager':
+        session.permanent = True
         session['user_id'] = 2
         session['username'] = username
         session['user_role'] = 'manager'
+        print(f"Session set for manager: {session}")  # Отладочная информация
         return jsonify({'success': True, 'redirect': '/'})
     elif username == 'rd' and password == 'rd':
+        session.permanent = True
         session['user_id'] = 3
         session['username'] = username
         session['user_role'] = 'rd'
         return jsonify({'success': True, 'redirect': '/'})
     elif username == 'tu' and password == 'tu':
+        session.permanent = True
         session['user_id'] = 4
         session['username'] = username
         session['user_role'] = 'tu'
         return jsonify({'success': True, 'redirect': '/'})
     elif username == 'store' and password == 'store':
+        session.permanent = True
         session['user_id'] = 5
         session['username'] = username
         session['user_role'] = 'store'
@@ -184,6 +201,7 @@ def api_login():
 @app.route('/')
 @login_required
 def index():
+    print(f"Index route - session: {session}")  # Отладочная информация
     return render_template('index.html')
 
 @app.route('/users')
