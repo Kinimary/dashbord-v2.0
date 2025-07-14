@@ -320,7 +320,7 @@ def sensor_data():
         SELECT device_id, timestamp, count, status, received_at, location
         FROM visitor_counts
         ORDER BY received_at DESC
-        LIMIT 50
+        LIMIT 100
     ''')
 
     rows = cursor.fetchall()
@@ -334,6 +334,58 @@ def sensor_data():
         'received_at': row[4],
         'location': row[5] if len(row) > 5 else None
     } for row in rows])
+
+@app.route('/api/dashboard-stats', methods=['GET'])
+def dashboard_stats():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Статистика за сегодня
+    cursor.execute('''
+        SELECT 
+            COUNT(DISTINCT device_id) as sensors_count,
+            SUM(count) as total_visitors,
+            AVG(count) as avg_visitors
+        FROM visitor_counts
+        WHERE DATE(received_at) = DATE('now')
+    ''')
+    
+    today_stats = cursor.fetchone()
+    
+    # Статистика по часам
+    cursor.execute('''
+        SELECT 
+            strftime('%H', received_at) as hour,
+            SUM(count) as hourly_count
+        FROM visitor_counts
+        WHERE DATE(received_at) = DATE('now')
+        GROUP BY strftime('%H', received_at)
+        ORDER BY hour
+    ''')
+    
+    hourly_stats = cursor.fetchall()
+    
+    # Активные датчики
+    cursor.execute('''
+        SELECT device_id, MAX(received_at) as last_update
+        FROM visitor_counts
+        GROUP BY device_id
+        HAVING datetime(last_update) > datetime('now', '-1 hour')
+    ''')
+    
+    active_sensors = cursor.fetchall()
+    
+    conn.close()
+    
+    return jsonify({
+        'today': {
+            'sensors_count': today_stats[0] or 0,
+            'total_visitors': today_stats[1] or 0,
+            'avg_visitors': round(today_stats[2] or 0, 2)
+        },
+        'hourly': [{'hour': row[0], 'count': row[1]} for row in hourly_stats],
+        'active_sensors': len(active_sensors)
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1521, debug=True)

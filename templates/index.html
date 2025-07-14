@@ -1,351 +1,79 @@
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Система управления посетителями</title>
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='css/style.css') }}"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-    </head>
-    <body>
-        <div class="container">
-            <!-- Боковая панель -->
-            <div class="sidebar">
-                <div class="logo">
-                    <span>Система управления посетителями</span>
-                </div>
-                <ul class="menu">
-                    <li class="active">
-                        <a href="/">
-                            <i class="fas fa-chart-line"></i> Дашборд
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/users">
-                            <i class="fas fa-users"></i> Пользователи
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/sensors">
-                            <i class="fas fa-robot"></i> Датчики
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/reports">
-                            <i class="fas fa-file-alt"></i> Отчеты
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"> <i class="fas fa-cog"></i> Настройки </a>
-                    </li>
-                </ul>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
-                </div>
-            </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система подсчета посетителей</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Система подсчета посетителей</h1>
+            <nav>
+                <a href="/">Главная</a>
+                <a href="/sensors">Датчики</a>
+                <a href="/reports">Отчеты</a>
+                <a href="/users">Пользователи</a>
+            </nav>
+        </header>
 
-            <!-- Основное содержимое -->
-            <div class="main-content">
-                <div class="top-bar">
-                    <h1>Панель управления</h1>
-                    <div class="search-bar">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Поиск..." />
-                    </div>
-                    <div class="user-profile">
-            <div class="notifications">
-                <i class="fas fa-bell"></i>
-            </div>
-            <div class="user-info">
-                <img src="https://via.placeholder.com/30" alt="User Avatar">
-                <div>
-                    <span id="current-user">Загрузка...</span>
-                    <div class="user-details">
-                        <p id="user-role">Роль: Загрузка...</p>
-                        <p>Email: user@example.com</p>
-                        <a href="/logout">Выйти</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <main class="dashboard">
+            <section class="stats-cards">
+                <div class="card">
+                    <h3>Всего посетителей сегодня</h3>
+                    <div class="stat-value" id="today-visitors">-</div>
+                    <div class="stat-change" id="today-change">-</div>
                 </div>
 
-                <div class="dashboard-tabs">
-                    <button class="tab active">Обзор</button>
-                    <button class="tab">Взаимодействие</button>
-                    <button class="tab">Продажи</button>
-                    <button class="tab">Состояние системы</button>
+                <div class="card">
+                    <h3>Активных датчиков</h3>
+                    <div class="stat-value" id="active-sensors">-</div>
+                    <div class="stat-change" id="sensors-status">-</div>
                 </div>
 
-                <div class="date-range">
-                    <span>01 янв. 2025 г. - 01 февр. 2025 г.</span>
-                    <button>Создать новый заказ</button>
+                <div class="card">
+                    <h3>Средний поток в час</h3>
+                    <div class="stat-value" id="avg-hourly">-</div>
+                    <div class="stat-change" id="hourly-change">-</div>
                 </div>
 
-                <!-- Статистические карты -->
-                <div class="stats-cards">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Общая выручка</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="card-body">
-                            <h2>25 430 руб.</h2>
-                            <p>+24,5% от прошлого месяца</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Обработанные заказы</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="card-body">
-                            <h2>320</h2>
-                            <p>+15,2% от прошлого месяца</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Активные клиенты</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="card-body">
-                            <h2>24</h2>
-                            <p>+10% от прошлого месяца</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Время работы системы</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="card-body">
-                            <h2>99,98%</h2>
-                            <p>Стабильная работа</p>
-                        </div>
-                    </div>
+                <div class="card">
+                    <h3>Пиковое время</h3>
+                    <div class="stat-value" id="peak-time">-</div>
+                    <div class="stat-change" id="peak-count">-</div>
+                </div>
+            </section>
+
+            <section class="charts-section">
+                <div class="chart-container">
+                    <h3>Посетители по часам</h3>
+                    <canvas id="visitors-chart"></canvas>
                 </div>
 
-                <!-- Диаграммы -->
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Рост выручки</h3>
-                            <div class="chart-actions">
-                                <span class="dot total-revenue"></span> Общая
-                                выручка
-                                <span class="dot new-sales"></span> Новые
-                                продажи
-                                <span class="dot refunds"></span> Возвраты и
-                                отмены
-                                <i class="fas fa-ellipsis-v"></i>
-                            </div>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Взаимодействие клиентов</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="engagementChart"></canvas>
-                        </div>
-                    </div>
+                <div class="chart-container">
+                    <h3>Данные с датчиков</h3>
+                    <canvas id="sensors-chart"></canvas>
                 </div>
+            </section>
 
-                <!-- Нижние диаграммы -->
-                <div class="bottom-charts">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Топ продуктов/услуг</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="productsChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Статус заказа</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="chart-body">
-                            <div class="order-status">
-                                <div class="status-item">
-                                    <span>Активные заказы</span>
-                                    <div class="progress-bar">
-                                        <div
-                                            class="progress"
-                                            style="width: 40%"
-                                        ></div>
-                                    </div>
-                                    <span>5 <small>40%</small></span>
-                                </div>
-                                <div class="status-item">
-                                    <span>Заказы в ожидании</span>
-                                    <div class="progress-bar">
-                                        <div
-                                            class="progress"
-                                            style="width: 60%"
-                                        ></div>
-                                    </div>
-                                    <span>12 <small>60%</small></span>
-                                </div>
-                                <div class="status-item">
-                                    <span>Отправленные заказы</span>
-                                    <div class="progress-bar">
-                                        <div
-                                            class="progress"
-                                            style="width: 80%"
-                                        ></div>
-                                    </div>
-                                    <span>18 <small>80%</small></span>
-                                </div>
-                                <div class="status-item">
-                                    <span>Завершенные заказы</span>
-                                    <div class="progress-bar">
-                                        <div
-                                            class="progress"
-                                            style="width: 100%"
-                                        ></div>
-                                    </div>
-                                    <span>30 <small>100%</small></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Недавние заказы</h3>
-                            <i class="fas fa-ellipsis-v"></i>
-                        </div>
-                        <div class="chart-body">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>№ заказа</th>
-                                        <th>Клиент</th>
-                                        <th>Статус</th>
-                                        <th>Сумма</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>#5678</td>
-                                        <td>John D.</td>
-                                        <td>
-                                            <span
-                                                class="status completed"
-                                            ></span>
-                                            Завершен
-                                        </td>
-                                        <td>150,00 руб.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>#5678</td>
-                                        <td>Sarah S.</td>
-                                        <td>
-                                            <span class="status pending"></span>
-                                            В ожидании
-                                        </td>
-                                        <td>89,99 руб.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>#5678</td>
-                                        <td>Mike J.</td>
-                                        <td>
-                                            <span class="status shipped"></span>
-                                            Отправлен
-                                        </td>
-                                        <td>220,50 руб.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>#5678</td>
-                                        <td>Emily B.</td>
-                                        <td>
-                                            <span
-                                                class="status canceled"
-                                            ></span>
-                                            Отменен
-                                        </td>
-                                        <td>0,00 руб.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <section class="recent-activity">
+                <h3>Последние данные</h3>
+                <div class="activity-list" id="recent-data">
+                    <!-- Данные будут загружены через JavaScript -->
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+            <section class="sensors-overview">
+                <h3>Состояние датчиков</h3>
+                <div class="sensors-grid" id="sensors-grid">
+                    <!-- Датчики будут загружены через JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-
-<script>
-        // Переключение темы
-        const themeToggle = document.querySelector('.theme-toggle');
-        const body = document.body;
-
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('light-mode');
-            const icon = themeToggle.querySelector('i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-        });
-
-        // Загрузка информации о текущем пользователе
-        function loadUserInfo() {
-            // Получаем информацию о текущем пользователе из сессии
-            fetch('/api/current-user')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username && data.role) {
-                        document.getElementById('current-user').textContent = data.username;
-                        document.getElementById('user-role').textContent = `Роль: ${data.role}`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки информации о пользователе:', error);
-                });
-        }
-
-        // Имитация загрузки данных
-        function loadDashboardData() {
-            // Здесь будет реальная загрузка данных
-            console.log('Загрузка данных дашборда...');
-        }
-
-        // Активация вкладки
-        function setActiveTab(tab) {
-            // Удаляем активный класс у всех вкладок
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            // Добавляем активный класс к выбранной вкладке
-            tab.classList.add('active');
-
-            // Здесь можно добавить логику для загрузки данных конкретной вкладки
-            loadDashboardData();
-        }
-
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUserInfo();
-            loadDashboardData();
-
-            // Добавляем обработчики для вкладок
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => setActiveTab(tab));
-            });
-        });
-    </script>
+    <script src="/static/js/visitor-dashboard.js"></script>
 </body>
 </html>
