@@ -1,4 +1,3 @@
-
 // Функции для работы с аутентификацией
 
 function getToken() {
@@ -14,37 +13,32 @@ function isAuthenticated() {
 }
 
 function logout() {
-    removeToken();
-    // Clear cookie by visiting logout endpoint
+    // Перенаправляем на logout endpoint для очистки куки
     window.location.href = '/logout';
 }
 
-// Функция для отправки authenticated запросов
+// Функция для отправки authenticated запросов с токеном из localStorage (для совместимости)
 function fetchWithAuth(url, options = {}) {
-    const token = getToken();
-    
-    if (!token) {
-        window.location.href = '/login';
-        return Promise.reject('No token found');
-    }
-    
+    const token = localStorage.getItem('jwt_token');
+
     const headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
         ...options.headers
     };
-    
+
+    // Добавляем токен в заголовок если он есть
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     return fetch(url, {
         ...options,
         headers
     }).then(response => {
         if (response.status === 401) {
-            removeToken();
             window.location.href = '/login';
             throw new Error('Unauthorized');
         }
         return response;
     });
 }
-
-// Remove automatic client-side auth check since we're using server-side cookie validation

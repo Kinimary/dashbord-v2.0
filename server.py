@@ -111,19 +111,13 @@ def verify_jwt_token(token):
 
 def get_token_from_request():
     """Extract JWT token from request headers or cookies"""
-    # Try Authorization header first
+    # Try Authorization header first (for API calls)
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
-        print("Token found in Authorization header")
         return auth_header.split(' ')[1]
     
-    # Try cookie as fallback
-    cookie_token = request.cookies.get('jwt_token')
-    if cookie_token:
-        print("Token found in cookie")
-    else:
-        print("No token found in cookie or header")
-    return cookie_token
+    # Try cookie (for page loads)
+    return request.cookies.get('jwt_token')
 
 def jwt_required(f):
     """Decorator to require JWT authentication"""
@@ -131,26 +125,18 @@ def jwt_required(f):
     def decorated_function(*args, **kwargs):
         token = get_token_from_request()
         
-        print(f"JWT Required - Token found: {token is not None}")
-        
         if not token:
-            print("No token found, redirecting to login")
-            if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({'error': 'Missing token', 'redirect': '/login'}), 401
+            if request.is_json:
+                return jsonify({'error': 'Missing token'}), 401
             return redirect(url_for('login'))
         
         payload = verify_jwt_token(token)
-        print(f"Token verification result: {payload is not None}")
-        
         if not payload:
-            print("Invalid token, redirecting to login")
-            if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({'error': 'Invalid token', 'redirect': '/login'}), 401
+            if request.is_json:
+                return jsonify({'error': 'Invalid token'}), 401
             return redirect(url_for('login'))
         
-        # Store user info in request context
         request.current_user = payload
-        print(f"Authentication successful for user: {payload.get('username')}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -194,13 +180,6 @@ def set_required_role(role):
 
 @app.route('/login')
 def login():
-    # Check if user is already authenticated via cookie
-    token = request.cookies.get('jwt_token')
-    if token:
-        payload = verify_jwt_token(token)
-        if payload:
-            print(f"User already authenticated via cookie: {payload.get('username')}")
-            return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/logout')
@@ -215,9 +194,7 @@ def api_login():
     username = data.get('username')
     password = data.get('password')
 
-    print(f"Login attempt: {username}")
-
-    # Простая проверка для демонстрации
+    # Простая проверка - пароль равен логину
     user_credentials = {
         'admin': {'id': 1, 'role': 'admin'},
         'manager': {'id': 2, 'role': 'manager'},
@@ -230,12 +207,8 @@ def api_login():
         user_info = user_credentials[username]
         token = create_jwt_token(user_info['id'], username, user_info['role'])
         
-        print(f"JWT token created for {username}")
-        
         response = jsonify({'success': True, 'redirect': '/', 'token': token})
-        # Set cookie with proper settings for Replit environment
         response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax', max_age=86400)
-        print(f"Cookie set for user: {username}")
         return response
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
@@ -243,8 +216,6 @@ def api_login():
 @app.route('/')
 @jwt_required
 def index():
-    print(f"Index route - user: {request.current_user}")
-    print(f"JWT token from cookie: {request.cookies.get('jwt_token')}")
     return render_template('index.html')
 
 @app.route('/users')

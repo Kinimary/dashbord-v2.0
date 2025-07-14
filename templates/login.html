@@ -27,6 +27,9 @@
                 <button type="submit" class="login-btn">Войти</button>
             </form>
             <div id="error-message" class="error-message" style="display: none;"></div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666;">
+                Для тестирования используйте: admin/admin, manager/manager, rd/rd, tu/tu, store/store
+            </div>
         </div>
     </div>
 
@@ -56,10 +59,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Сохраняем токен в localStorage (для API запросов)
-                    localStorage.setItem('jwt_token', data.token);
-                    // Перенаправляем после успешного входа
-                    window.location.href = data.redirect || '/';
+                    // Перенаправляем на главную страницу
+                    window.location.href = '/';
                 } else {
                     document.getElementById('error-message').textContent = data.message || 'Ошибка входа';
                     document.getElementById('error-message').style.display = 'block';
