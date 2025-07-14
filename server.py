@@ -10,11 +10,17 @@ from handlers.sensors import sensors
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = 'your-secret-key-change-in-production'
+
+# Ensure flask_session directory exists
+os.makedirs('./flask_session', exist_ok=True)
+
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'visitor_app:'
 app.config['SESSION_FILE_DIR'] = './flask_session'
+app.config['SESSION_FILE_THRESHOLD'] = 500
+app.config['SESSION_FILE_MODE'] = 384  # 0o600 in octal
 Session(app)
 
 app.register_blueprint(reports, url_prefix='/reports')
@@ -163,37 +169,20 @@ def api_login():
 
     # Простая проверка для демонстрации
     # В реальном приложении используйте хэширование паролей
-    if username == 'admin' and password == 'admin':
+    user_credentials = {
+        'admin': {'id': 1, 'role': 'admin'},
+        'manager': {'id': 2, 'role': 'manager'},
+        'rd': {'id': 3, 'role': 'rd'},
+        'tu': {'id': 4, 'role': 'tu'},
+        'store': {'id': 5, 'role': 'store'}
+    }
+    
+    if username in user_credentials and password == username:
         session.permanent = True
-        session['user_id'] = 1
+        session['user_id'] = user_credentials[username]['id']
         session['username'] = username
-        session['user_role'] = 'admin'
-        print(f"Session set for admin: {session}")  # Отладочная информация
-        return jsonify({'success': True, 'redirect': '/'})
-    elif username == 'manager' and password == 'manager':
-        session.permanent = True
-        session['user_id'] = 2
-        session['username'] = username
-        session['user_role'] = 'manager'
-        print(f"Session set for manager: {session}")  # Отладочная информация
-        return jsonify({'success': True, 'redirect': '/'})
-    elif username == 'rd' and password == 'rd':
-        session.permanent = True
-        session['user_id'] = 3
-        session['username'] = username
-        session['user_role'] = 'rd'
-        return jsonify({'success': True, 'redirect': '/'})
-    elif username == 'tu' and password == 'tu':
-        session.permanent = True
-        session['user_id'] = 4
-        session['username'] = username
-        session['user_role'] = 'tu'
-        return jsonify({'success': True, 'redirect': '/'})
-    elif username == 'store' and password == 'store':
-        session.permanent = True
-        session['user_id'] = 5
-        session['username'] = username
-        session['user_role'] = 'store'
+        session['user_role'] = user_credentials[username]['role']
+        print(f"Session set for {username}: {dict(session)}")  # Отладочная информация
         return jsonify({'success': True, 'redirect': '/'})
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
