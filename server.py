@@ -114,10 +114,16 @@ def get_token_from_request():
     # Try Authorization header first
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
+        print("Token found in Authorization header")
         return auth_header.split(' ')[1]
     
     # Try cookie as fallback
-    return request.cookies.get('jwt_token')
+    cookie_token = request.cookies.get('jwt_token')
+    if cookie_token:
+        print("Token found in cookie")
+    else:
+        print("No token found in cookie or header")
+    return cookie_token
 
 def jwt_required(f):
     """Decorator to require JWT authentication"""
@@ -188,11 +194,12 @@ def set_required_role(role):
 
 @app.route('/login')
 def login():
-    # Check if user is already authenticated
-    token = get_token_from_request()
+    # Check if user is already authenticated via cookie
+    token = request.cookies.get('jwt_token')
     if token:
         payload = verify_jwt_token(token)
         if payload:
+            print(f"User already authenticated via cookie: {payload.get('username')}")
             return redirect(url_for('index'))
     return render_template('login.html')
 
@@ -226,7 +233,9 @@ def api_login():
         print(f"JWT token created for {username}")
         
         response = jsonify({'success': True, 'redirect': '/', 'token': token})
-        response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')
+        # Set cookie with proper settings for Replit environment
+        response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax', max_age=86400)
+        print(f"Cookie set for user: {username}")
         return response
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})

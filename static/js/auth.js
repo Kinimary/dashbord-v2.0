@@ -47,12 +47,4 @@ function fetchWithAuth(url, options = {}) {
     });
 }
 
-// Проверка аутентификации при загрузке страницы
-function checkAuth() {
-    if (!isAuthenticated() && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-    }
-}
-
-// Автоматическая проверка при загрузке
-document.addEventListener('DOMContentLoaded', checkAuth);
+// Remove automatic client-side auth check since we're using server-side cookie validation

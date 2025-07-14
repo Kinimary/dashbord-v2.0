@@ -31,11 +31,6 @@
     </div>
 
     <script>
-        // Check if user is already authenticated
-        if (localStorage.getItem('jwt_token')) {
-            window.location.replace('/');
-        }
-
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
