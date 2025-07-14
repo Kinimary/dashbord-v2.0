@@ -1,11 +1,5 @@
-django
-djangorestframework
 pandas
 openpyxl
-drf-yasg
-django-adminlte3
-djangorestframework-simplejwt
-django-filter
-django-adminlte3-theme
-Flask==2.0.1
-sqlite3
+Flask==2.3.3
+xlsxwriter
+Flask-Session>=0.6.0
