@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,43 +6,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система подсчета посетителей</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Система подсчета посетителей</h1>
-            <nav>
-                <a href="/">Главная</a>
-                <a href="/sensors">Датчики</a>
-                <a href="/reports">Отчеты</a>
-                <a href="/users">Пользователи</a>
-            </nav>
-        </header>
+        <!-- Боковая панель -->
+        <div class="sidebar">
+            <div class="logo">
+                <span>Система подсчета посетителей</span>
+            </div>
+            <ul class="menu">
+                <li class="active">
+                    <a href="/">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/users">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/sensors">
+                        <i class="fas fa-robot"></i>
+                        <span>Датчики</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/reports">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </div>
+        </div>
 
-        <main class="dashboard">
+        <!-- Основное содержимое -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h1>Дашборд</h1>
+                <div class="user-profile">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Поиск...">
+                    </div>
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/32" alt="User">
+                        <span>Админ</span>
+                    </div>
+                </div>
+            </div>
+
             <section class="stats-cards">
                 <div class="card">
                     <h3>Всего посетителей сегодня</h3>
                     <div class="stat-value" id="today-visitors">-</div>
-                    <div class="stat-change" id="today-change">-</div>
+                    <div class="stat-change" id="today-change">Загрузка...</div>
                 </div>
 
                 <div class="card">
                     <h3>Активных датчиков</h3>
                     <div class="stat-value" id="active-sensors">-</div>
-                    <div class="stat-change" id="sensors-status">-</div>
+                    <div class="stat-change" id="sensors-status">Загрузка...</div>
                 </div>
 
                 <div class="card">
                     <h3>Средний поток в час</h3>
                     <div class="stat-value" id="avg-hourly">-</div>
-                    <div class="stat-change" id="hourly-change">-</div>
+                    <div class="stat-change" id="hourly-change">Загрузка...</div>
                 </div>
 
                 <div class="card">
                     <h3>Пиковое время</h3>
                     <div class="stat-value" id="peak-time">-</div>
-                    <div class="stat-change" id="peak-count">-</div>
+                    <div class="stat-change" id="peak-count">Загрузка...</div>
                 </div>
             </section>
 
@@ -60,20 +112,65 @@
             <section class="recent-activity">
                 <h3>Последние данные</h3>
                 <div class="activity-list" id="recent-data">
-                    <!-- Данные будут загружены через JavaScript -->
+                    <div class="activity-item">
+                        <div class="activity-icon">📊</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Загрузка данных...</div>
+                            <div class="activity-meta">
+                                Подождите, идет загрузка
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <section class="sensors-overview">
                 <h3>Состояние датчиков</h3>
                 <div class="sensors-grid" id="sensors-grid">
-                    <!-- Датчики будут загружены через JavaScript -->
+                    <div class="sensor-card">
+                        <div class="sensor-header">
+                            <h4>Загрузка...</h4>
+                            <span class="status-indicator offline"></span>
+                        </div>
+                        <div class="sensor-info">
+                            <div class="sensor-location">Загрузка данных...</div>
+                            <div class="sensor-count">- посетителей</div>
+                            <div class="sensor-update">Подождите...</div>
+                        </div>
+                    </div>
                 </div>
             </section>
-        </main>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/visitor-dashboard.js"></script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Загрузка сохраненной темы
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+            }
+        });
+    </script>
 </body>
 </html>
