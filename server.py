@@ -2,13 +2,16 @@ from functools import wraps
 import os
 import sqlite3
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template
-from flask import Flask
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from flask_session import Session
 from handlers.reports import reports
 from handlers.users import users
 from handlers.sensors import sensors
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
+app.secret_key = 'your-secret-key-change-in-production'
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 
 app.register_blueprint(reports, url_prefix='/reports')
 app.register_blueprint(users, url_prefix='/users')
@@ -81,32 +84,43 @@ def init_db():
 
 init_db()
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def check_permission():
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            user_role = 'admin'  # В реальном приложении得到当前用户角色
-            
+            if 'user_id' not in session:
+                return jsonify({'error': 'Unauthorized'}), 401
+
+            user_role = session.get('user_role', 'store')
+
             required_role = getattr(f, 'required_role', None)
-            
+
             if required_role:
                 conn = sqlite3.connect(DB_PATH)
                 cursor = conn.cursor()
-                
+
                 cursor.execute('SELECT level FROM roles WHERE name = ?', (user_role,))
                 user_level = cursor.fetchone()
-                
+
                 cursor.execute('SELECT level FROM roles WHERE name = ?', (required_role,))
                 required_level = cursor.fetchone()
-                
+
                 conn.close()
-                
+
                 if not user_level or not required_level:
                     return jsonify({'error': 'Invalid role'}), 403
-                
+
                 if user_level[0] < required_level[0]:
                     return jsonify({'error': 'Insufficient permissions'}), 403
-            
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -117,13 +131,57 @@ def set_required_role(role):
         return f
     return decorator
 
+@app.route('/login')
+def login():
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Простая проверка для демонстрации
+    # В реальном приложении используйте хэширование паролей
+    if username == 'admin' and password == 'admin':
+        session['user_id'] = 1
+        session['username'] = username
+        session['user_role'] = 'admin'
+        return jsonify({'success': True})
+    elif username == 'manager' and password == 'manager':
+        session['user_id'] = 2
+        session['username'] = username
+        session['user_role'] = 'manager'
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'message': 'Неверные учетные данные'})
+
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
 @app.route('/users')
+@login_required
 def users_page():
     return render_template('users.html')
+
+@app.route('/sensors')
+@login_required
+def sensors_page():
+    return render_template('sensors.html')
+
+@app.route('/reports')
+@login_required
+def reports_page():
+    return render_template('reports.html')
 
 @app.route('/api/visitor-count', methods=['POST'])
 def visitor_count():
@@ -336,7 +394,7 @@ def get_sensors():
 @set_required_role('manager')
 @check_permission()
 def sensor_data():
-    user_role = 'admin'  # В реальном приложении得到当前用户角色
+    user_role = session.get('user_role', 'store')
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
