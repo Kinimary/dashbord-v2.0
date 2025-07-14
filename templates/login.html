@@ -31,6 +31,11 @@
     </div>
 
     <script>
+        // Check if user is already authenticated
+        if (localStorage.getItem('jwt_token')) {
+            window.location.replace('/');
+        }
+
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -56,10 +61,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Успешная авторизация - даем время cookie установиться, затем перенаправляем
-                    setTimeout(() => {
-                        window.location.replace(data.redirect || '/');
-                    }, 100);
+                    // Сохраняем токен в localStorage
+                    localStorage.setItem('jwt_token', data.token);
+                    window.location.replace(data.redirect || '/');
                 } else {
                     document.getElementById('error-message').textContent = data.message || 'Ошибка входа';
                     document.getElementById('error-message').style.display = 'block';
