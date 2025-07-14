@@ -88,6 +88,9 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
+            # Если это AJAX запрос, возвращаем JSON
+            if request.is_json or request.headers.get('Content-Type') == 'application/json':
+                return jsonify({'error': 'Unauthorized', 'redirect': '/login'}), 401
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
