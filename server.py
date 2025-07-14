@@ -111,13 +111,17 @@ def verify_jwt_token(token):
 
 def get_token_from_request():
     """Extract JWT token from request headers or cookies"""
-    # Try Authorization header first
+    # Try cookie first (for web interface)
+    token = request.cookies.get('jwt_token')
+    if token:
+        return token
+    
+    # Try Authorization header (for API)
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
         return auth_header.split(' ')[1]
     
-    # Try cookie as fallback
-    return request.cookies.get('jwt_token')
+    return None
 
 def jwt_required(f):
     """Decorator to require JWT authentication"""
@@ -125,19 +129,26 @@ def jwt_required(f):
     def decorated_function(*args, **kwargs):
         token = get_token_from_request()
         
+        print(f"JWT Required - Token found: {token is not None}")
+        
         if not token:
+            print("No token found, redirecting to login")
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({'error': 'Missing token', 'redirect': '/login'}), 401
             return redirect(url_for('login'))
         
         payload = verify_jwt_token(token)
+        print(f"Token verification result: {payload is not None}")
+        
         if not payload:
+            print("Invalid token, redirecting to login")
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({'error': 'Invalid token', 'redirect': '/login'}), 401
             return redirect(url_for('login'))
         
         # Store user info in request context
         request.current_user = payload
+        print(f"Authentication successful for user: {payload.get('username')}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -233,6 +244,7 @@ def api_login():
 @jwt_required
 def index():
     print(f"Index route - user: {request.current_user}")
+    print(f"JWT token from cookie: {request.cookies.get('jwt_token')}")
     return render_template('index.html')
 
 @app.route('/users')
