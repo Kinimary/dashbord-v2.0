@@ -2,7 +2,7 @@
 from functools import wraps
 import os
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import jwt
 from handlers.reports import reports
@@ -89,12 +89,13 @@ init_db()
 
 def create_jwt_token(user_id, username, role):
     """Create JWT token for user"""
+    now = datetime.now(timezone.utc)
     payload = {
         'user_id': user_id,
         'username': username,
         'role': role,
-        'exp': datetime.utcnow() + JWT_EXPIRATION_DELTA,
-        'iat': datetime.utcnow()
+        'exp': now + JWT_EXPIRATION_DELTA,
+        'iat': now
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -180,9 +181,12 @@ def set_required_role(role):
 
 @app.route('/login')
 def login():
+    # Check if user is already authenticated
     token = get_token_from_request()
-    if token and verify_jwt_token(token):
-        return redirect(url_for('index'))
+    if token:
+        payload = verify_jwt_token(token)
+        if payload:
+            return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/logout')
