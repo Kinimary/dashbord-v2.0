@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Профиль - Система управления посетителями</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <!-- Боковая панель -->
+            <div class="sidebar">
+                <div class="logo">
+                    <div class="logo-container">
+                        <img src="{{ url_for('static', filename='img/belwest-logo.png') }}" alt="BELWEST Logo">
+                        <div class="logo-text">BELWEST</div>
+                    </div>
+                    <div class="logo-subtitle">Система управления посетителями</div>
+                </div>
+                <ul class="menu">
+                    <li>
+                        <a href="/">
+                            <i class="fas fa-chart-line"></i> Дашборд
+                        </a>
+                    </li>
+                    {% if user.role == 'admin' %}
+                    <li>
+                        <a href="/users">
+                            <i class="fas fa-users"></i> Пользователи
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="/reports">
+                            <i class="fas fa-file-alt"></i> Отчеты
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/profile">
+                            <i class="fas fa-user-cog"></i> Профиль
+                        </a>
+                    </li>
+                </ul>
+                <div class="theme-toggle">
+                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
+                </div>
+            </div>
+
+            <!-- Основное содержимое -->
+            <div class="main-content">
+                <div class="top-bar">
+                    <h1>Настройки профиля</h1>
+                    <div class="user-profile">
+                        <div class="notifications">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="user-info">
+                            <img
+                                src="https://via.placeholder.com/30"
+                                alt="User"
+                            />
+                            <span>A</span>
+                            <div class="user-details">
+                                <p>Admin User</p>
+                                <a href="#">Выйти</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-container">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Информация профиля</h3>
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="chart-body">
+                            <form id="profile-form">
+                                <div class="form-group">
+                                    <label for="username">Имя пользователя</label>
+                                    <input type="text" id="username" name="username" value="admin" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" value="admin@example.com" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="role">Роль</label>
+                                    <input type="text" id="role" name="role" value="Администратор" readonly />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Настройки интерфейса</h3>
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="chart-body">
+                            <div class="form-group">
+                                <label for="theme-select">Тема интерфейса</label>
+                                <select id="theme-select">
+                                    <option value="dark-mode">Темная</option>
+                                    <option value="light-mode">Светлая</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="language-select">Язык системы</label>
+                                <select id="language-select">
+                                    <option value="ru">Русский</option>
+                                    <option value="en">English</option>
+                                    <option value="de">Deutsch</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="notifications-toggle">Уведомления</label>
+                                <input type="checkbox" id="notifications-toggle" checked />
+                                <span>Получать уведомления о событиях</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Безопасность</h3>
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="chart-body">
+                            <div class="form-group">
+                                <label for="current-password">Текущий пароль</label>
+                                <input type="password" id="current-password" name="current-password" />
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password">Новый пароль</label>
+                                <input type="password" id="new-password" name="new-password" />
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Подтвердить пароль</label>
+                                <input type="password" id="confirm-password" name="confirm-password" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button id="save-profile" type="button">Сохранить изменения</button>
+                        <button id="reset-profile" type="button">Сбросить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}" />
+    </body>
+</html>
