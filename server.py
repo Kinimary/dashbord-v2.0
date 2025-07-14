@@ -63,6 +63,35 @@ init_db()
 def index():
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    # Optional login page for admin functions
+    return render_template('login.html')
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """Optional login for administrative functions"""
+    if not request.is_json:
+        return jsonify({'error': 'Expected JSON data'}), 400
+
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Simple hardcoded admin credentials (можно расширить)
+    if username == 'admin' and password == 'admin123':
+        return jsonify({
+            'success': True, 
+            'message': 'Login successful',
+            'user': {'username': 'admin', 'role': 'admin'}
+        })
+    else:
+        return jsonify({'success': False, 'message': 'Неверные учетные данные'})
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    return jsonify({'success': True, 'message': 'Logged out successfully'})
+
 @app.route('/users')
 def users_page():
     return render_template('users.html')
