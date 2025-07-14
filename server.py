@@ -233,7 +233,8 @@ def api_login():
                           max_age=int(JWT_EXPIRATION_DELTA.total_seconds()),
                           httponly=True, 
                           secure=False,  # Set to True in production with HTTPS
-                          samesite='Lax')
+                          samesite='Lax',
+                          path='/')
         
         print(f"JWT token created for {username}")
         return response

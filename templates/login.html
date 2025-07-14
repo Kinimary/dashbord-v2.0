@@ -56,8 +56,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Успешная авторизация - перенаправляем на панель управления
-                    window.location.replace(data.redirect || '/');
+                    // Успешная авторизация - даем время cookie установиться, затем перенаправляем
+                    setTimeout(() => {
+                        window.location.replace(data.redirect || '/');
+                    }, 100);
                 } else {
                     document.getElementById('error-message').textContent = data.message || 'Ошибка входа';
                     document.getElementById('error-message').style.display = 'block';
