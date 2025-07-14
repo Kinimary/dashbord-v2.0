@@ -2,4 +2,4 @@ pandas
 openpyxl
 Flask==2.3.3
 xlsxwriter
-Flask-Session>=0.6.0
+PyJWT==2.8.0

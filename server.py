@@ -1,27 +1,20 @@
+
 from functools import wraps
 import os
 import sqlite3
-from datetime import datetime
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
-from flask_session import Session
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, render_template, redirect, url_for
+import jwt
 from handlers.reports import reports
 from handlers.users import users
 from handlers.sensors import sensors
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = 'your-secret-key-change-in-production'
 
-# Ensure flask_session directory exists
-os.makedirs('./flask_session', exist_ok=True)
-
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'visitor_app:'
-app.config['SESSION_FILE_DIR'] = './flask_session'
-app.config['SESSION_FILE_THRESHOLD'] = 500
-app.config['SESSION_FILE_MODE'] = 384  # 0o600 in octal
-Session(app)
+# JWT Configuration
+JWT_SECRET_KEY = 'your-jwt-secret-key-change-in-production'
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_DELTA = timedelta(hours=24)
 
 app.register_blueprint(reports, url_prefix='/reports')
 app.register_blueprint(users, url_prefix='/users')
@@ -94,18 +87,56 @@ def init_db():
 
 init_db()
 
-def login_required(f):
+def create_jwt_token(user_id, username, role):
+    """Create JWT token for user"""
+    payload = {
+        'user_id': user_id,
+        'username': username,
+        'role': role,
+        'exp': datetime.utcnow() + JWT_EXPIRATION_DELTA,
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+def verify_jwt_token(token):
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def get_token_from_request():
+    """Extract JWT token from request headers or cookies"""
+    # Try Authorization header first
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        return auth_header.split(' ')[1]
+    
+    # Try cookie as fallback
+    return request.cookies.get('jwt_token')
+
+def jwt_required(f):
+    """Decorator to require JWT authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        print(f"Login required check - session: {session}")  # Отладочная информация
-        print(f"User ID in session: {'user_id' in session}")  # Отладочная информация
-        if 'user_id' not in session:
-            print("Redirecting to login - no user_id in session")  # Отладочная информация
-            # Если это AJAX запрос, возвращаем JSON
+        token = get_token_from_request()
+        
+        if not token:
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({'error': 'Unauthorized', 'redirect': '/login'}), 401
+                return jsonify({'error': 'Missing token', 'redirect': '/login'}), 401
             return redirect(url_for('login'))
-        print("User authenticated, proceeding")  # Отладочная информация
+        
+        payload = verify_jwt_token(token)
+        if not payload:
+            if request.is_json or request.headers.get('Content-Type') == 'application/json':
+                return jsonify({'error': 'Invalid token', 'redirect': '/login'}), 401
+            return redirect(url_for('login'))
+        
+        # Store user info in request context
+        request.current_user = payload
         return f(*args, **kwargs)
     return decorated_function
 
@@ -113,11 +144,10 @@ def check_permission():
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'user_id' not in session:
+            if not hasattr(request, 'current_user'):
                 return jsonify({'error': 'Unauthorized'}), 401
 
-            user_role = session.get('user_role', 'store')
-
+            user_role = request.current_user.get('role', 'store')
             required_role = getattr(f, 'required_role', None)
 
             if required_role:
@@ -150,14 +180,16 @@ def set_required_role(role):
 
 @app.route('/login')
 def login():
-    if 'user_id' in session:
+    token = get_token_from_request()
+    if token and verify_jwt_token(token):
         return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.clear()
-    return redirect(url_for('login'))
+    response = redirect(url_for('login'))
+    response.set_cookie('jwt_token', '', expires=0)
+    return response
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -165,10 +197,9 @@ def api_login():
     username = data.get('username')
     password = data.get('password')
 
-    print(f"Login attempt: {username}")  # Отладочная информация
+    print(f"Login attempt: {username}")
 
     # Простая проверка для демонстрации
-    # В реальном приложении используйте хэширование паролей
     user_credentials = {
         'admin': {'id': 1, 'role': 'admin'},
         'manager': {'id': 2, 'role': 'manager'},
@@ -178,43 +209,50 @@ def api_login():
     }
     
     if username in user_credentials and password == username:
-        session.permanent = True
-        session['user_id'] = user_credentials[username]['id']
-        session['username'] = username
-        session['user_role'] = user_credentials[username]['role']
-        print(f"Session set for {username}: {dict(session)}")  # Отладочная информация
-        return jsonify({'success': True, 'redirect': '/'})
+        user_info = user_credentials[username]
+        token = create_jwt_token(user_info['id'], username, user_info['role'])
+        
+        response = jsonify({'success': True, 'redirect': '/', 'token': token})
+        # Set token as HTTP-only cookie for web interface
+        response.set_cookie('jwt_token', token, 
+                          max_age=int(JWT_EXPIRATION_DELTA.total_seconds()),
+                          httponly=True, 
+                          secure=False,  # Set to True in production with HTTPS
+                          samesite='Lax')
+        
+        print(f"JWT token created for {username}")
+        return response
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
 
 @app.route('/')
-@login_required
+@jwt_required
 def index():
-    print(f"Index route - session: {session}")  # Отладочная информация
+    print(f"Index route - user: {request.current_user}")
     return render_template('index.html')
 
 @app.route('/users')
-@login_required
+@jwt_required
 def users_page():
     return render_template('users.html')
 
 @app.route('/sensors')
-@login_required
+@jwt_required
 def sensors_page():
     return render_template('sensors.html')
 
 @app.route('/reports')
-@login_required
+@jwt_required
 def reports_page():
     return render_template('reports.html')
 
 @app.route('/api/current-user', methods=['GET'])
-@login_required
+@jwt_required
 def get_current_user():
     return jsonify({
-        'user_id': session.get('user_id'),
-        'username': session.get('username'),
-        'role': session.get('user_role')
+        'user_id': request.current_user.get('user_id'),
+        'username': request.current_user.get('username'),
+        'role': request.current_user.get('role')
     })
 
 @app.route('/api/visitor-count', methods=['POST'])
@@ -249,6 +287,7 @@ def visitor_count():
     return jsonify({'message': 'Data saved'}), 200
 
 @app.route('/api/users', methods=['GET'])
+@jwt_required
 def get_users():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -269,6 +308,7 @@ def get_users():
     return jsonify(users)
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])
+@jwt_required
 def get_user(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -299,6 +339,7 @@ def get_user(user_id):
         return jsonify({'error': 'User not found'}), 404
 
 @app.route('/api/users', methods=['POST'])
+@jwt_required
 def create_user():
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
@@ -341,6 +382,7 @@ def create_user():
         conn.close()
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
+@jwt_required
 def update_user(user_id):
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
@@ -378,6 +420,7 @@ def update_user(user_id):
         conn.close()
 
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@jwt_required
 def delete_user(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -395,6 +438,7 @@ def delete_user(user_id):
         conn.close()
 
 @app.route('/api/users/<int:user_id>/sensors', methods=['GET'])
+@jwt_required
 def get_user_sensors(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -407,6 +451,7 @@ def get_user_sensors(user_id):
     return jsonify(sensors)
 
 @app.route('/api/sensors', methods=['GET'])
+@jwt_required
 def get_sensors():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -425,10 +470,11 @@ def get_sensors():
     return jsonify(sensors)
 
 @app.route('/api/sensor-data', methods=['GET'])
+@jwt_required
 @set_required_role('manager')
 @check_permission()
 def sensor_data():
-    user_role = session.get('user_role', 'store')
+    user_role = request.current_user.get('role', 'store')
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -481,7 +527,7 @@ def sensor_data():
             WHERE us.user_id = ?
             ORDER BY vc.received_at DESC
             LIMIT 10
-        ''', (1,))  # В реальном приложении使用当前用户ID
+        ''', (request.current_user.get('user_id'),))
     
     rows = cursor.fetchall()
     conn.close()
