@@ -15,7 +15,8 @@ function isAuthenticated() {
 
 function logout() {
     removeToken();
-    window.location.href = '/login';
+    // Clear cookie by visiting logout endpoint
+    window.location.href = '/logout';
 }
 
 // Функция для отправки authenticated запросов

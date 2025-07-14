@@ -110,13 +110,14 @@ def verify_jwt_token(token):
         return None
 
 def get_token_from_request():
-    """Extract JWT token from request headers"""
-    # Try Authorization header
+    """Extract JWT token from request headers or cookies"""
+    # Try Authorization header first
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
         return auth_header.split(' ')[1]
     
-    return None
+    # Try cookie as fallback
+    return request.cookies.get('jwt_token')
 
 def jwt_required(f):
     """Decorator to require JWT authentication"""
@@ -197,7 +198,9 @@ def login():
 
 @app.route('/logout')
 def logout():
-    return redirect(url_for('login'))
+    response = redirect(url_for('login'))
+    response.set_cookie('jwt_token', '', expires=0)
+    return response
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -221,7 +224,10 @@ def api_login():
         token = create_jwt_token(user_info['id'], username, user_info['role'])
         
         print(f"JWT token created for {username}")
-        return jsonify({'success': True, 'redirect': '/', 'token': token})
+        
+        response = jsonify({'success': True, 'redirect': '/', 'token': token})
+        response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')
+        return response
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
 
