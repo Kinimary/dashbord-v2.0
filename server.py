@@ -1,20 +1,13 @@
-
 from functools import wraps
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from flask import Flask, request, jsonify, render_template, redirect, url_for
-import jwt
 from handlers.reports import reports
 from handlers.users import users
 from handlers.sensors import sensors
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-
-# JWT Configuration
-JWT_SECRET_KEY = 'your-jwt-secret-key-change-in-production'
-JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION_DELTA = timedelta(hours=24)
 
 app.register_blueprint(reports, url_prefix='/reports')
 app.register_blueprint(users, url_prefix='/users')
@@ -27,7 +20,7 @@ def init_db():
     if not os.path.exists(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS visitor_counts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +32,7 @@ def init_db():
                 location TEXT
             )
         ''')
-        
+
         cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +42,7 @@ def init_db():
                 created_at TEXT NOT NULL
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_sensors (
                 user_id INTEGER NOT NULL,
@@ -59,182 +52,28 @@ def init_db():
                 PRIMARY KEY (user_id, sensor_id)
             )
         ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS roles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                level INTEGER NOT NULL
-            )
-        ''')
-        
-        roles = [
-            ('admin', 5),
-            ('manager', 4),
-            ('rd', 3),
-            ('tu', 2),
-            ('store', 1)
-        ]
-        
-        cursor.executemany('''
-            INSERT OR IGNORE INTO roles (name, level)
-            VALUES (?, ?)
-        ''', roles)
-        
+
         conn.commit()
         conn.close()
         print(f"Database created at: {DB_PATH}")
 
 init_db()
 
-def create_jwt_token(user_id, username):
-    """Create JWT token for user"""
-    now = datetime.now(timezone.utc)
-    payload = {
-        'user_id': user_id,
-        'username': username,
-        'exp': now + JWT_EXPIRATION_DELTA,
-        'iat': now
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-
-def verify_jwt_token(token):
-    """Verify and decode JWT token"""
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-def get_token_from_request():
-    """Extract JWT token from request headers or cookies"""
-    # Try Authorization header first (for API calls)
-    auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        return auth_header.split(' ')[1]
-    
-    # Try cookie (for page loads)
-    return request.cookies.get('jwt_token')
-
-def jwt_required(f):
-    """Decorator to require JWT authentication"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = get_token_from_request()
-        
-        if not token:
-            if request.is_json:
-                return jsonify({'error': 'Missing token'}), 401
-            return redirect(url_for('login'))
-        
-        payload = verify_jwt_token(token)
-        if not payload:
-            if request.is_json:
-                return jsonify({'error': 'Invalid token'}), 401
-            return redirect(url_for('login'))
-        
-        request.current_user = payload
-        return f(*args, **kwargs)
-    return decorated_function
-
-def check_permission():
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not hasattr(request, 'current_user'):
-                return jsonify({'error': 'Unauthorized'}), 401
-
-            user_role = request.current_user.get('role', 'store')
-            required_role = getattr(f, 'required_role', None)
-
-            if required_role:
-                conn = sqlite3.connect(DB_PATH)
-                cursor = conn.cursor()
-
-                cursor.execute('SELECT level FROM roles WHERE name = ?', (user_role,))
-                user_level = cursor.fetchone()
-
-                cursor.execute('SELECT level FROM roles WHERE name = ?', (required_role,))
-                required_level = cursor.fetchone()
-
-                conn.close()
-
-                if not user_level or not required_level:
-                    return jsonify({'error': 'Invalid role'}), 403
-
-                if user_level[0] < required_level[0]:
-                    return jsonify({'error': 'Insufficient permissions'}), 403
-
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-def set_required_role(role):
-    def decorator(f):
-        f.required_role = role
-        return f
-    return decorator
-
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    response = redirect(url_for('login'))
-    response.set_cookie('jwt_token', '', expires=0)
-    return response
-
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    # Простая проверка - пароль равен логину
-    valid_users = ['admin', 'user', 'test']
-    
-    if username in valid_users and password == username:
-        token = create_jwt_token(1, username)
-        print(f"Login successful for user: {username}")
-        
-        response = jsonify({'success': True, 'message': 'Вход выполнен успешно'})
-        response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax', max_age=86400)
-        print(f"Cookie set for user: {username}")
-        return response
-    else:
-        print(f"Login failed for user: {username}")
-        return jsonify({'success': False, 'message': 'Неверные учетные данные'})
-
 @app.route('/')
-@jwt_required
 def index():
     return render_template('index.html')
 
 @app.route('/users')
-@jwt_required
 def users_page():
     return render_template('users.html')
 
 @app.route('/sensors')
-@jwt_required
 def sensors_page():
     return render_template('sensors.html')
 
 @app.route('/reports')
-@jwt_required
 def reports_page():
     return render_template('reports.html')
-
-@app.route('/api/current-user', methods=['GET'])
-@jwt_required
-def get_current_user():
-    return jsonify({
-        'user_id': request.current_user.get('user_id'),
-        'username': request.current_user.get('username')
-    })
 
 @app.route('/api/visitor-count', methods=['POST'])
 def visitor_count():
@@ -268,13 +107,12 @@ def visitor_count():
     return jsonify({'message': 'Data saved'}), 200
 
 @app.route('/api/users', methods=['GET'])
-@jwt_required
 def get_users():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT id, username, email, role, created_at FROM users')
-    
+
     users = []
     for row in cursor.fetchall():
         users.append({
@@ -284,20 +122,19 @@ def get_users():
             'role': row[3],
             'created_at': row[4]
         })
-    
+
     conn.close()
     return jsonify(users)
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])
-@jwt_required
 def get_user(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT id, username, email, role, created_at FROM users WHERE id = ?', (user_id,))
-    
+
     user = cursor.fetchone()
-    
+
     if user:
         user_data = {
             'id': user[0],
@@ -307,12 +144,12 @@ def get_user(user_id):
             'created_at': user[4],
             'sensors': []
         }
-        
+
         cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
-        
+
         sensors = [row[0] for row in cursor.fetchall()]
         user_data['sensors'] = sensors
-        
+
         conn.close()
         return jsonify(user_data)
     else:
@@ -320,13 +157,12 @@ def get_user(user_id):
         return jsonify({'error': 'User not found'}), 404
 
 @app.route('/api/users', methods=['POST'])
-@jwt_required
 def create_user():
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
 
     data = request.get_json()
-    
+
     required_fields = ['username', 'email', 'role']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
@@ -334,18 +170,18 @@ def create_user():
     username = data['username']
     email = data['email']
     role = data['role']
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('''
             INSERT INTO users (username, email, role, created_at)
             VALUES (?, ?, ?, ?)
         ''', (username, email, role, datetime.now().isoformat()))
-        
+
         user_id = cursor.lastrowid
-        
+
         if 'sensor_ids' in data:
             sensor_ids = data['sensor_ids']
             for sensor_id in sensor_ids:
@@ -353,7 +189,7 @@ def create_user():
                     INSERT INTO user_sensors (user_id, sensor_id)
                     VALUES (?, ?)
                 ''', (user_id, sensor_id))
-        
+
         conn.commit()
         return jsonify({'message': 'User created', 'id': user_id}), 201
     except Exception as e:
@@ -363,27 +199,26 @@ def create_user():
         conn.close()
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
-@jwt_required
 def update_user(user_id):
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
 
     data = request.get_json()
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('''
             UPDATE users
             SET username = ?, email = ?, role = ?
             WHERE id = ?
         ''', (data.get('username', ''), data.get('email', ''), data.get('role', ''), user_id))
-        
+
         cursor.execute('''
             DELETE FROM user_sensors WHERE user_id = ?
         ''', (user_id,))
-        
+
         if 'sensor_ids' in data:
             sensor_ids = data['sensor_ids']
             for sensor_id in sensor_ids:
@@ -391,7 +226,7 @@ def update_user(user_id):
                     INSERT INTO user_sensors (user_id, sensor_id)
                     VALUES (?, ?)
                 ''', (user_id, sensor_id))
-        
+
         conn.commit()
         return jsonify({'message': 'User updated'}), 200
     except Exception as e:
@@ -401,15 +236,14 @@ def update_user(user_id):
         conn.close()
 
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
-@jwt_required
 def delete_user(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('DELETE FROM user_sensors WHERE user_id = ?', (user_id,))
         cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
-        
+
         conn.commit()
         return jsonify({'message': 'User deleted'}), 200
     except Exception as e:
@@ -419,26 +253,24 @@ def delete_user(user_id):
         conn.close()
 
 @app.route('/api/users/<int:user_id>/sensors', methods=['GET'])
-@jwt_required
 def get_user_sensors(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
-    
+
     sensors = [row[0] for row in cursor.fetchall()]
-    
+
     conn.close()
     return jsonify(sensors)
 
 @app.route('/api/sensors', methods=['GET'])
-@jwt_required
 def get_sensors():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT DISTINCT device_id, location FROM visitor_counts')
-    
+
     sensors = []
     for row in cursor.fetchall():
         sensors.append({
@@ -446,70 +278,22 @@ def get_sensors():
             'name': f"Датчик {row[0]}",
             'location': row[1] or 'Не указано'
         })
-    
+
     conn.close()
     return jsonify(sensors)
 
 @app.route('/api/sensor-data', methods=['GET'])
-@jwt_required
-@set_required_role('manager')
-@check_permission()
 def sensor_data():
-    user_role = request.current_user.get('role', 'store')
-    
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    if user_role == 'admin':
-        cursor.execute('''
-            SELECT device_id, timestamp, count, status, received_at, location
-            FROM visitor_counts
-            ORDER BY received_at DESC
-            LIMIT 10
-        ''')
-    elif user_role == 'manager':
-        cursor.execute('''
-            SELECT vc.device_id, vc.timestamp, vc.count, vc.status, vc.received_at, vc.location
-            FROM visitor_counts vc
-            JOIN user_sensors us ON vc.device_id = us.sensor_id
-            WHERE us.user_id IN (
-                SELECT id FROM users WHERE role IN ('rd', 'tu', 'store')
-            )
-            ORDER BY vc.received_at DESC
-            LIMIT 10
-        ''')
-    elif user_role == 'rd':
-        cursor.execute('''
-            SELECT vc.device_id, vc.timestamp, vc.count, vc.status, vc.received_at, vc.location
-            FROM visitor_counts vc
-            JOIN user_sensors us ON vc.device_id = us.sensor_id
-            WHERE us.user_id IN (
-                SELECT id FROM users WHERE role IN ('tu', 'store')
-            )
-            ORDER BY vc.received_at DESC
-            LIMIT 10
-        ''')
-    elif user_role == 'tu':
-        cursor.execute('''
-            SELECT vc.device_id, vc.timestamp, vc.count, vc.status, vc.received_at, vc.location
-            FROM visitor_counts vc
-            JOIN user_sensors us ON vc.device_id = us.sensor_id
-            WHERE us.user_id IN (
-                SELECT id FROM users WHERE role = 'store'
-            )
-            ORDER BY vc.received_at DESC
-            LIMIT 10
-        ''')
-    elif user_role == 'store':
-        cursor.execute('''
-            SELECT vc.device_id, vc.timestamp, vc.count, vc.status, vc.received_at, vc.location
-            FROM visitor_counts vc
-            JOIN user_sensors us ON vc.device_id = us.sensor_id
-            WHERE us.user_id = ?
-            ORDER BY vc.received_at DESC
-            LIMIT 10
-        ''', (request.current_user.get('user_id'),))
-    
+
+    cursor.execute('''
+        SELECT device_id, timestamp, count, status, received_at, location
+        FROM visitor_counts
+        ORDER BY received_at DESC
+        LIMIT 50
+    ''')
+
     rows = cursor.fetchall()
     conn.close()
 
