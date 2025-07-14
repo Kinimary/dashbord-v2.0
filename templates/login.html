@@ -37,6 +37,12 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
+            if (!username || !password) {
+                document.getElementById('error-message').textContent = 'Пожалуйста, заполните все поля';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
             fetch('/api/login', {
                 method: 'POST',
                 headers: {
@@ -50,7 +56,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/';
+                    // Перенаправляем на указанную страницу или на главную
+                    window.location.href = data.redirect || '/';
                 } else {
                     document.getElementById('error-message').textContent = data.message || 'Ошибка входа';
                     document.getElementById('error-message').style.display = 'block';

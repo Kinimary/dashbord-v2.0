@@ -154,12 +154,27 @@ def api_login():
         session['user_id'] = 1
         session['username'] = username
         session['user_role'] = 'admin'
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'redirect': '/'})
     elif username == 'manager' and password == 'manager':
         session['user_id'] = 2
         session['username'] = username
         session['user_role'] = 'manager'
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'redirect': '/'})
+    elif username == 'rd' and password == 'rd':
+        session['user_id'] = 3
+        session['username'] = username
+        session['user_role'] = 'rd'
+        return jsonify({'success': True, 'redirect': '/'})
+    elif username == 'tu' and password == 'tu':
+        session['user_id'] = 4
+        session['username'] = username
+        session['user_role'] = 'tu'
+        return jsonify({'success': True, 'redirect': '/'})
+    elif username == 'store' and password == 'store':
+        session['user_id'] = 5
+        session['username'] = username
+        session['user_role'] = 'store'
+        return jsonify({'success': True, 'redirect': '/'})
     else:
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
 
@@ -182,6 +197,15 @@ def sensors_page():
 @login_required
 def reports_page():
     return render_template('reports.html')
+
+@app.route('/api/current-user', methods=['GET'])
+@login_required
+def get_current_user():
+    return jsonify({
+        'user_id': session.get('user_id'),
+        'username': session.get('username'),
+        'role': session.get('user_role')
+    })
 
 @app.route('/api/visitor-count', methods=['POST'])
 def visitor_count():

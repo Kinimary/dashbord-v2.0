@@ -59,21 +59,21 @@
                         <input type="text" placeholder="Поиск..." />
                     </div>
                     <div class="user-profile">
-                        <div class="notifications">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <div class="user-info">
-                            <img
-                                src="https://via.placeholder.com/30"
-                                alt="User"
-                            />
-                            <span>S</span>
-                            <div class="user-details">
-                                <p>Samantha Maybury</p>
-                                <a href="/logout">Выйти</a>
-                            </div>
-                        </div>
+            <div class="notifications">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="user-info">
+                <img src="https://via.placeholder.com/30" alt="User Avatar">
+                <div>
+                    <span id="current-user">Загрузка...</span>
+                    <div class="user-details">
+                        <p id="user-role">Роль: Загрузка...</p>
+                        <p>Email: user@example.com</p>
+                        <a href="/logout">Выйти</a>
                     </div>
+                </div>
+            </div>
+        </div>
                 </div>
 
                 <div class="dashboard-tabs">
@@ -289,5 +289,62 @@
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    </body>
+    
+<script>
+        // Переключение темы
+        const themeToggle = document.querySelector('.theme-toggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const icon = themeToggle.querySelector('i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        });
+
+        // Загрузка информации о текущем пользователе
+        function loadUserInfo() {
+            // Получаем информацию о текущем пользователе из сессии
+            fetch('/api/current-user')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username && data.role) {
+                        document.getElementById('current-user').textContent = data.username;
+                        document.getElementById('user-role').textContent = `Роль: ${data.role}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки информации о пользователе:', error);
+                });
+        }
+
+        // Имитация загрузки данных
+        function loadDashboardData() {
+            // Здесь будет реальная загрузка данных
+            console.log('Загрузка данных дашборда...');
+        }
+
+        // Активация вкладки
+        function setActiveTab(tab) {
+            // Удаляем активный класс у всех вкладок
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Добавляем активный класс к выбранной вкладке
+            tab.classList.add('active');
+
+            // Здесь можно добавить логику для загрузки данных конкретной вкладки
+            loadDashboardData();
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadDashboardData();
+
+            // Добавляем обработчики для вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => setActiveTab(tab));
+            });
+        });
+    </script>
+</body>
 </html>
