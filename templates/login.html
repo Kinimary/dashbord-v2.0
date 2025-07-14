@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -28,7 +27,8 @@
             </form>
             <div id="error-message" class="error-message" style="display: none;"></div>
             <div style="margin-top: 20px; font-size: 12px; color: #666;">
-                Для тестирования используйте: admin/admin, manager/manager, rd/rd, tu/tu, store/store
+                Для тестирования используйте:<br>
+                admin/admin, user/user, test/test
             </div>
         </div>
     </div>
@@ -36,40 +36,33 @@
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
-            if (!username || !password) {
-                document.getElementById('error-message').textContent = 'Пожалуйста, заполните все поля';
-                document.getElementById('error-message').style.display = 'block';
-                return;
-            }
-            
+            const errorDiv = document.getElementById('error-message');
+
             fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
+                body: JSON.stringify({ username, password })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Перенаправляем на главную страницу
+                    console.log('Login successful, redirecting...');
+                    // Redirect to dashboard
                     window.location.href = '/';
                 } else {
-                    document.getElementById('error-message').textContent = data.message || 'Ошибка входа';
-                    document.getElementById('error-message').style.display = 'block';
+                    errorDiv.textContent = data.message;
+                    errorDiv.style.display = 'block';
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('error-message').textContent = 'Произошла ошибка при входе';
-                document.getElementById('error-message').style.display = 'block';
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Ошибка подключения к серверу';
+                errorDiv.style.display = 'block';
             });
         });
     </script>

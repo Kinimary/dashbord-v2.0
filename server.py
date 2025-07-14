@@ -87,13 +87,12 @@ def init_db():
 
 init_db()
 
-def create_jwt_token(user_id, username, role):
+def create_jwt_token(user_id, username):
     """Create JWT token for user"""
     now = datetime.now(timezone.utc)
     payload = {
         'user_id': user_id,
         'username': username,
-        'role': role,
         'exp': now + JWT_EXPIRATION_DELTA,
         'iat': now
     }
@@ -195,22 +194,18 @@ def api_login():
     password = data.get('password')
 
     # Простая проверка - пароль равен логину
-    user_credentials = {
-        'admin': {'id': 1, 'role': 'admin'},
-        'manager': {'id': 2, 'role': 'manager'},
-        'rd': {'id': 3, 'role': 'rd'},
-        'tu': {'id': 4, 'role': 'tu'},
-        'store': {'id': 5, 'role': 'store'}
-    }
+    valid_users = ['admin', 'user', 'test']
     
-    if username in user_credentials and password == username:
-        user_info = user_credentials[username]
-        token = create_jwt_token(user_info['id'], username, user_info['role'])
+    if username in valid_users and password == username:
+        token = create_jwt_token(1, username)
+        print(f"Login successful for user: {username}")
         
-        response = jsonify({'success': True, 'redirect': '/', 'token': token})
+        response = jsonify({'success': True, 'message': 'Вход выполнен успешно'})
         response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax', max_age=86400)
+        print(f"Cookie set for user: {username}")
         return response
     else:
+        print(f"Login failed for user: {username}")
         return jsonify({'success': False, 'message': 'Неверные учетные данные'})
 
 @app.route('/')
@@ -238,8 +233,7 @@ def reports_page():
 def get_current_user():
     return jsonify({
         'user_id': request.current_user.get('user_id'),
-        'username': request.current_user.get('username'),
-        'role': request.current_user.get('role')
+        'username': request.current_user.get('username')
     })
 
 @app.route('/api/visitor-count', methods=['POST'])
