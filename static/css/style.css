@@ -282,6 +282,18 @@ body::before {
     overflow-y: auto;
     background: transparent;
     position: relative;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.main-content.loading {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.main-content.loaded {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .top-bar {
@@ -740,6 +752,134 @@ button:hover::before {
 .status-badge.offline {
     background: linear-gradient(135deg, var(--error-color), #FF6B6B);
     color: #FFFFFF;
+}
+
+/* Page Transition Styles */
+.page-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        rgba(15, 15, 35, 0.95) 0%, 
+        rgba(26, 26, 46, 0.95) 25%, 
+        rgba(22, 33, 62, 0.95) 50%, 
+        rgba(15, 52, 96, 0.95) 75%, 
+        rgba(83, 52, 131, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.page-transition-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.transition-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(46, 139, 87, 0.3);
+    border-top: 4px solid var(--belwest-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+    box-shadow: 0 0 30px var(--belwest-green-glow);
+}
+
+.transition-text {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.8;
+    letter-spacing: 1px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Content fade-in animation */
+.content-container {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: contentFadeIn 0.6s ease-out forwards;
+}
+
+@keyframes contentFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger animation for cards */
+.stats-cards .card {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    animation: cardStagger 0.6s ease-out forwards;
+}
+
+.stats-cards .card:nth-child(1) { animation-delay: 0.1s; }
+.stats-cards .card:nth-child(2) { animation-delay: 0.2s; }
+.stats-cards .card:nth-child(3) { animation-delay: 0.3s; }
+.stats-cards .card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes cardStagger {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Menu item active state enhancement */
+.menu li a {
+    position: relative;
+    overflow: hidden;
+}
+
+.menu li a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.4s ease;
+}
+
+.menu li a:hover::after,
+.menu li.active a::after {
+    width: 100%;
+    height: 100%;
+}
+
+/* Enhanced loading states */
+.loading-skeleton {
+    background: linear-gradient(90deg, 
+        rgba(46, 139, 87, 0.1) 25%, 
+        rgba(46, 139, 87, 0.2) 50%, 
+        rgba(46, 139, 87, 0.1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--border-radius);
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
 
 /* Responsive Design */
