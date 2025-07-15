@@ -11,10 +11,6 @@ def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     return conn
 
-@users.route('/users')
-def users_page():
-    return render_template('users.html')
-
 @users.route('/api/users', methods=['GET'])
 def get_users():
     conn = get_db_connection()

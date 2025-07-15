@@ -11,10 +11,6 @@ def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     return conn
 
-@sensors.route('/sensors')
-def sensors_page():
-    return render_template('sensors.html')
-
 @sensors.route('/api/sensors', methods=['GET'])
 def get_sensors():
     conn = get_db_connection()

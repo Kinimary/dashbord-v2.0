@@ -116,10 +116,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-@app.route('/users')
-@login_required
-def users_page():
-    return render_template('users.html')
+
 
 @app.route('/sensors')
 @login_required

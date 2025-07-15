@@ -13,10 +13,6 @@ def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     return conn
 
-@reports.route('/reports')
-def reports_page():
-    return render_template('reports.html')
-
 @reports.route('/api/reports', methods=['GET'])
 def get_reports_data():
     conn = get_db_connection()
