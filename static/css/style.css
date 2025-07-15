@@ -151,7 +151,7 @@ body::before {
 }
 
 .sidebar .logo::before {
-    content: 'BW';
+    content: '🏢';
     display: flex;
     align-items: center;
     justify-content: center;
@@ -161,8 +161,7 @@ body::before {
     transform: translate(-50%, -50%);
     width: 40px;
     height: 40px;
-    font-size: 16px;
-    font-weight: 900;
+    font-size: 20px;
     color: #FFFFFF;
     background: linear-gradient(135deg, #2E8B57, #3CB371);
     border-radius: 8px;
@@ -1506,6 +1505,73 @@ button:hover::before {
 .tab:hover:not(.active) {
     background: var(--glass-bg);
     color: var(--text-primary);
+}
+
+/* Search Bar Styles */
+.search-bar {
+    position: relative;
+    max-width: 300px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    border: 2px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--belwest-green);
+    box-shadow: 0 0 0 4px var(--belwest-green-glow);
+}
+
+.search-bar::before {
+    content: '\f002';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 14px;
+}
+
+/* Action Buttons */
+.edit-sensor, .delete-sensor {
+    padding: 8px 16px;
+    margin: 0 4px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.edit-sensor {
+    background: var(--belwest-green);
+    color: white;
+}
+
+.edit-sensor:hover {
+    background: var(--belwest-green-dark);
+    transform: translateY(-1px);
+}
+
+.delete-sensor {
+    background: var(--error-color);
+    color: white;
+}
+
+.delete-sensor:hover {
+    background: #cc3a47;
+    transform: translateY(-1px);
 }
 
 /* Additional Enhancements */
