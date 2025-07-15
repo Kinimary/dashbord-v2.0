@@ -52,8 +52,46 @@
                         </a>
                     </li>
                 </ul>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
+                <div class="sidebar-settings">
+                    <div class="settings-dropdown">
+                        <button class="settings-btn" id="settings-btn">
+                            <i class="fas fa-cog"></i>
+                            <span>Настройки</span>
+                            <i class="fas fa-chevron-down settings-arrow"></i>
+                        </button>
+                        <div class="settings-menu">
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-moon"></i>
+                                    <span>Темная тема</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-bell"></i>
+                                    <span>Уведомления</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Авто-обновление</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
