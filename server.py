@@ -113,6 +113,37 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    username = data.get('username')
+    password = hashlib.sha256(data.get('password').encode()).hexdigest()
+
+    conn = sqlite3.connect('visitor_data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
+                  (username, password))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        session['user_id'] = user[0]
+        session['username'] = user[1]
+        session['role'] = user[2]
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user[0],
+                'username': user[1],
+                'role': user[2]
+            }
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Неверный логин или пароль'
+        }), 401
+
 @app.route('/logout')
 def logout():
     session.clear()

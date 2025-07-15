@@ -4,30 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BELWEST - Админ панель</title>
+    <title>BELWEST - Система управления посетителями</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="login-container">
         <div class="login-form">
-            <h2>Вход в админ панель</h2>
-            <p>Необязательный вход для административных функций</p>
+            <div class="logo">
+                <span>BELWEST</span>
+            </div>
+            <h2 style="text-align: center; color: var(--text-primary); margin-bottom: 10px; font-weight: 700;">Вход в систему</h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 40px; font-size: 14px;">Система управления посетителями</p>
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Логин</label>
-                    <input type="text" id="username" name="username" required>
+                    <label for="username">
+                        <i class="fas fa-user" style="margin-right: 8px; color: var(--belwest-green);"></i>
+                        Логин
+                    </label>
+                    <input type="text" id="username" name="username" placeholder="Введите логин" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Пароль</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="password">
+                        <i class="fas fa-lock" style="margin-right: 8px; color: var(--belwest-green);"></i>
+                        Пароль
+                    </label>
+                    <input type="password" id="password" name="password" placeholder="Введите пароль" required>
                 </div>
                 
-                <button type="submit">Войти</button>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>
+                    Войти в систему
+                </button>
             </form>
             
-            <p><a href="/">Вернуться на главную</a></p>
+            <div class="login-footer" style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 10px;">
+                    <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                    Данные по умолчанию:
+                </p>
+                <p style="color: var(--text-secondary); font-size: 13px; background: var(--glass-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <strong>Логин:</strong> admin<br>
+                    <strong>Пароль:</strong> admin123
+                </p>
+            </div>
+            
+            <div id="error-message" class="error-message" style="display: none;"></div>
         </div>
     </div>
 
@@ -37,27 +61,50 @@
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-message');
             
-            fetch('/api/login', {
+            // Скрыть предыдущие ошибки
+            errorDiv.style.display = 'none';
+            
+            fetch('/login', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ username, password })
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    localStorage.setItem('adminUser', JSON.stringify(data.user));
-                    alert('Вход выполнен успешно!');
-                    window.location.href = '/users';
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
                 } else {
-                    alert(data.message || 'Ошибка входа');
+                    return response.text();
+                }
+            })
+            .then(data => {
+                if (data) {
+                    // Если есть данные, значит произошла ошибка
+                    errorDiv.textContent = 'Неверный логин или пароль';
+                    errorDiv.style.display = 'block';
                 }
             })
             .catch(error => {
-                alert('Ошибка: ' + error.message);
+                console.error('Error:', error);
+                errorDiv.textContent = 'Ошибка соединения с сервером';
+                errorDiv.style.display = 'block';
             });
+        });
+
+        // Добавим анимацию при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('.login-form');
+            loginForm.style.opacity = '0';
+            loginForm.style.transform = 'translateY(30px) scale(0.95)';
+            
+            setTimeout(() => {
+                loginForm.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                loginForm.style.opacity = '1';
+                loginForm.style.transform = 'translateY(0) scale(1)';
+            }, 100);
         });
     </script>
 </body>
