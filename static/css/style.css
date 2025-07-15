@@ -493,8 +493,8 @@ input:checked + .toggle-slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 24px;
     margin-bottom: 40px;
-    padding: 0 16px;
     background: var(--glass-bg);
     backdrop-filter: var(--blur);
     border-radius: var(--border-radius);
@@ -502,9 +502,10 @@ input:checked + .toggle-slider:before {
     box-shadow: 
         0 8px 32px var(--shadow-light),
         inset 0 1px 4px rgba(255, 255, 255, 0.1);
-    padding: 20px 24px;
+    padding: 20px 32px;
     position: relative;
     z-index: 10;
+    min-height: 80px;
 }
 
 .top-bar h1 {
@@ -519,6 +520,30 @@ input:checked + .toggle-slider:before {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.top-bar-center {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    justify-content: center;
+    max-width: 600px;
+}
+
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
 }
 
 .user-profile {
@@ -1603,24 +1628,39 @@ button:hover::before {
 /* Search Bar Styles */
 .search-bar {
     position: relative;
-    max-width: 300px;
+    max-width: 350px;
+    min-width: 280px;
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .search-bar input {
     width: 100%;
-    padding: 12px 16px 12px 40px;
+    padding: 14px 20px 14px 48px;
     border: 2px solid var(--glass-border);
     border-radius: var(--border-radius);
     background: var(--glass-bg);
+    backdrop-filter: var(--blur);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 500;
     transition: var(--transition);
+    box-shadow: 0 4px 16px var(--shadow-light);
+    outline: none;
+}
+
+.search-bar input::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
 }
 
 .search-bar input:focus {
-    outline: none;
     border-color: var(--belwest-green);
-    box-shadow: 0 0 0 4px var(--belwest-green-glow);
+    box-shadow: 
+        0 0 0 4px var(--belwest-green-glow),
+        0 4px 16px var(--shadow-light);
+    transform: translateY(-1px);
 }
 
 .search-bar::before {
@@ -1628,11 +1668,17 @@ button:hover::before {
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     position: absolute;
-    left: 14px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-tertiary);
-    font-size: 14px;
+    font-size: 16px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.search-bar:focus-within::before {
+    color: var(--belwest-green);
 }
 
 /* Action Buttons */
