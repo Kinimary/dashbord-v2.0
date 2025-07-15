@@ -64,3 +64,194 @@ class NotificationSystem {
 
 // Initialize notification system
 const notifications = new NotificationSystem();
+// Notification system
+document.addEventListener('DOMContentLoaded', function() {
+    initializeNotifications();
+    initializeUserMenu();
+    initializeSettings();
+});
+
+function initializeNotifications() {
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+    
+    if (!notificationsBtn || !notificationDropdown) return;
+    
+    notificationsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = notificationsBtn.classList.contains('active');
+        
+        // Close user menu if open
+        const userMenu = document.getElementById('user-menu-btn');
+        if (userMenu) userMenu.classList.remove('active');
+        
+        if (isActive) {
+            notificationsBtn.classList.remove('active');
+        } else {
+            notificationsBtn.classList.add('active');
+        }
+    });
+    
+    // Mark all as read
+    const markAllRead = document.querySelector('.mark-all-read');
+    if (markAllRead) {
+        markAllRead.addEventListener('click', function() {
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+            updateNotificationBadge();
+        });
+    }
+    
+    // Click notification items
+    const notificationItems = document.querySelectorAll('.notification-item');
+    notificationItems.forEach(item => {
+        item.addEventListener('click', function() {
+            this.classList.remove('unread');
+            updateNotificationBadge();
+        });
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!notificationsBtn.contains(e.target)) {
+            notificationsBtn.classList.remove('active');
+        }
+    });
+}
+
+function initializeUserMenu() {
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (!userMenuBtn || !userDropdown) return;
+    
+    userMenuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = userMenuBtn.classList.contains('active');
+        
+        // Close notifications if open
+        const notificationsBtn = document.getElementById('notifications-btn');
+        if (notificationsBtn) notificationsBtn.classList.remove('active');
+        
+        if (isActive) {
+            userMenuBtn.classList.remove('active');
+        } else {
+            userMenuBtn.classList.add('active');
+        }
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!userMenuBtn.contains(e.target)) {
+            userMenuBtn.classList.remove('active');
+        }
+    });
+}
+
+function initializeSettings() {
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsDropdown = document.getElementById('settings-dropdown');
+    const themeToggle = document.getElementById('theme-toggle-checkbox');
+    
+    if (!settingsBtn || !settingsDropdown) return;
+    
+    // Load saved settings
+    const savedTheme = localStorage.getItem('theme');
+    if (themeToggle) {
+        themeToggle.checked = savedTheme === 'light';
+    }
+    
+    settingsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        settingsDropdown.classList.toggle('active');
+    });
+    
+    // Theme toggle
+    if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+            const body = document.body;
+            if (this.checked) {
+                body.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    }
+    
+    // Other toggles
+    const toggles = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
+    toggles.forEach(toggle => {
+        const savedState = localStorage.getItem(toggle.id);
+        if (savedState !== null) {
+            toggle.checked = savedState === 'true';
+        }
+        
+        toggle.addEventListener('change', function() {
+            localStorage.setItem(this.id, this.checked);
+            
+            // Handle specific settings
+            if (this.id === 'notifications-toggle') {
+                // Handle notifications toggle
+                console.log('Notifications:', this.checked ? 'enabled' : 'disabled');
+            } else if (this.id === 'auto-refresh-toggle') {
+                // Handle auto-refresh toggle
+                console.log('Auto-refresh:', this.checked ? 'enabled' : 'disabled');
+            } else if (this.id === 'sound-toggle') {
+                // Handle sound toggle
+                console.log('Sound:', this.checked ? 'enabled' : 'disabled');
+            }
+        });
+    });
+}
+
+function updateNotificationBadge() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    const badge = document.getElementById('notification-count');
+    
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function addNotification(title, text, type = 'info') {
+    const notificationList = document.querySelector('.notification-list');
+    if (!notificationList) return;
+    
+    const iconMap = {
+        success: 'fa-check-circle text-success',
+        warning: 'fa-exclamation-triangle text-warning',
+        error: 'fa-exclamation-circle text-error',
+        info: 'fa-info-circle'
+    };
+    
+    const notificationHTML = `
+        <div class="notification-item unread">
+            <div class="notification-icon">
+                <i class="fas ${iconMap[type] || iconMap.info}"></i>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-text">${text}</div>
+                <div class="notification-time">Только что</div>
+            </div>
+        </div>
+    `;
+    
+    notificationList.insertAdjacentHTML('afterbegin', notificationHTML);
+    updateNotificationBadge();
+}
+
+function logout() {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+        window.location.href = '/login';
+    }
+}

@@ -63,14 +63,77 @@
                         <i class="fas fa-search"></i>
                         <input type="text" placeholder="Поиск...">
                     </div>
-                    <div class="notifications">
+                    <div class="notifications" id="notifications-btn">
                         <i class="fas fa-bell"></i>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
+                        <span class="notification-badge" id="notification-count">3</span>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header">
+                                <h4>Уведомления</h4>
+                                <button class="mark-all-read">Прочитать все</button>
+                            </div>
+                            <div class="notification-list">
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Датчик офлайн</div>
+                                        <div class="notification-text">Датчик "Вход основной" не отвечает</div>
+                                        <div class="notification-time">5 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-users text-success"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Пиковая нагрузка</div>
+                                        <div class="notification-text">Превышен порог посетителей (200+)</div>
+                                        <div class="notification-time">15 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="notification-item">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Система обновлена</div>
+                                        <div class="notification-text">Версия 2.1.4 успешно установлена</div>
+                                        <div class="notification-time">1 час назад</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                    <div class="user-info" id="user-menu-btn">
+                        <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
                         <span>Админ</span>
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name">Администратор</div>
+                                    <div class="user-role">Полный доступ</div>
+                                </div>
+                            </div>
+                            <div class="user-dropdown-menu">
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>Профиль</span>
+                                </a>
+                                <a href="/settings" class="dropdown-item">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Настройки</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -98,6 +161,17 @@
                     <h3>Пиковое время</h3>
                     <div class="stat-value" id="peak-time">-</div>
                     <div class="stat-change" id="peak-count">Загрузка...</div>
+                </div>
+                 <div class="card">
+                    <h3>Новые посетители</h3>
+                    <div class="stat-value" id="new-visitors">-</div>
+                    <div class="stat-change" id="new-visitors-change">Загрузка...</div>
+                </div>
+
+                <div class="card">
+                    <h3>Постоянные посетители</h3>
+                    <div class="stat-value" id="returning-visitors">-</div>
+                    <div class="stat-change" id="returning-visitors-change">Загрузка...</div>
                 </div>
             </section>
 
