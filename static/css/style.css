@@ -128,6 +128,38 @@ body::before {
     display: none;
 }
 
+.sidebar.collapsed .logo::before {
+    content: 'BW';
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 
+        0 0 20px rgba(255, 255, 255, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    background: linear-gradient(135deg, #2E8B57, #3CB371);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: bwGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes bwGlow {
+    0% { 
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% { 
+        text-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 2px 4px rgba(0, 0, 0, 0.5);
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
 .sidebar.collapsed .menu li a span {
     display: none;
 }
@@ -441,6 +473,23 @@ body::before {
     box-shadow: 0 12px 40px var(--belwest-green-glow);
 }
 
+.user-info .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    border: 2px solid var(--belwest-green);
+    box-shadow: 0 0 16px var(--belwest-green-glow);
+    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 16px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .user-info img {
     width: 40px;
     height: 40px;
@@ -448,6 +497,11 @@ body::before {
     margin-right: 12px;
     border: 2px solid var(--belwest-green);
     box-shadow: 0 0 16px var(--belwest-green-glow);
+    display: none; /* Hide broken images */
+}
+
+.user-info img:not([src=""]):not([src*="placeholder"]) {
+    display: block;
 }
 
 .user-info span {
