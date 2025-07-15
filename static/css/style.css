@@ -153,33 +153,40 @@ body::before {
 
 .sidebar.collapsed .logo::before {
     content: 'BW';
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
     font-weight: 900;
     color: #FFFFFF;
-    text-shadow: 
-        0 0 20px rgba(255, 255, 255, 0.8),
-        0 2px 4px rgba(0, 0, 0, 0.5);
-    z-index: 10;
     background: linear-gradient(135deg, #2E8B57, #3CB371);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 4px 12px rgba(46, 139, 87, 0.4),
+        inset 0 1px 4px rgba(255, 255, 255, 0.2);
+    z-index: 10;
     animation: bwGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes bwGlow {
     0% { 
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+        box-shadow: 
+            0 4px 12px rgba(46, 139, 87, 0.4),
+            inset 0 1px 4px rgba(255, 255, 255, 0.2);
         transform: translate(-50%, -50%) scale(1);
     }
     100% { 
-        text-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 2px 4px rgba(0, 0, 0, 0.5);
-        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 
+            0 6px 20px rgba(46, 139, 87, 0.6),
+            inset 0 1px 4px rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%) scale(1.05);
     }
 }
 
