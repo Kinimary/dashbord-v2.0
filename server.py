@@ -77,6 +77,8 @@ def init_db():
 
 # Authentication decorator
 def login_required(f):
+    from functools import wraps
+    @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))

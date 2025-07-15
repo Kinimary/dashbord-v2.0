@@ -99,6 +99,7 @@ body::before {
 /* BELWEST Sidebar Styling */
 .sidebar {
     width: 300px;
+    min-width: 300px;
     background: linear-gradient(180deg, 
         rgba(46, 139, 87, 0.15) 0%, 
         rgba(46, 139, 87, 0.05) 100%);
@@ -113,25 +114,28 @@ body::before {
         0 0 40px var(--belwest-green-glow),
         inset 0 0 20px rgba(46, 139, 87, 0.1);
     z-index: 100;
-    transition: var(--transition);
 }
 
 .sidebar .logo span {
     opacity: 1;
+    display: block;
 }
 
 .sidebar .logo::after {
     opacity: 1;
+    display: block;
 }
 
 .sidebar .menu li a span {
     opacity: 1;
+    display: inline;
 }
 
 .sidebar .menu li a {
     justify-content: flex-start;
     padding: 16px 20px;
     transition: all 0.3s ease;
+    display: flex;
 }
 
 .sidebar .menu li a i {
@@ -438,12 +442,15 @@ input:checked + .toggle-slider:before {
 
 .sidebar .settings-btn span {
     opacity: 1;
+    display: inline;
 }
 
 .sidebar .settings-btn {
     justify-content: space-between;
     padding: 16px 20px;
     transition: all 0.3s ease;
+    display: flex;
+    width: 100%;
 }
 
 .sidebar .settings-btn i:first-child {
@@ -452,6 +459,7 @@ input:checked + .toggle-slider:before {
 
 .sidebar .settings-arrow {
     opacity: 1;
+    display: inline;
 }
 
 .sidebar .settings-menu {
