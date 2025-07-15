@@ -1,87 +1,310 @@
+
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BELWEST - Система подсчета посетителей</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
-    <div class="container">
-        <!-- Боковая панель -->
-        <div class="sidebar" id="sidebar">
-            <div class="logo">
-                <span>BELWEST</span>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BELWEST - Система мониторинга посетителей</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <!-- Боковая панель -->
+            <div class="sidebar" id="sidebar">
+                <div class="logo">
+                    <span>BELWEST</span>
+                    <small>VISITOR MANAGEMENT</small>
+                </div>
+                <ul class="menu">
+                    <li class="active">
+                        <a href="/">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Дашборд</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/users" id="users-menu" style="display: none;">
+                            <i class="fas fa-users"></i>
+                            <span>Пользователи</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/sensors">
+                            <i class="fas fa-robot"></i>
+                            <span>Датчики</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/reports">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Отчеты</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/settings" id="settings-menu" style="display: none;">
+                            <i class="fas fa-cog"></i>
+                            <span>Настройки</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="sidebar-settings">
+                    <div class="settings-dropdown">
+                        <button class="settings-btn" id="settings-btn">
+                            <i class="fas fa-cog"></i>
+                            <span>Настройки</span>
+                            <i class="fas fa-chevron-down settings-arrow"></i>
+                        </button>
+                        <div class="settings-menu">
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-moon"></i>
+                                    <span>Темная тема</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-bell"></i>
+                                    <span>Уведомления</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Авто-обновление</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <ul class="menu">
-                <li class="active">
-                    <a href="/">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Дашборд</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/users">
-                        <i class="fas fa-users"></i>
-                        <span>Пользователи</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/sensors">
-                        <i class="fas fa-robot"></i>
-                        <span>Датчики</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/reports">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Отчеты</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Настройки</span>
-                    </a>
-                </li>
-            </ul>
-            <div class="sidebar-settings">
-                <div class="settings-dropdown">
-                    <button class="settings-btn" id="settings-btn">
-                        <i class="fas fa-cog"></i>
-                        <span>Настройки</span>
-                        <i class="fas fa-chevron-down settings-arrow"></i>
-                    </button>
-                    <div class="settings-menu">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-moon"></i>
-                                <span>Темная тема</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
-                                <span class="toggle-slider"></span>
+
+            <!-- Основное содержимое -->
+            <div class="main-content">
+                <div class="top-bar">
+                    <h1>Дашборд</h1>
+                    <div class="user-profile">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Поиск...">
+                        </div>
+                        <div class="notifications" id="notifications-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-count">3</span>
+                            <div class="notification-dropdown" id="notification-dropdown">
+                                <div class="notification-header">
+                                    <h4>Уведомления</h4>
+                                    <button class="mark-all-read" id="mark-all-read">Прочитать все</button>
+                                </div>
+                                <div class="notification-list">
+                                    <div class="notification-item unread">
+                                        <div class="notification-icon">
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">Датчик офлайн</div>
+                                            <div class="notification-text">Датчик "Вход основной" не отвечает</div>
+                                            <div class="notification-time">5 минут назад</div>
+                                        </div>
+                                    </div>
+                                    <div class="notification-item unread">
+                                        <div class="notification-icon">
+                                            <i class="fas fa-users text-success"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">Пиковая нагрузка</div>
+                                            <div class="notification-text">Превышен порог посетителей (200+)</div>
+                                            <div class="notification-time">15 минут назад</div>
+                                        </div>
+                                    </div>
+                                    <div class="notification-item">
+                                        <div class="notification-icon">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">Система обновлена</div>
+                                            <div class="notification-text">Версия 2.1.4 успешно установлена</div>
+                                            <div class="notification-time">1 час назад</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-bell"></i>
-                                <span>Уведомления</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
-                                <span class="toggle-slider"></span>
+                        <div class="user-info" id="user-menu-btn">
+                            <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
+                            <span id="user-display-name">Загрузка...</span>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-avatar">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name" id="profile-username">Администратор</div>
+                                        <div class="user-role" id="profile-role">Полный доступ</div>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-menu">
+                                    <a href="/profile" class="dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Профиль</span>
+                                    </a>
+                                    <a href="/settings" class="dropdown-item" id="settings-link" style="display: none;">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Настройки</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" class="dropdown-item" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Выйти</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Авто-обновление</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Статистика -->
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <h3>Всего посетителей сегодня</h3>
+                            <div class="stat-trend" id="today-trend">0%</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="today-visitors">0</div>
+                            <div class="stat-label">0% за сегодня</div>
+                        </div>
+                    </div>
+
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <h3>Активных датчиков</h3>
+                            <div class="status-indicator" id="sensors-status">offline</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="active-sensors">0</div>
+                            <div class="stat-label">Все датчики онлайн</div>
+                        </div>
+                    </div>
+
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <h3>Средний поток в час</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="avg-hourly">0</div>
+                            <div class="stat-label">За последний час</div>
+                        </div>
+                    </div>
+
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <h3>Пиковое время</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="peak-time">14:30</div>
+                            <div class="stat-label" id="peak-count">48 посетителей</div>
+                        </div>
+                    </div>
+
+                    <!-- Новые/Постоянные посетители -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Новые посетители</h3>
+                            <div class="stat-trend" id="new-visitors-trend">+16% сегодня</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="new-visitors">33</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Постоянные посетители</h3>
+                            <div class="stat-trend" id="returning-visitors-trend">-12% сегодня</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number" id="returning-visitors">62</div>
+                        </div>
+                    </div>
+
+                    <!-- График посетителей по часам -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Посетители по часам</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="visitorsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Последняя активность -->
+                    <div class="card activity-card">
+                        <div class="card-header">
+                            <h3>Последняя активность</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="activity-list" id="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Новый посетитель</div>
+                                        <div class="activity-description">Зарегистрирован через главный вход</div>
+                                        <div class="activity-time">5 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-wifi"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Датчик подключен</div>
+                                        <div class="activity-description">Боковой вход - статус онлайн</div>
+                                        <div class="activity-time">10 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-tools"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Система обновлена</div>
+                                        <div class="activity-description">Обновление до версии 2.1.4</div>
+                                        <div class="activity-time">1 час назад</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
-                                <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+
+                    <!-- Статус датчиков -->
+                    <div class="card sensors-status-card">
+                        <div class="card-header">
+                            <h3>Статус датчиков</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="sensors-grid" id="sensors-grid">
+                                <!-- Sensors will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -89,176 +312,278 @@
             </div>
         </div>
 
-        <!-- Основное содержимое -->
-        <div class="main-content">
-            <div class="top-bar">
-                <h1>Дашборд</h1>
-                <div class="user-profile">
-                    <div class="search-bar">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Поиск...">
-                    </div>
-                    <div class="notifications" id="notifications-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge" id="notification-count">3</span>
-                        <div class="notification-dropdown" id="notification-dropdown">
-                            <div class="notification-header">
-                                <h4>Уведомления</h4>
-                                <button class="mark-all-read">Прочитать все</button>
-                            </div>
-                            <div class="notification-list">
-                                <div class="notification-item unread">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Датчик офлайн</div>
-                                        <div class="notification-text">Датчик "Вход основной" не отвечает</div>
-                                        <div class="notification-time">5 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="notification-item unread">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-users text-success"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Пиковая нагрузка</div>
-                                        <div class="notification-text">Превышен порог посетителей (200+)</div>
-                                        <div class="notification-time">15 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Система обновлена</div>
-                                        <div class="notification-text">Версия 2.1.4 успешно установлена</div>
-                                        <div class="notification-time">1 час назад</div>
-                                    </div>
-                                </div>
-                            </div>
+        <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+        <script>
+            // Dashboard specific functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeDashboard();
+                loadUserProfile();
+                loadSensorData();
+                setInterval(loadSensorData, 30000); // Refresh every 30 seconds
+            });
+
+            function initializeDashboard() {
+                // Initialize notifications
+                initializeNotificationSystem();
+                
+                // Initialize user menu
+                initializeUserMenu();
+                
+                // Check user role for menu visibility
+                checkUserRole();
+            }
+
+            function loadUserProfile() {
+                fetch('/api/user-profile')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error loading profile:', data.error);
+                            return;
+                        }
+                        
+                        document.getElementById('user-display-name').textContent = data.username;
+                        document.getElementById('profile-username').textContent = data.username;
+                        document.getElementById('profile-role').textContent = data.role_name;
+                        
+                        // Store role for menu visibility
+                        window.userRole = data.role;
+                        checkUserRole();
+                    })
+                    .catch(error => {
+                        console.error('Error loading profile:', error);
+                    });
+            }
+
+            function checkUserRole() {
+                const userRole = window.userRole;
+                
+                // Show/hide menu items based on role
+                const usersMenu = document.getElementById('users-menu');
+                const settingsMenu = document.getElementById('settings-menu');
+                const settingsLink = document.getElementById('settings-link');
+                
+                if (userRole === 'admin' || userRole === 'manager') {
+                    if (usersMenu) usersMenu.style.display = 'block';
+                }
+                
+                if (userRole === 'admin') {
+                    if (settingsMenu) settingsMenu.style.display = 'block';
+                    if (settingsLink) settingsLink.style.display = 'block';
+                }
+            }
+
+            function initializeNotificationSystem() {
+                const notificationsBtn = document.getElementById('notifications-btn');
+                const markAllReadBtn = document.getElementById('mark-all-read');
+                
+                if (notificationsBtn) {
+                    notificationsBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        this.classList.toggle('active');
+                        
+                        // Close user menu if open
+                        const userMenu = document.getElementById('user-menu-btn');
+                        if (userMenu) userMenu.classList.remove('active');
+                    });
+                }
+                
+                if (markAllReadBtn) {
+                    markAllReadBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const unreadItems = document.querySelectorAll('.notification-item.unread');
+                        unreadItems.forEach(item => {
+                            item.classList.remove('unread');
+                        });
+                        
+                        updateNotificationBadge();
+                        
+                        this.textContent = 'Отмечено!';
+                        setTimeout(() => {
+                            this.textContent = 'Прочитать все';
+                        }, 1000);
+                    });
+                }
+                
+                // Click notification items to mark as read
+                const notificationItems = document.querySelectorAll('.notification-item');
+                notificationItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        this.classList.remove('unread');
+                        updateNotificationBadge();
+                    });
+                });
+                
+                // Close notifications on outside click
+                document.addEventListener('click', function(e) {
+                    const notificationsBtn = document.getElementById('notifications-btn');
+                    if (notificationsBtn && !notificationsBtn.contains(e.target)) {
+                        notificationsBtn.classList.remove('active');
+                    }
+                });
+            }
+
+            function initializeUserMenu() {
+                const userMenuBtn = document.getElementById('user-menu-btn');
+                
+                if (userMenuBtn) {
+                    userMenuBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        this.classList.toggle('active');
+                        
+                        // Close notifications if open
+                        const notificationsBtn = document.getElementById('notifications-btn');
+                        if (notificationsBtn) notificationsBtn.classList.remove('active');
+                    });
+                }
+                
+                // Close user menu on outside click
+                document.addEventListener('click', function(e) {
+                    const userMenuBtn = document.getElementById('user-menu-btn');
+                    if (userMenuBtn && !userMenuBtn.contains(e.target)) {
+                        userMenuBtn.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateNotificationBadge() {
+                const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+                const badge = document.getElementById('notification-count');
+                
+                if (badge) {
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+
+            function loadSensorData() {
+                fetch('/api/sensor-data')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateDashboard(data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading sensor data:', error);
+                    });
+            }
+
+            function updateDashboard(data) {
+                // Update statistics
+                document.getElementById('today-visitors').textContent = data.today_visitors || 0;
+                document.getElementById('active-sensors').textContent = data.active_sensors || 0;
+                document.getElementById('avg-hourly').textContent = data.avg_hourly || 0;
+                document.getElementById('peak-time').textContent = data.peak_time || '--:--';
+                document.getElementById('peak-count').textContent = `${data.peak_count || 0} посетителей`;
+                document.getElementById('new-visitors').textContent = data.new_visitors || 0;
+                document.getElementById('returning-visitors').textContent = data.returning_visitors || 0;
+                
+                // Update trends
+                const todayChange = data.today_change || 0;
+                const todayTrend = document.getElementById('today-trend');
+                if (todayTrend) {
+                    todayTrend.textContent = `${todayChange > 0 ? '+' : ''}${todayChange}%`;
+                    todayTrend.className = `stat-trend ${todayChange >= 0 ? 'positive' : 'negative'}`;
+                }
+                
+                // Update sensor status
+                const sensorsStatus = document.getElementById('sensors-status');
+                if (sensorsStatus) {
+                    sensorsStatus.textContent = data.sensors_status === 'online' ? 'online' : 'offline';
+                    sensorsStatus.className = `status-indicator ${data.sensors_status}`;
+                }
+                
+                // Update activity list
+                if (data.recent_activity) {
+                    updateActivityList(data.recent_activity);
+                }
+                
+                // Update sensors grid
+                if (data.sensors) {
+                    updateSensorsGrid(data.sensors);
+                }
+                
+                // Update chart
+                if (data.hourly_visitors && window.visitorsChart) {
+                    updateChart(data.hourly_visitors);
+                }
+            }
+
+            function updateActivityList(activities) {
+                const activityList = document.getElementById('activity-list');
+                if (!activityList) return;
+                
+                activityList.innerHTML = '';
+                activities.forEach(activity => {
+                    const activityItem = document.createElement('div');
+                    activityItem.className = 'activity-item';
+                    
+                    let iconClass = 'fas fa-info-circle';
+                    if (activity.type === 'visitor') iconClass = 'fas fa-user-plus';
+                    else if (activity.type === 'sensor') iconClass = 'fas fa-wifi';
+                    else if (activity.type === 'system') iconClass = 'fas fa-tools';
+                    
+                    activityItem.innerHTML = `
+                        <div class="activity-icon">
+                            <i class="${iconClass}"></i>
                         </div>
-                    </div>
-                    <div class="user-info" id="user-menu-btn">
-                        <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
-                        <span>Админ</span>
-                        <div class="user-dropdown" id="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <div class="user-avatar">
-                                    <i class="fas fa-user-circle"></i>
-                                </div>
-                                <div class="user-details">
-                                    <div class="user-name">Администратор</div>
-                                    <div class="user-role">Полный доступ</div>
-                                </div>
-                            </div>
-                            <div class="user-dropdown-menu">
-                                <a href="/profile" class="dropdown-item">
-                                    <i class="fas fa-user"></i>
-                                    <span>Профиль</span>
-                                </a>
-                                <a href="/settings" class="dropdown-item">
-                                    <i class="fas fa-cog"></i>
-                                    <span>Настройки</span>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item" onclick="logout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Выйти</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <section class="stats-cards">
-                <div class="card">
-                    <h3>Всего посетителей сегодня</h3>
-                    <div class="stat-value" id="today-visitors">-</div>
-                    <div class="stat-change" id="today-change">Загрузка...</div>
-                </div>
-
-                <div class="card">
-                    <h3>Активных датчиков</h3>
-                    <div class="stat-value" id="active-sensors">-</div>
-                    <div class="stat-change" id="sensors-status">Загрузка...</div>
-                </div>
-
-                <div class="card">
-                    <h3>Средний поток в час</h3>
-                    <div class="stat-value" id="avg-hourly">-</div>
-                    <div class="stat-change" id="hourly-change">Загрузка...</div>
-                </div>
-
-                <div class="card">
-                    <h3>Пиковое время</h3>
-                    <div class="stat-value" id="peak-time">-</div>
-                    <div class="stat-change" id="peak-count">Загрузка...</div>
-                </div>
-                 <div class="card">
-                    <h3>Новые посетители</h3>
-                    <div class="stat-value" id="new-visitors">-</div>
-                    <div class="stat-change" id="new-visitors-change">Загрузка...</div>
-                </div>
-
-                <div class="card">
-                    <h3>Постоянные посетители</h3>
-                    <div class="stat-value" id="returning-visitors">-</div>
-                    <div class="stat-change" id="returning-visitors-change">Загрузка...</div>
-                </div>
-            </section>
-
-            <section class="charts-section">
-                <div class="chart-container">
-                    <h3>Посетители по часам</h3>
-                    <canvas id="visitors-chart"></canvas>
-                </div>
-
-                <div class="chart-container">
-                    <h3>Данные с датчиков</h3>
-                    <canvas id="sensors-chart"></canvas>
-                </div>
-            </section>
-
-            <section class="recent-activity">
-                <h3>Последние данные</h3>
-                <div class="activity-list" id="recent-data">
-                    <div class="activity-item">
-                        <div class="activity-icon">📊</div>
                         <div class="activity-content">
-                            <div class="activity-title">Загрузка данных...</div>
-                            <div class="activity-meta">
-                                Подождите, идет загрузка
-                            </div>
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-description">${activity.description}</div>
+                            <div class="activity-time">${activity.time}</div>
                         </div>
-                    </div>
-                </div>
-            </section>
+                    `;
+                    
+                    activityList.appendChild(activityItem);
+                });
+            }
 
-            <section class="sensors-overview">
-                <h3>Состояние датчиков</h3>
-                <div class="sensors-grid" id="sensors-grid">
-                    <div class="sensor-card">
-                        <div class="sensor-header">
-                            <h4>Загрузка...</h4>
-                            <span class="status-indicator offline"></span>
-                        </div>
+            function updateSensorsGrid(sensors) {
+                const sensorsGrid = document.getElementById('sensors-grid');
+                if (!sensorsGrid) return;
+                
+                sensorsGrid.innerHTML = '';
+                sensors.forEach(sensor => {
+                    const sensorItem = document.createElement('div');
+                    sensorItem.className = 'sensor-item';
+                    
+                    sensorItem.innerHTML = `
                         <div class="sensor-info">
-                            <div class="sensor-location">Загрузка данных...</div>
-                            <div class="sensor-count">- посетителей</div>
-                            <div class="sensor-update">Подождите...</div>
+                            <div class="sensor-name">${sensor.name}</div>
+                            <div class="sensor-location">${sensor.location}</div>
                         </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
+                        <div class="sensor-status ${sensor.status}">${sensor.status === 'active' ? 'Онлайн' : 'Офлайн'}</div>
+                        <div class="sensor-count">${sensor.count || 0}</div>
+                    `;
+                    
+                    sensorsGrid.appendChild(sensorItem);
+                });
+            }
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/page-transitions.js"></script>
-    <script src="/static/js/visitor-dashboard.js"></script>
-    <script src="/static/js/sidebar.js"></script>
-</body>
+            // Logout function
+            function logout() {
+                if (confirm('Вы уверены, что хотите выйти?')) {
+                    fetch('/logout', {
+                        method: 'GET',
+                        credentials: 'same-origin'
+                    }).then(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.href = '/login';
+                    }).catch(() => {
+                        window.location.href = '/logout';
+                    });
+                }
+            }
+        </script>
+    </body>
 </html>

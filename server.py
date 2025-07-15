@@ -146,6 +146,25 @@ def login_required(f):
     return decorated_function
 
 
+# Role-based access control decorator
+def role_required(*allowed_roles):
+    from functools import wraps
+    
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return redirect(url_for('login'))
+            
+            user_role = session.get('role')
+            if user_role not in allowed_roles:
+                return jsonify({'error': 'Недостаточно прав доступа'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 @app.route('/')
 def index():
     if 'user_id' not in session:
@@ -221,6 +240,7 @@ def logout():
 
 @app.route('/users')
 @login_required
+@role_required('admin', 'manager')
 def users_page():
     return render_template('users.html')
 
@@ -239,6 +259,7 @@ def reports_page():
 
 @app.route('/settings')
 @login_required
+@role_required('admin')
 def settings_page():
     return render_template('settings.html')
 
@@ -249,37 +270,118 @@ def profile_page():
     return render_template('profile.html')
 
 
+@app.route('/api/user-profile')
+@login_required
+def get_user_profile():
+    try:
+        user_id = session.get('user_id')
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT username, email, role, created_at 
+            FROM users 
+            WHERE id = ?
+        ''', (user_id,))
+        
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            return jsonify({
+                'username': user[0],
+                'email': user[1],
+                'role': user[2],
+                'created_at': user[3],
+                'role_name': get_role_name(user[2])
+            })
+        else:
+            return jsonify({'error': 'User not found'}), 404
+            
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+
+
+def get_role_name(role):
+    role_names = {
+        'admin': 'Администратор',
+        'manager': 'Менеджер',
+        'rd': 'РД',
+        'tu': 'ТУ',
+        'store': 'Магазин'
+    }
+    return role_names.get(role, role)
+
+
 @app.route('/api/sensor-data')
 @login_required
 def get_sensor_data():
     try:
+        user_role = session.get('role')
+        user_id = session.get('user_id')
+        
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
 
+        # Build sensor filter based on role
+        sensor_filter = ""
+        filter_params = []
+        
+        if user_role not in ['admin', 'manager']:
+            # For non-admin users, filter by assigned sensors
+            cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
+            user_sensors = [row[0] for row in cursor.fetchall()]
+            
+            if user_sensors:
+                placeholders = ','.join(['?' for _ in user_sensors])
+                sensor_filter = f" WHERE s.id IN ({placeholders})"
+                filter_params = user_sensors
+            else:
+                # No sensors assigned, return empty data
+                sensor_filter = " WHERE 1=0"
+
         # Get sensor statistics
-        cursor.execute('''
+        stats_query = f'''
             SELECT COUNT(*) as total, 
                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                    SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-            FROM sensors
-        ''')
+            FROM sensors s{sensor_filter}
+        '''
+        cursor.execute(stats_query, filter_params)
         sensors_stats = cursor.fetchone()
 
         # Get today's visitors
-        cursor.execute('''
+        visitors_query = f'''
             SELECT COALESCE(SUM(visitor_count), 0) as today_visitors
-            FROM visitor_data 
-            WHERE DATE(timestamp) = DATE('now')
-        ''')
+            FROM visitor_data vd
+            JOIN sensors s ON vd.sensor_id = s.id
+            WHERE DATE(vd.timestamp) = DATE('now'){sensor_filter.replace('s.', 's.')}
+        '''
+        if sensor_filter:
+            visitors_query = f'''
+                SELECT COALESCE(SUM(vd.visitor_count), 0) as today_visitors
+                FROM visitor_data vd
+                JOIN sensors s ON vd.sensor_id = s.id
+                WHERE DATE(vd.timestamp) = DATE('now') AND s.id IN ({','.join(['?' for _ in filter_params])})
+            '''
+        else:
+            visitors_query = '''
+                SELECT COALESCE(SUM(visitor_count), 0) as today_visitors
+                FROM visitor_data 
+                WHERE DATE(timestamp) = DATE('now')
+            '''
+        
+        cursor.execute(visitors_query, filter_params if sensor_filter else [])
         today_visitors = cursor.fetchone()[0]
 
         # Get sensors data
-        cursor.execute('''
+        sensors_query = f'''
             SELECT s.name, s.location, s.status, s.visitor_count,
                    COALESCE(s.last_update, 'Никогда') as last_update
-            FROM sensors s
+            FROM sensors s{sensor_filter}
             ORDER BY s.name
-        ''')
+        '''
+        cursor.execute(sensors_query, filter_params)
         sensors_data = cursor.fetchall()
 
         # Generate sample hourly data

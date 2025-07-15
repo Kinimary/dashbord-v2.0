@@ -18,13 +18,28 @@ def hash_password(password):
 
 @users.route('/api/users', methods=['GET'])
 def get_users():
+    from flask import session
+    
+    # Check if user has permission to view users
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
-        SELECT id, username, email, role, created_at 
-        FROM users
-    ''')
+    # Admin can see all users, manager can see non-admin users
+    if user_role == 'admin':
+        cursor.execute('''
+            SELECT id, username, email, role, created_at 
+            FROM users
+        ''')
+    else:  # manager
+        cursor.execute('''
+            SELECT id, username, email, role, created_at 
+            FROM users
+            WHERE role != 'admin'
+        ''')
     
     users = []
     for row in cursor.fetchall():
@@ -77,6 +92,13 @@ def get_user(user_id):
 
 @users.route('/api/users', methods=['POST'])
 def create_user():
+    from flask import session
+    
+    # Check permissions
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
 
@@ -94,6 +116,10 @@ def create_user():
     # Password is required for new users
     if not password or password.strip() == '':
         return jsonify({'error': 'Password is required for new users'}), 400
+    
+    # Role restrictions
+    if user_role == 'manager' and role == 'admin':
+        return jsonify({'error': 'Менеджер не может создавать администраторов'}), 403
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -132,6 +158,15 @@ def create_user():
 
 @users.route('/api/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
+    from flask import session
+    
+    # Check permissions
+    user_role = session.get('role')
+    current_user_id = session.get('user_id')
+    
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
     if not request.is_json:
         return jsonify({'error': 'Expected JSON data'}), 400
 
@@ -141,10 +176,24 @@ def update_user(user_id):
     cursor = conn.cursor()
     
     try:
-        # Проверка существования пользователя
-        cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
-        if not cursor.fetchone():
+        # Проверка существования пользователя и его роли
+        cursor.execute('SELECT id, role FROM users WHERE id = ?', (user_id,))
+        target_user = cursor.fetchone()
+        if not target_user:
             return jsonify({'error': 'User not found'}), 404
+        
+        target_user_role = target_user[1]
+        
+        # Prevent self-modification of critical fields for non-admins
+        if user_role == 'manager':
+            if target_user_role == 'admin':
+                return jsonify({'error': 'Менеджер не может изменять администраторов'}), 403
+            if 'role' in data and data['role'] == 'admin':
+                return jsonify({'error': 'Менеджер не может назначать роль администратора'}), 403
+        
+        # Prevent users from changing their own role (except admin)
+        if user_id == current_user_id and user_role != 'admin' and 'role' in data:
+            return jsonify({'error': 'Нельзя изменить собственную роль'}), 403
         
         # Подготовка SQL запроса
         update_fields = []
