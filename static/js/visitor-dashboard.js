@@ -1,555 +1,588 @@
-// BELWEST - Visitor Dashboard JavaScript
+
+// BELWEST - Modern Visitor Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
     loadDashboardData();
-    setupPeriodicUpdates();
     initializeCharts();
+    setupRealTimeUpdates();
 });
 
+// Глобальные переменные для графиков
+let mainChart, storesChart, miniCharts = {};
+
 function initializeDashboard() {
-    // Add smooth loading animation
-    const cards = document.querySelectorAll('.card');
+    // Анимация карточек при загрузке
+    const cards = document.querySelectorAll('.metric-card, .chart-card, .detail-card');
     cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 0.1}s`;
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
     });
 }
 
 function loadDashboardData() {
-    // Show loading state
-    showLoadingState();
-
-    // Load sensor data
+    const location = document.getElementById('location-filter').value;
     const period = document.getElementById('period-select').value;
-    fetch(`/api/sensor-data?period=${period}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+    
+    fetch(`/api/sensor-data?location=${location}&period=${period}`)
+        .then(response => response.json())
         .then(data => {
-            updateDashboard(data);
-            hideLoadingState();
+            updateMetrics(data);
+            updateMainChart(data);
+            updateStoresChart(data);
+            updateSensorsOverview(data);
+            updateActivityStream(data);
+            updateDowntimeList(data);
         })
         .catch(error => {
             console.error('Ошибка загрузки данных:', error);
-            showErrorState();
-            hideLoadingState();
+            showNotification('Ошибка загрузки данных', 'error');
         });
 }
 
-function updateDashboard(data) {
-    try {
-        // Update main statistics
-        updateMainStats(data);
-
-        // Update additional statistics
-        updateAdditionalStats(data);
-
-        // Update recent activity
-        updateRecentActivity(data);
-
-        // Update sensors overview
-        updateSensorsOverview(data);
-
-        // Update charts
-        updateCharts(data);
-
-    } catch (error) {
-        console.error('Ошибка обновления дашборда:', error);
-        showErrorState();
-    }
-}
-
-function updateMainStats(data) {
-    const defaultData = {
-        today_visitors: 0,
-        active_sensors: 0,
-        avg_hourly: 0,
-        peak_time: '--:--',
-        peak_count: 0,
-        today_change: 0,
-        sensors_status: 'offline'
+function updateMetrics(data) {
+    // Обновление основных метрик
+    const metrics = {
+        'today-visitors': data.today_visitors || 0,
+        'active-sensors': data.active_sensors || 0,
+        'peak-time': data.peak_time || '00:00',
+        'hourly-avg': data.hourly_avg || 0
     };
-
-    const stats = { ...defaultData, ...data };
-
-    // Update today's visitors
-    const todayElement = document.getElementById('today-visitors');
-    if (todayElement) {
-        todayElement.textContent = stats.today_visitors;
-    }
-
-    const changeElement = document.getElementById('today-change');
-    if (changeElement) {
-        const changeText = stats.today_change > 0 ? 
-            `+${stats.today_change}% за сегодня` : 
-            `${stats.today_change}% за сегодня`;
-        changeElement.textContent = changeText;
-    }
-
-    // Update active sensors
-    const sensorsElement = document.getElementById('active-sensors');
-    if (sensorsElement) {
-        sensorsElement.textContent = stats.active_sensors;
-    }
-
-    const statusElement = document.getElementById('sensors-status');
-    if (statusElement) {
-        statusElement.textContent = stats.sensors_status === 'online' ? 
-            'Все датчики онлайн' : 'Проверьте соединение';
-    }
-
-    // Update average hourly
-    const avgElement = document.getElementById('avg-hourly');
-    if (avgElement) {
-        avgElement.textContent = stats.avg_hourly;
-    }
-
-    const hourlyChangeElement = document.getElementById('hourly-change');
-    if (hourlyChangeElement) {
-        hourlyChangeElement.textContent = 'За последний час';
-    }
-
-    // Update peak time
-    const peakTimeElement = document.getElementById('peak-time');
-    if (peakTimeElement) {
-        peakTimeElement.textContent = stats.peak_time;
-    }
-
-    const peakCountElement = document.getElementById('peak-count');
-    if (peakCountElement) {
-        peakCountElement.textContent = `${stats.peak_count} посетителей`;
-    }
+    
+    const changes = {
+        'visitors-change': data.visitors_change || '+0%',
+        'sensors-change': data.sensors_change || '+0',
+        'peak-change': data.peak_period || 'Будни',
+        'avg-change': data.avg_change || '+0%'
+    };
+    
+    Object.entries(metrics).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            animateValue(element, parseInt(element.textContent) || 0, value, 1000);
+        }
+    });
+    
+    Object.entries(changes).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+            
+            // Определение цвета изменения
+            if (value.startsWith('+')) {
+                element.className = 'metric-change positive';
+            } else if (value.startsWith('-')) {
+                element.className = 'metric-change negative';
+            } else {
+                element.className = 'metric-change neutral';
+            }
+        }
+    });
+    
+    // Обновление мини-графиков
+    updateMiniCharts(data);
 }
 
-function updateAdditionalStats(data) {
-    try {
-        const defaultData = {
-            new_visitors: 0,
-            returning_visitors: 0,
-            new_visitors_change: 0,
-            returning_visitors_change: 0
-        };
-
-        const stats = { ...defaultData, ...data };
-
-        // Update new visitors
-        const newVisitorsElement = document.getElementById('new-visitors');
-        if (newVisitorsElement) {
-            newVisitorsElement.textContent = stats.new_visitors;
+function animateValue(element, start, end, duration) {
+    const startTime = performance.now();
+    const isNumber = typeof end === 'number';
+    
+    function updateValue(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        if (isNumber) {
+            const current = Math.round(start + (end - start) * progress);
+            element.textContent = current.toLocaleString();
+        } else {
+            element.textContent = end;
         }
-
-        const newVisitorsChangeElement = document.getElementById('new-visitors-change');
-        if (newVisitorsChangeElement) {
-            const changeText = stats.new_visitors_change > 0 ? 
-                `+${stats.new_visitors_change}% сегодня` : 
-                `${stats.new_visitors_change}% сегодня`;
-            newVisitorsChangeElement.textContent = changeText;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateValue);
         }
-
-        // Update returning visitors
-        const returningElement = document.getElementById('returning-visitors');
-        if (returningElement) {
-            returningElement.textContent = stats.returning_visitors;
-        }
-
-        const returningChangeElement = document.getElementById('returning-visitors-change');
-        if (returningChangeElement) {
-            const changeText = stats.returning_visitors_change > 0 ? 
-                `+${stats.returning_visitors_change}% сегодня` : 
-                `${stats.returning_visitors_change}% сегодня`;
-            returningChangeElement.textContent = changeText;
-        }
-
-    } catch (error) {
-        console.error('Ошибка обновления дополнительных статистик:', error);
     }
-}
-
-function updateRecentActivity(data) {
-    const activityContainer = document.getElementById('recent-data');
-    if (!activityContainer) return;
-
-    const activities = data.recent_activity || [];
-
-    if (activities.length === 0) {
-        activityContainer.innerHTML = `
-            <div class="activity-item">
-                <div class="activity-icon">📊</div>
-                <div class="activity-content">
-                    <div class="activity-title">Нет данных</div>
-                    <div class="activity-meta">
-                        Данные о посетителях отсутствуют
-                    </div>
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    const activityHTML = activities.map(activity => `
-        <div class="activity-item">
-            <div class="activity-icon">${getActivityIcon(activity.type)}</div>
-            <div class="activity-content">
-                <div class="activity-title">${activity.title}</div>
-                <div class="activity-meta">
-                    ${activity.description} • ${activity.time}
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    activityContainer.innerHTML = activityHTML;
-}
-
-function updateSensorsOverview(data) {
-    const sensorsContainer = document.getElementById('sensors-grid');
-    if (!sensorsContainer) return;
-
-    const sensors = data.sensors || [];
-
-    if (sensors.length === 0) {
-        sensorsContainer.innerHTML = `
-            <div class="sensor-card">
-                <div class="sensor-header">
-                    <h4>Нет датчиков</h4>
-                    <span class="status-indicator offline"></span>
-                </div>
-                <div class="sensor-info">
-                    <div class="sensor-location">Датчики не настроены</div>
-                    <div class="sensor-count">0 посетителей</div>
-                    <div class="sensor-update">Настройте датчики в разделе "Датчики"</div>
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    const sensorsHTML = sensors.map(sensor => `
-        <div class="sensor-card">
-            <div class="sensor-header">
-                <h4>${sensor.name}</h4>
-                <span class="status-indicator ${sensor.status}"></span>
-            </div>
-            <div class="sensor-info">
-                <div class="sensor-location">${sensor.location}</div>
-                <div class="sensor-count">${sensor.count} посетителей</div>
-                <div class="sensor-update">Обновлено: ${sensor.last_update}</div>
-            </div>
-        </div>
-    `).join('');
-
-    sensorsContainer.innerHTML = sensorsHTML;
+    
+    requestAnimationFrame(updateValue);
 }
 
 function initializeCharts() {
-    // Initialize visitors chart
-    const visitorsCtx = document.getElementById('visitors-chart');
-    if (visitorsCtx) {
-        window.visitorsChart = new Chart(visitorsCtx, {
+    // Инициализация главного графика
+    const mainCtx = document.getElementById('main-visitors-chart');
+    if (mainCtx) {
+        mainChart = new Chart(mainCtx, {
             type: 'line',
             data: {
-                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                labels: [],
                 datasets: [{
                     label: 'Посетители',
-                    data: Array(24).fill(0),
+                    data: [],
                     borderColor: '#2E8B57',
                     backgroundColor: 'rgba(46, 139, 87, 0.1)',
-                    tension: 0.4
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#2E8B57',
+                    pointBorderColor: '#FFFFFF',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#FFFFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#2E8B57',
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
                         ticks: {
                             color: '#A8D8A8'
                         }
                     },
                     x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
                         ticks: {
                             color: '#A8D8A8'
                         }
                     }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
     }
-
-    // Initialize sensors chart
-    const sensorsCtx = document.getElementById('sensors-chart');
-    if (sensorsCtx) {
-        window.sensorsChart = new Chart(sensorsCtx, {
+    
+    // Инициализация графика распределения по локациям
+    const storesCtx = document.getElementById('stores-distribution-chart');
+    if (storesCtx) {
+        storesChart = new Chart(storesCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Онлайн', 'Офлайн'],
+                labels: [],
                 datasets: [{
-                    data: [0, 0],
-                    backgroundColor: ['#2E8B57', '#FF4757']
+                    data: [],
+                    backgroundColor: [
+                        '#2E8B57',
+                        '#20B2AA',
+                        '#FF6B35',
+                        '#8B45FF',
+                        '#4FACFE',
+                        '#FFD700',
+                        '#FF4757',
+                        '#32CD32'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#A8D8A8'
-                        }
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#FFFFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#2E8B57',
+                        borderWidth: 1
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+    
+    // Инициализация мини-графиков
+    initializeMiniCharts();
+}
+
+function initializeMiniCharts() {
+    const miniChartIds = ['visitors-mini-chart', 'sensors-mini-chart', 'peak-mini-chart', 'avg-mini-chart'];
+    
+    miniChartIds.forEach(id => {
+        const ctx = document.getElementById(id);
+        if (ctx) {
+            miniCharts[id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', '', ''],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#2E8B57',
+                        backgroundColor: 'rgba(46, 139, 87, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    elements: {
+                        line: { tension: 0.4 },
+                        point: { radius: 0 }
                     }
                 }
-            }
-        });
-    }
-}
-
-function updateCharts(data) {
-    // Update visitors chart
-    if (window.visitorsChart && data.hourly_visitors) {
-        window.visitorsChart.data.datasets[0].data = data.hourly_visitors;
-        window.visitorsChart.update();
-    }
-
-    // Update sensors chart
-    if (window.sensorsChart && data.sensors_stats) {
-        window.sensorsChart.data.datasets[0].data = [
-            data.sensors_stats.online || 0,
-            data.sensors_stats.offline || 0
-        ];
-        window.sensorsChart.update();
-    }
-}
-
-function setupPeriodicUpdates() {
-    // Update data every 30 seconds
-    setInterval(loadDashboardData, 30000);
-}
-
-function showLoadingState() {
-    const cards = document.querySelectorAll('.card .stat-value');
-    cards.forEach(card => {
-        card.textContent = '...';
-    });
-}
-
-function hideLoadingState() {
-    // Loading state is automatically hidden when data is updated
-}
-
-function showErrorState() {
-    const cards = document.querySelectorAll('.card .stat-change');
-    cards.forEach(card => {
-        card.textContent = 'Ошибка загрузки';
-        card.style.color = '#FF4757';
-    });
-}
-
-function getActivityIcon(type) {
-    const icons = {
-        'visitor': '👤',
-        'sensor': '📡',
-        'system': '⚙️',
-        'alert': '⚠️',
-        'success': '✅'
-    };
-    return icons[type] || '📊';
-}
-
-// Export functions for global use
-window.loadDashboardData = loadDashboardData;
-window.updateDashboard = updateDashboard;
-
-// Загрузка данных датчиков
-function loadSensorData() {
-    const period = document.getElementById('period-select').value;
-    fetch(`/api/sensor-data?period=${period}`)
-        .then(response => response.json())
-        .then(data => {
-            updateDashboard(data);
-            updateChart(data.hourly_visitors);
-            updateStoresChart(data.stores);
-            updateStoresList(data.stores);
-        })
-        .catch(error => {
-            console.error('Error loading sensor data:', error);
-        });
-}
-
-// Загрузка данных об отключениях датчиков
-function loadDowntimeData() {
-    fetch('/api/sensor-downtimes')
-        .then(response => response.json())
-        .then(data => {
-            updateDowntimeList(data.downtimes);
-        })
-        .catch(error => {
-            console.error('Error loading downtime data:', error);
-        });
-}
-
-// Обновление элементов дашборда
-function updateDashboard(data) {
-    // Обновляем статистику
-    document.getElementById('total-visitors').textContent = data.total_visitors;
-    document.getElementById('active-sensors').textContent = data.active_sensors;
-
-    // Обновляем период
-    const periodLabels = {
-        'hour': 'за час',
-        'day': 'за день',
-        'week': 'за неделю',
-        'month': 'за месяц',
-        'year': 'за год'
-    };
-    document.getElementById('period-label').textContent = periodLabels[data.period];
-
-    // Обновляем статус датчиков
-    const sensorsStatusElement = document.getElementById('sensors-status');
-    sensorsStatusElement.textContent = data.sensors_status;
-    sensorsStatusElement.className = `stat-status ${data.sensors_status}`;
-
-    // Обновляем пиковые времена
-    document.getElementById('peak-weekday').textContent = data.peak_weekday;
-    document.getElementById('peak-weekend').textContent = data.peak_weekend;
-    document.getElementById('peak-weekday-count').textContent = `${data.peak_weekday_count} посетителей`;
-    document.getElementById('peak-weekend-count').textContent = `${data.peak_weekend_count} посетителей`;
-}
-
-// Обновление диаграммы магазинов
-function updateStoresChart(stores) {
-    const canvas = document.getElementById('storesChart');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-
-    // Уничтожаем предыдущий график если он существует
-    if (window.storesChart) {
-        window.storesChart.destroy();
-    }
-
-    const labels = stores.map(store => store.name);
-    const data = stores.map(store => store.visitors);
-
-    window.storesChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Посетители',
-                data: data,
-                backgroundColor: [
-                    '#4f46e5',
-                    '#06b6d4',
-                    '#10b981',
-                    '#f59e0b',
-                    '#ef4444'
-                ],
-                borderColor: [
-                    '#4338ca',
-                    '#0891b2',
-                    '#059669',
-                    '#d97706',
-                    '#dc2626'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+            });
         }
     });
 }
 
-// Обновление списка магазинов
-function updateStoresList(stores) {
-    const container = document.getElementById('stores-list-container');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    stores.forEach(store => {
-        const storeElement = document.createElement('div');
-        storeElement.className = 'store-item';
-        storeElement.innerHTML = `
-            <div class="store-info">
-                <h4>${store.name}</h4>
-                <p>${store.address}</p>
-            </div>
-            <div class="store-visitors">
-                <span class="visitors-count">${store.visitors}</span>
-                <span class="visitors-label">посетителей</span>
-            </div>
-        `;
-        container.appendChild(storeElement);
+function updateMiniCharts(data) {
+    // Обновление мини-графиков случайными данными для демонстрации
+    Object.keys(miniCharts).forEach(chartId => {
+        const chart = miniCharts[chartId];
+        const newData = Array.from({length: 7}, () => Math.floor(Math.random() * 100));
+        
+        chart.data.datasets[0].data = newData;
+        chart.update('none');
     });
 }
 
-// Обновление списка отключений датчиков
-function updateDowntimeList(downtimes) {
-    const container = document.getElementById('downtime-list');
-    if (!container) return;
+function updateMainChart(data) {
+    if (!mainChart) return;
+    
+    const period = document.getElementById('period-select').value;
+    const chartData = data.chart_data || generateSampleData(period);
+    
+    mainChart.data.labels = chartData.labels;
+    mainChart.data.datasets[0].data = chartData.data;
+    mainChart.update('active');
+}
 
-    container.innerHTML = '';
+function updateStoresChart(data) {
+    if (!storesChart) return;
+    
+    const stores = data.stores || [
+        { name: 'Магазин 1', visitors: 150 },
+        { name: 'Магазин 2', visitors: 120 },
+        { name: 'Магазин 3', visitors: 90 },
+        { name: 'ТУ Центр', visitors: 200 },
+        { name: 'РД Восток', visitors: 300 }
+    ];
+    
+    storesChart.data.labels = stores.map(store => store.name);
+    storesChart.data.datasets[0].data = stores.map(store => store.visitors);
+    storesChart.update('active');
+    
+    // Обновление легенды
+    updateStoresLegend(stores);
+}
 
-    if (downtimes.length === 0) {
-        container.innerHTML = '<p>Отключений не зарегистрировано</p>';
-        return;
-    }
+function updateStoresLegend(stores) {
+    const legendContainer = document.getElementById('stores-legend');
+    if (!legendContainer) return;
+    
+    const colors = ['#2E8B57', '#20B2AA', '#FF6B35', '#8B45FF', '#4FACFE', '#FFD700', '#FF4757', '#32CD32'];
+    
+    legendContainer.innerHTML = stores.map((store, index) => `
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
+            <span>${store.name}: ${store.visitors}</span>
+        </div>
+    `).join('');
+}
 
-    downtimes.forEach(downtime => {
-        const downtimeElement = document.createElement('div');
-        downtimeElement.className = `downtime-item ${downtime.status}`;
-        downtimeElement.innerHTML = `
+function updateSensorsOverview(data) {
+    const sensors = data.sensors || generateSampleSensors();
+    
+    // Обновление сетки датчиков
+    updateSensorsGrid(sensors);
+    
+    // Обновление списка датчиков
+    updateSensorsList(sensors);
+}
+
+function updateSensorsGrid(sensors) {
+    const gridContainer = document.getElementById('sensors-grid');
+    if (!gridContainer) return;
+    
+    gridContainer.innerHTML = sensors.map(sensor => `
+        <div class="sensor-grid-item">
+            <div class="sensor-status-icon ${sensor.status}">
+                <i class="fas fa-wifi"></i>
+            </div>
+            <div class="sensor-name">${sensor.name}</div>
+            <div class="sensor-location">${sensor.location}</div>
+            <div class="sensor-visitors">${sensor.visitors || 0}</div>
+        </div>
+    `).join('');
+}
+
+function updateSensorsList(sensors) {
+    const listContainer = document.getElementById('sensors-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = sensors.map(sensor => `
+        <div class="sensor-list-item">
+            <div class="sensor-status-icon ${sensor.status}">
+                <i class="fas fa-wifi"></i>
+            </div>
+            <div class="sensor-list-info">
+                <div class="sensor-list-name">${sensor.name}</div>
+                <div class="sensor-list-details">${sensor.location} • ${sensor.status === 'online' ? 'Онлайн' : 'Офлайн'}</div>
+            </div>
+            <div class="sensor-list-stats">
+                <div class="sensor-list-visitors">${sensor.visitors || 0}</div>
+                <div class="sensor-list-label">посетителей</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateActivityStream(data) {
+    const activities = data.activities || generateSampleActivities();
+    const streamContainer = document.getElementById('activity-stream');
+    
+    if (!streamContainer) return;
+    
+    streamContainer.innerHTML = activities.map(activity => `
+        <div class="activity-item" data-type="${activity.type}">
+            <div class="activity-icon ${activity.type}">
+                <i class="fas fa-${getActivityIcon(activity.type)}"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-description">${activity.description}</div>
+                <div class="activity-time">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateDowntimeList(data) {
+    const downtimes = data.downtimes || generateSampleDowntimes();
+    const listContainer = document.getElementById('downtime-list');
+    
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = downtimes.map(downtime => `
+        <div class="downtime-item ${downtime.status}">
             <div class="downtime-icon">
-                <i class="fas fa-${downtime.status === 'offline' ? 'exclamation-triangle' : 'check-circle'}"></i>
+                <i class="fas fa-${downtime.status === 'offline' ? 'times' : 'check'}"></i>
             </div>
-            <div class="downtime-content">
-                <h4>${downtime.sensor_name}</h4>
-                <p>${downtime.store_name}</p>
-                <div class="downtime-time">
-                    <span>Отключен: ${new Date(downtime.disconnected_at).toLocaleString()}</span>
-                    ${downtime.reconnected_at ? 
-                        `<span>Подключен: ${new Date(downtime.reconnected_at).toLocaleString()}</span>
-                         <span>Длительность: ${downtime.duration_minutes} мин.</span>` : 
-                        '<span class="offline-status">Сейчас отключен</span>'
-                    }
-                </div>
+            <div class="downtime-content-info">
+                <div class="downtime-sensor-name">${downtime.sensor}</div>
+                <div class="downtime-location">${downtime.location}</div>
+                <div class="downtime-duration">Длительность: ${downtime.duration}</div>
             </div>
-        `;
-        container.appendChild(downtimeElement);
-    });
+            <div class="downtime-time">
+                <div>${downtime.start_time}</div>
+                ${downtime.end_time ? `<div>${downtime.end_time}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    loadSensorData();
-    loadDowntimeData();
-
-    // Обработчик изменения периода
-    document.getElementById('period-select').addEventListener('change', function() {
-        loadSensorData();
-    });
-
-    // Обновляем данные каждые 30 секунд
+function setupRealTimeUpdates() {
+    // Обновление каждые 30 секунд
     setInterval(() => {
-        loadSensorData();
-        loadDowntimeData();
+        const autoUpdate = document.getElementById('auto-update-toggle');
+        if (autoUpdate && autoUpdate.checked) {
+            loadDashboardData();
+            updateRealTimeActivity();
+        }
     }, 30000);
-});
+}
+
+function updateRealTimeActivity() {
+    // Добавление новых активностей в реальном времени
+    const streamContainer = document.getElementById('activity-stream');
+    if (!streamContainer) return;
+    
+    const newActivity = {
+        type: 'visitor',
+        title: 'Новый посетитель',
+        description: 'Зарегистрирован через датчик входа',
+        time: new Date().toLocaleTimeString('ru-RU')
+    };
+    
+    const activityHtml = `
+        <div class="activity-item" data-type="${newActivity.type}">
+            <div class="activity-icon ${newActivity.type}">
+                <i class="fas fa-${getActivityIcon(newActivity.type)}"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${newActivity.title}</div>
+                <div class="activity-description">${newActivity.description}</div>
+                <div class="activity-time">${newActivity.time}</div>
+            </div>
+        </div>
+    `;
+    
+    streamContainer.insertAdjacentHTML('afterbegin', activityHtml);
+    
+    // Удаление старых записей (оставляем только 10 последних)
+    const items = streamContainer.querySelectorAll('.activity-item');
+    if (items.length > 10) {
+        items[items.length - 1].remove();
+    }
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'visitor': 'user-plus',
+        'sensor': 'wifi',
+        'alert': 'exclamation-triangle',
+        'system': 'cogs'
+    };
+    return icons[type] || 'info-circle';
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${type === 'error' ? '#FF4757' : '#2E8B57'};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        font-weight: 600;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Генерация демонстрационных данных
+function generateSampleData(period) {
+    const labels = [];
+    const data = [];
+    
+    const now = new Date();
+    let points = 24;
+    
+    switch (period) {
+        case 'hour':
+            points = 60;
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 60 * 1000);
+                labels.push(time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+                data.push(Math.floor(Math.random() * 10 + 5));
+            }
+            break;
+        case 'day':
+            points = 24;
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+                labels.push(time.toLocaleTimeString('ru-RU', { hour: '2-digit' }));
+                data.push(Math.floor(Math.random() * 100 + 20));
+            }
+            break;
+        case 'week':
+            points = 7;
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(time.toLocaleDateString('ru-RU', { weekday: 'short' }));
+                data.push(Math.floor(Math.random() * 1000 + 500));
+            }
+            break;
+        case 'month':
+            points = 30;
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(time.getDate().toString());
+                data.push(Math.floor(Math.random() * 1000 + 300));
+            }
+            break;
+        case 'year':
+            points = 12;
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                labels.push(time.toLocaleDateString('ru-RU', { month: 'short' }));
+                data.push(Math.floor(Math.random() * 10000 + 5000));
+            }
+            break;
+    }
+    
+    return { labels, data };
+}
+
+function generateSampleSensors() {
+    return [
+        { name: 'Датчик входа А', location: 'Главный вход', status: 'online', visitors: 45 },
+        { name: 'Датчик входа Б', location: 'Боковой вход', status: 'online', visitors: 23 },
+        { name: 'Датчик зала 1', location: 'Торговый зал', status: 'offline', visitors: 0 },
+        { name: 'Датчик зала 2', location: 'Торговый зал', status: 'online', visitors: 67 },
+        { name: 'Датчик кассы', location: 'Касса', status: 'online', visitors: 34 },
+        { name: 'Датчик склада', location: 'Склад', status: 'online', visitors: 5 }
+    ];
+}
+
+function generateSampleActivities() {
+    return [
+        { type: 'visitor', title: 'Новый посетитель', description: 'Зарегистрирован через главный вход', time: '2 минуты назад' },
+        { type: 'sensor', title: 'Датчик подключен', description: 'Боковой вход - статус онлайн', time: '5 минут назад' },
+        { type: 'alert', title: 'Превышение лимита', description: 'Более 100 посетителей в торговом зале', time: '8 минут назад' },
+        { type: 'visitor', title: 'Пик посещаемости', description: 'Зарегистрировано 50 посетителей за час', time: '12 минут назад' },
+        { type: 'system', title: 'Система обновлена', description: 'Обновление до версии 2.1.4', time: '1 час назад' }
+    ];
+}
+
+function generateSampleDowntimes() {
+    return [
+        { sensor: 'Датчик входа А', location: 'Главный вход', status: 'offline', duration: '45 мин', start_time: '14:30', end_time: null },
+        { sensor: 'Датчик зала 1', location: 'Торговый зал', status: 'reconnected', duration: '2ч 15мин', start_time: '11:45', end_time: '14:00' },
+        { sensor: 'Датчик кассы', location: 'Касса', status: 'reconnected', duration: '15 мин', start_time: '13:30', end_time: '13:45' }
+    ];
+}
+
+// Экспорт функций для глобального использования
+window.loadDashboardData = loadDashboardData;
+window.updateDashboard = updateDashboard;

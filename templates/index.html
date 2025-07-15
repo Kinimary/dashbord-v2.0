@@ -1,109 +1,129 @@
+
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>BELWEST - Система мониторинга посетителей</title>
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='css/style.css') }}"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-    </head>
-    <body>
-        <div class="container">
-            <!-- Боковая панель -->
-            <div class="sidebar" id="sidebar">
-                <div class="logo">
-                    <span>BELWEST</span>
-                    <small>VISITOR MANAGEMENT</small>
-                </div>
-                <ul class="menu">
-                    <li class="active">
-                        <a href="/">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Дашборд</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/users" id="users-menu" style="display: none;">
-                            <i class="fas fa-users"></i>
-                            <span>Пользователи</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/sensors">
-                            <i class="fas fa-robot"></i>
-                            <span>Датчики</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/reports">
-                            <i class="fas fa-file-alt"></i>
-                            <span>Отчеты</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/settings" id="settings-menu" style="display: none;">
-                            <i class="fas fa-cog"></i>
-                            <span>Настройки</span>
-                        </a>
-                    </li>
-                </ul>
-                <div class="sidebar-settings">
-                    <div class="settings-dropdown">
-                        <button class="settings-btn" id="settings-btn">
-                            <i class="fas fa-cog"></i>
-                            <span>Настройки</span>
-                            <i class="fas fa-chevron-down settings-arrow"></i>
-                        </button>
-                        <div class="settings-menu">
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-moon"></i>
-                                    <span>Темная тема</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
-                                    <span class="toggle-slider"></span>
-                                </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BELWEST - Дашборд посетителей</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Боковая панель -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <span>BELWEST</span>
+            </div>
+            <ul class="menu">
+                <li class="active">
+                    <a href="/">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/users">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/sensors">
+                        <i class="fas fa-robot"></i>
+                        <span>Датчики</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/reports">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-settings">
+                <div class="settings-dropdown">
+                    <button class="settings-btn" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                        <i class="fas fa-chevron-down settings-arrow"></i>
+                    </button>
+                    <div class="settings-menu">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-moon"></i>
+                                <span>Темная тема</span>
                             </div>
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-bell"></i>
-                                    <span>Уведомления</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                <span class="toggle-slider"></span>
                             </div>
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Авто-обновление</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-bell"></i>
+                                <span>Уведомления</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Авто-обновление</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Основное содержимое -->
-            <div class="main-content">
-                <div class="top-bar">
-                    <h1>Дашборд</h1>
+        <!-- Основной контент -->
+        <div class="main-content">
+            <!-- Верхняя панель -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <h1>Дашборд посетителей</h1>
+                </div>
+                <div class="top-bar-center">
+                    <div class="analytics-controls">
+                        <select id="location-filter" class="modern-select">
+                            <option value="all">Все локации</option>
+                            <option value="store">Магазин</option>
+                            <option value="tu">ТУ</option>
+                            <option value="rd">РД</option>
+                        </select>
+                        <select id="period-select" class="modern-select">
+                            <option value="hour">Час</option>
+                            <option value="day">День</option>
+                            <option value="week">Неделя</option>
+                            <option value="month">Месяц</option>
+                            <option value="year">Год</option>
+                        </select>
+                        <button id="refresh-data" class="refresh-btn">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="top-bar-right">
                     <div class="user-profile">
                         <div class="search-bar">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Поиск...">
+                            <input type="text" placeholder="Поиск по дашборду...">
                         </div>
                         <div class="notifications" id="notifications-btn">
                             <i class="fas fa-bell"></i>
@@ -111,7 +131,7 @@
                             <div class="notification-dropdown" id="notification-dropdown">
                                 <div class="notification-header">
                                     <h4>Уведомления</h4>
-                                    <button class="mark-all-read" id="mark-all-read">Прочитать все</button>
+                                    <button class="mark-all-read">Прочитать все</button>
                                 </div>
                                 <div class="notification-list">
                                     <div class="notification-item unread">
@@ -149,15 +169,15 @@
                         </div>
                         <div class="user-info" id="user-menu-btn">
                             <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
-                            <span id="user-display-name">Загрузка...</span>
+                            <span>Админ</span>
                             <div class="user-dropdown" id="user-dropdown">
                                 <div class="user-dropdown-header">
                                     <div class="user-avatar">
                                         <i class="fas fa-user-circle"></i>
                                     </div>
                                     <div class="user-details">
-                                        <div class="user-name" id="profile-username">Администратор</div>
-                                        <div class="user-role" id="profile-role">Полный доступ</div>
+                                        <div class="user-name">Администратор</div>
+                                        <div class="user-role">Полный доступ</div>
                                     </div>
                                 </div>
                                 <div class="user-dropdown-menu">
@@ -165,7 +185,7 @@
                                         <i class="fas fa-user"></i>
                                         <span>Профиль</span>
                                     </a>
-                                    <a href="/settings" class="dropdown-item" id="settings-link" style="display: none;">
+                                    <a href="/settings" class="dropdown-item">
                                         <i class="fas fa-cog"></i>
                                         <span>Настройки</span>
                                     </a>
@@ -179,410 +199,369 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="dashboard-grid">
-                    <!-- Статистика -->
-                    <div class="card stats-card">
-                        <div class="card-header">
-                            <h3>Всего посетителей сегодня</h3>
-                            <div class="stat-trend" id="today-trend">0%</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="today-visitors">0</div>
-                            <div class="stat-label">0% за сегодня</div>
+            <!-- Основные метрики -->
+            <div class="metrics-grid">
+                <div class="metric-card visitors-today">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="today-visitors">1,247</div>
+                        <div class="metric-label">Посетители сегодня</div>
+                        <div class="metric-change positive" id="visitors-change">+12.5%</div>
+                    </div>
+                    <div class="metric-chart">
+                        <canvas id="visitors-mini-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="metric-card active-sensors">
+                    <div class="metric-icon">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="active-sensors">98</div>
+                        <div class="metric-label">Активных датчиков</div>
+                        <div class="metric-change positive" id="sensors-change">+2</div>
+                    </div>
+                    <div class="metric-chart">
+                        <canvas id="sensors-mini-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="metric-card peak-time">
+                    <div class="metric-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="peak-time">14:30</div>
+                        <div class="metric-label">Пиковое время</div>
+                        <div class="metric-change neutral" id="peak-change">Будни</div>
+                    </div>
+                    <div class="metric-chart">
+                        <canvas id="peak-mini-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="metric-card hourly-avg">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="hourly-avg">52</div>
+                        <div class="metric-label">Средний поток в час</div>
+                        <div class="metric-change positive" id="avg-change">+8.3%</div>
+                    </div>
+                    <div class="metric-chart">
+                        <canvas id="avg-mini-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основные графики -->
+            <div class="charts-container">
+                <div class="chart-card main-chart">
+                    <div class="chart-header">
+                        <h3>Динамика посетителей</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-chart="visitors">Посетители</button>
+                            <button class="chart-btn" data-chart="comparison">Сравнение</button>
+                            <button class="chart-btn" data-chart="trend">Тренд</button>
                         </div>
                     </div>
+                    <div class="chart-content">
+                        <canvas id="main-visitors-chart"></canvas>
+                    </div>
+                </div>
 
-                    <div class="card stats-card">
-                        <div class="card-header">
-                            <h3>Активных датчиков</h3>
-                            <div class="status-indicator" id="sensors-status">offline</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="active-sensors">0</div>
-                            <div class="stat-label">Все датчики онлайн</div>
+                <div class="chart-card stores-chart">
+                    <div class="chart-header">
+                        <h3>Статистика по локациям</h3>
+                        <div class="chart-legend" id="stores-legend"></div>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="stores-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Детальная информация -->
+            <div class="details-container">
+                <div class="detail-card sensors-status">
+                    <div class="detail-header">
+                        <h3>Состояние датчиков</h3>
+                        <div class="detail-controls">
+                            <button class="detail-btn" id="sensors-grid-btn">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="detail-btn active" id="sensors-list-btn">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button class="detail-btn" id="sensors-map-btn">
+                                <i class="fas fa-map"></i>
+                            </button>
                         </div>
                     </div>
-
-                    <div class="card stats-card">
-                        <div class="card-header">
-                            <h3>Средний поток в час</h3>
+                    <div class="detail-content">
+                        <div class="sensors-view" id="sensors-grid-view">
+                            <div class="sensors-grid" id="sensors-grid"></div>
                         </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="avg-hourly">0</div>
-                            <div class="stat-label">За последний час</div>
+                        <div class="sensors-view active" id="sensors-list-view">
+                            <div class="sensors-list" id="sensors-list"></div>
                         </div>
-                    </div>
-
-                    <div class="card stats-card">
-                        <div class="card-header">
-                            <h3>Пиковое время</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="peak-time">14:30</div>
-                            <div class="stat-label" id="peak-count">48 посетителей</div>
-                        </div>
-                    </div>
-
-                    <!-- Новые/Постоянные посетители -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Новые посетители</h3>
-                            <div class="stat-trend" id="new-visitors-trend">+16% сегодня</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="new-visitors">33</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Постоянные посетители</h3>
-                            <div class="stat-trend" id="returning-visitors-trend">-12% сегодня</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="stat-number" id="returning-visitors">62</div>
-                        </div>
-                    </div>
-
-                    <!-- График посетителей по часам -->
-                    <div class="card chart-card">
-                        <div class="card-header">
-                            <h3>Посетители по часам</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="visitorsChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Последняя активность -->
-                    <div class="card activity-card">
-                        <div class="card-header">
-                            <h3>Последняя активность</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="activity-list" id="activity-list">
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-user-plus"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title">Новый посетитель</div>
-                                        <div class="activity-description">Зарегистрирован через главный вход</div>
-                                        <div class="activity-time">5 минут назад</div>
-                                    </div>
+                        <div class="sensors-view" id="sensors-map-view">
+                            <div class="sensors-map">
+                                <div class="map-placeholder">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    <p>Интерактивная карта датчиков</p>
                                 </div>
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-wifi"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title">Датчик подключен</div>
-                                        <div class="activity-description">Боковой вход - статус онлайн</div>
-                                        <div class="activity-time">10 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-tools"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title">Система обновлена</div>
-                                        <div class="activity-description">Обновление до версии 2.1.4</div>
-                                        <div class="activity-time">1 час назад</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Статус датчиков -->
-                    <div class="card sensors-status-card">
-                        <div class="card-header">
-                            <h3>Статус датчиков</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="sensors-grid" id="sensors-grid">
-                                <!-- Sensors will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="detail-card activity-feed">
+                    <div class="detail-header">
+                        <h3>Активность в реальном времени</h3>
+                        <div class="activity-controls">
+                            <button class="activity-filter active" data-filter="all">Все</button>
+                            <button class="activity-filter" data-filter="visitors">Посетители</button>
+                            <button class="activity-filter" data-filter="sensors">Датчики</button>
+                            <button class="activity-filter" data-filter="alerts">Алерты</button>
+                        </div>
+                    </div>
+                    <div class="detail-content">
+                        <div class="activity-stream" id="activity-stream"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отключенные датчики -->
+            <div class="downtime-section">
+                <div class="downtime-card">
+                    <div class="downtime-header">
+                        <h3>Отключения датчиков</h3>
+                        <div class="downtime-controls">
+                            <select id="downtime-filter" class="modern-select">
+                                <option value="all">Все локации</option>
+                                <option value="store">Магазины</option>
+                                <option value="tu">ТУ</option>
+                                <option value="rd">РД</option>
+                            </select>
+                            <select id="downtime-period" class="modern-select">
+                                <option value="today">Сегодня</option>
+                                <option value="week">Неделя</option>
+                                <option value="month">Месяц</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="downtime-content">
+                        <div class="downtime-stats">
+                            <div class="downtime-stat">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Отключений</div>
+                            </div>
+                            <div class="downtime-stat">
+                                <div class="stat-value">2.3ч</div>
+                                <div class="stat-label">Среднее время</div>
+                            </div>
+                            <div class="downtime-stat">
+                                <div class="stat-value">98.7%</div>
+                                <div class="stat-label">Время работы</div>
+                            </div>
+                        </div>
+                        <div class="downtime-list" id="downtime-list"></div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
-        <script>
-            // Dashboard specific functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                initializeDashboard();
-                loadUserProfile();
-                loadSensorData();
-                setInterval(loadSensorData, 30000); // Refresh every 30 seconds
+    <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/visitor-dashboard.js') }}"></script>
+    <script>
+        // Инициализация дашборда
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupEventListeners();
+            loadDashboardData();
+        });
+
+        function initializeDashboard() {
+            // Инициализация уведомлений
+            const notificationsBell = document.querySelector('.notifications');
+            const userInfo = document.querySelector('.user-info');
+
+            if (notificationsBell) {
+                notificationsBell.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                    if (userInfo) userInfo.classList.remove('active');
+                });
+            }
+
+            if (userInfo) {
+                userInfo.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                    if (notificationsBell) notificationsBell.classList.remove('active');
+                });
+            }
+
+            // Закрытие выпадающих меню
+            document.addEventListener('click', function() {
+                if (notificationsBell) notificationsBell.classList.remove('active');
+                if (userInfo) userInfo.classList.remove('active');
             });
 
-            function initializeDashboard() {
-                // Initialize notifications
-                initializeNotificationSystem();
-
-                // Initialize user menu
-                initializeUserMenu();
-
-                // Check user role for menu visibility
-                checkUserRole();
-            }
-
-            function loadUserProfile() {
-                fetch('/api/user-profile')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            console.error('Error loading profile:', data.error);
-                            return;
-                        }
-
-                        document.getElementById('user-display-name').textContent = data.username;
-                        document.getElementById('profile-username').textContent = data.username;
-                        document.getElementById('profile-role').textContent = data.role_name;
-
-                        // Store role for menu visibility
-                        window.userRole = data.role;
-                        checkUserRole();
-                    })
-                    .catch(error => {
-                        console.error('Error loading profile:', error);
-                    });
-            }
-
-            function checkUserRole() {
-                const userRole = window.userRole;
-
-                // Show/hide menu items based on role
-                const usersMenu = document.getElementById('users-menu');
-                const settingsMenu = document.getElementById('settings-menu');
-                const settingsLink = document.getElementById('settings-link');
-
-                if (userRole === 'admin' || userRole === 'manager') {
-                    if (usersMenu) usersMenu.style.display = 'block';
-                }
-
-                if (userRole === 'admin') {
-                    if (settingsMenu) settingsMenu.style.display = 'block';
-                    if (settingsLink) settingsLink.style.display = 'block';
-                }
-            }
-
-            function initializeNotificationSystem() {
-                const notificationsBtn = document.getElementById('notifications-btn');
-                const markAllReadBtn = document.getElementById('mark-all-read');
-
-                if (notificationsBtn) {
-                    notificationsBtn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        this.classList.toggle('active');
-
-                        // Close user menu if open
-                        const userMenu = document.getElementById('user-menu-btn');
-                        if (userMenu) userMenu.classList.remove('active');
-                    });
-                }
-
-                if (markAllReadBtn) {
-                    markAllReadBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        const unreadItems = document.querySelectorAll('.notification-item.unread');
-                        unreadItems.forEach(item => {
-                            item.classList.remove('unread');
-                        });
-
-                        updateNotificationBadge();
-
-                        this.textContent = 'Отмечено!';
-                        setTimeout(() => {
-                            this.textContent = 'Прочитать все';
-                        }, 1000);
-                    });
-                }
-
-                // Click notification items to mark as read
-                const notificationItems = document.querySelectorAll('.notification-item');
-                notificationItems.forEach(item => {
-                    item.addEventListener('click', function() {
-                        this.classList.remove('unread');
-                        updateNotificationBadge();
-                    });
+            // Инициализация настроек
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsDropdown = document.querySelector('.settings-dropdown');
+            
+            if (settingsBtn && settingsDropdown) {
+                settingsBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    settingsDropdown.classList.toggle('active');
                 });
+            }
 
-                // Close notifications on outside click
-                document.addEventListener('click', function(e) {
-                    const notificationsBtn = document.getElementById('notifications-btn');
-                    if (notificationsBtn && !notificationsBtn.contains(e.target)) {
-                        notificationsBtn.classList.remove('active');
+            // Обработка переключателей
+            const toggles = document.querySelectorAll('.toggle-switch input');
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const setting = this.dataset.setting;
+                    const isEnabled = this.checked;
+                    
+                    // Сохранение настроек
+                    localStorage.setItem(setting, isEnabled);
+                    
+                    // Применение настроек
+                    if (setting === 'darkMode') {
+                        document.body.classList.toggle('dark-mode', isEnabled);
                     }
                 });
-            }
-
-            function initializeUserMenu() {
-                const userMenuBtn = document.getElementById('user-menu-btn');
-
-                if (userMenuBtn) {
-                    userMenuBtn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        this.classList.toggle('active');
-
-                        // Close notifications if open
-                        const notificationsBtn = document.getElementById('notifications-btn');
-                        if (notificationsBtn) notificationsBtn.classList.remove('active');
-                    });
-                }
-
-                // Close user menu on outside click
-                document.addEventListener('click', function(e) {
-                    const userMenuBtn = document.getElementById('user-menu-btn');
-                    if (userMenuBtn && !userMenuBtn.contains(e.target)) {
-                        userMenuBtn.classList.remove('active');
-                    }
-                });
-            }
-
-            function updateNotificationBadge() {
-                const unreadCount = document.querySelectorAll('.notification-item.unread').length;
-                const badge = document.getElementById('notification-count');
-
-                if (badge) {
-                    if (unreadCount > 0) {
-                        badge.textContent = unreadCount;
-                        badge.style.display = 'flex';
-                    } else {
-                        badge.style.display = 'none';
+                
+                // Загрузка сохраненных настроек
+                const setting = toggle.dataset.setting;
+                const savedValue = localStorage.getItem(setting);
+                if (savedValue !== null) {
+                    toggle.checked = savedValue === 'true';
+                    if (setting === 'darkMode' && toggle.checked) {
+                        document.body.classList.add('dark-mode');
                     }
                 }
-            }
+            });
+        }
 
-            function loadSensorData() {
-                fetch('/api/sensor-data')
-                    .then(response => response.json())
-                    .then(data => {
-                        updateDashboard(data);
-                    })
-                    .catch(error => {
-                        console.error('Error loading sensor data:', error);
-                    });
-            }
+        function setupEventListeners() {
+            // Фильтры и управление
+            const locationFilter = document.getElementById('location-filter');
+            const periodSelect = document.getElementById('period-select');
+            const refreshBtn = document.getElementById('refresh-data');
 
-            function updateDashboard(data) {
-                // Update statistics
-                document.getElementById('today-visitors').textContent = data.today_visitors || 0;
-                document.getElementById('active-sensors').textContent = data.active_sensors || 0;
-                document.getElementById('avg-hourly').textContent = data.avg_hourly || 0;
-                document.getElementById('peak-time').textContent = data.peak_time || '--:--';
-                document.getElementById('peak-count').textContent = `${data.peak_count || 0} посетителей`;
-                document.getElementById('new-visitors').textContent = data.new_visitors || 0;
-                document.getElementById('returning-visitors').textContent = data.returning_visitors || 0;
-
-                // Update trends
-                const todayChange = data.today_change || 0;
-                const todayTrend = document.getElementById('today-trend');
-                if (todayTrend) {
-                    todayTrend.textContent = `${todayChange > 0 ? '+' : ''}${todayChange}%`;
-                    todayTrend.className = `stat-trend ${todayChange >= 0 ? 'positive' : 'negative'}`;
-                }
-
-                // Update sensor status
-                const sensorsStatus = document.getElementById('sensors-status');
-                if (sensorsStatus) {
-                    sensorsStatus.textContent = data.sensors_status === 'online' ? 'online' : 'offline';
-                    sensorsStatus.className = `status-indicator ${data.sensors_status}`;
-                }
-
-                // Update activity list
-                if (data.recent_activity) {
-                    updateActivityList(data.recent_activity);
-                }
-
-                // Update sensors grid
-                if (data.sensors) {
-                    updateSensorsGrid(data.sensors);
-                }
-
-                // Update chart
-                if (data.hourly_visitors && window.visitorsChart) {
-                    updateChart(data.hourly_visitors);
-                }
-            }
-
-            function updateActivityList(activities) {
-                const activityList = document.getElementById('activity-list');
-                if (!activityList) return;
-
-                activityList.innerHTML = '';
-                activities.forEach(activity => {
-                    const activityItem = document.createElement('div');
-                    activityItem.className = 'activity-item';
-
-                    let iconClass = 'fas fa-info-circle';
-                    if (activity.type === 'visitor') iconClass = 'fas fa-user-plus';
-                    else if (activity.type === 'sensor') iconClass = 'fas fa-wifi';
-                    else if (activity.type === 'system') iconClass = 'fas fa-tools';
-
-                    activityItem.innerHTML = `
-                        <div class="activity-icon">
-                            <i class="${iconClass}"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">${activity.title}</div>
-                            <div class="activity-description">${activity.description}</div>
-                            <div class="activity-time">${activity.time}</div>
-                        </div>
-                    `;
-
-                    activityList.appendChild(activityItem);
+            if (locationFilter) {
+                locationFilter.addEventListener('change', function() {
+                    loadDashboardData();
                 });
             }
 
-            function updateSensorsGrid(sensors) {
-                const sensorsGrid = document.getElementById('sensors-grid');
-                if (!sensorsGrid) return;
-
-                sensorsGrid.innerHTML = '';
-                sensors.forEach(sensor => {
-                    const sensorItem = document.createElement('div');
-                    sensorItem.className = 'sensor-item';
-
-                    sensorItem.innerHTML = `
-                        <div class="sensor-info">
-                            <div class="sensor-name">${sensor.name}</div>
-                            <div class="sensor-location">${sensor.location}</div>
-                        </div>
-                        <div class="sensor-status ${sensor.status}">${sensor.status === 'active' ? 'Онлайн' : 'Офлайн'}</div>
-                        <div class="sensor-count">${sensor.count || 0}</div>
-                    `;
-
-                    sensorsGrid.appendChild(sensorItem);
+            if (periodSelect) {
+                periodSelect.addEventListener('change', function() {
+                    loadDashboardData();
                 });
             }
 
-            // Logout function
-            function logout() {
-                if (confirm('Вы уверены, что хотите выйти?')) {
-                    fetch('/logout', {
-                        method: 'GET',
-                        credentials: 'same-origin'
-                    }).then(() => {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        window.location.href = '/login';
-                    }).catch(() => {
-                        window.location.href = '/logout';
-                    });
-                }
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    this.classList.add('rotating');
+                    loadDashboardData();
+                    setTimeout(() => this.classList.remove('rotating'), 1000);
+                });
             }
-        </script>
-    </body>
+
+            // Переключение видов датчиков
+            const sensorsGridBtn = document.getElementById('sensors-grid-btn');
+            const sensorsListBtn = document.getElementById('sensors-list-btn');
+            const sensorsMapBtn = document.getElementById('sensors-map-btn');
+
+            if (sensorsGridBtn) {
+                sensorsGridBtn.addEventListener('click', function() {
+                    switchSensorsView('grid');
+                });
+            }
+
+            if (sensorsListBtn) {
+                sensorsListBtn.addEventListener('click', function() {
+                    switchSensorsView('list');
+                });
+            }
+
+            if (sensorsMapBtn) {
+                sensorsMapBtn.addEventListener('click', function() {
+                    switchSensorsView('map');
+                });
+            }
+
+            // Фильтры активности
+            const activityFilters = document.querySelectorAll('.activity-filter');
+            activityFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    activityFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    filterActivityStream(this.dataset.filter);
+                });
+            });
+
+            // Контролы графиков
+            const chartBtns = document.querySelectorAll('.chart-btn');
+            chartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    chartBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    switchMainChart(this.dataset.chart);
+                });
+            });
+        }
+
+        function switchSensorsView(view) {
+            const buttons = document.querySelectorAll('.detail-btn');
+            const views = document.querySelectorAll('.sensors-view');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            views.forEach(view => view.classList.remove('active'));
+            
+            document.getElementById(`sensors-${view}-btn`).classList.add('active');
+            document.getElementById(`sensors-${view}-view`).classList.add('active');
+        }
+
+        function filterActivityStream(filter) {
+            const items = document.querySelectorAll('.activity-item');
+            items.forEach(item => {
+                if (filter === 'all' || item.dataset.type === filter) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function switchMainChart(chartType) {
+            // Логика переключения главного графика
+            console.log('Switching to chart:', chartType);
+            // Здесь будет код для переключения между разными типами графиков
+        }
+
+        // Автообновление данных
+        setInterval(function() {
+            const autoUpdate = document.getElementById('auto-update-toggle');
+            if (autoUpdate && autoUpdate.checked) {
+                loadDashboardData();
+            }
+        }, 30000); // Каждые 30 секунд
+    </script>
+</body>
 </html>
