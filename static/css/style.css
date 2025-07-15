@@ -98,7 +98,7 @@ body::before {
 
 /* BELWEST Sidebar Styling */
 .sidebar {
-    width: 80px;
+    width: 90px;
     background: linear-gradient(180deg, 
         rgba(46, 139, 87, 0.15) 0%, 
         rgba(46, 139, 87, 0.05) 100%);
@@ -151,7 +151,7 @@ body::before {
 }
 
 .sidebar .logo::before {
-    content: '🏢';
+    content: 'BW';
     display: flex;
     align-items: center;
     justify-content: center;
@@ -161,7 +161,8 @@ body::before {
     transform: translate(-50%, -50%);
     width: 40px;
     height: 40px;
-    font-size: 20px;
+    font-size: 16px;
+    font-weight: 800;
     color: #FFFFFF;
     background: linear-gradient(135deg, #2E8B57, #3CB371);
     border-radius: 8px;
@@ -221,11 +222,18 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 1;
+    color: var(--text-secondary);
 }
 
 .sidebar:hover .menu li a i {
     margin-right: 16px;
     justify-content: flex-start;
+}
+
+.sidebar .menu li a:hover i,
+.sidebar .menu li.active a i {
+    color: #FFFFFF;
 }
 
 .sidebar::before {

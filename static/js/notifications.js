@@ -66,32 +66,11 @@ class NotificationSystem {
 const notifications = new NotificationSystem();
 // Notification system
 document.addEventListener('DOMContentLoaded', function() {
-    initializeNotifications();
-    initializeUserMenu();
+    initializeNotificationActions();
     initializeSettings();
 });
 
-function initializeNotifications() {
-    const notificationsBtn = document.getElementById('notifications-btn');
-    const notificationDropdown = document.getElementById('notification-dropdown');
-    
-    if (!notificationsBtn || !notificationDropdown) return;
-    
-    notificationsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isActive = notificationsBtn.classList.contains('active');
-        
-        // Close user menu if open
-        const userMenu = document.getElementById('user-menu-btn');
-        if (userMenu) userMenu.classList.remove('active');
-        
-        if (isActive) {
-            notificationsBtn.classList.remove('active');
-        } else {
-            notificationsBtn.classList.add('active');
-        }
-    });
-    
+function initializeNotificationActions() {
     // Mark all as read
     const markAllRead = document.querySelector('.mark-all-read');
     if (markAllRead) {
@@ -111,42 +90,6 @@ function initializeNotifications() {
             this.classList.remove('unread');
             updateNotificationBadge();
         });
-    });
-    
-    // Close on outside click
-    document.addEventListener('click', function(e) {
-        if (!notificationsBtn.contains(e.target)) {
-            notificationsBtn.classList.remove('active');
-        }
-    });
-}
-
-function initializeUserMenu() {
-    const userMenuBtn = document.getElementById('user-menu-btn');
-    const userDropdown = document.getElementById('user-dropdown');
-    
-    if (!userMenuBtn || !userDropdown) return;
-    
-    userMenuBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isActive = userMenuBtn.classList.contains('active');
-        
-        // Close notifications if open
-        const notificationsBtn = document.getElementById('notifications-btn');
-        if (notificationsBtn) notificationsBtn.classList.remove('active');
-        
-        if (isActive) {
-            userMenuBtn.classList.remove('active');
-        } else {
-            userMenuBtn.classList.add('active');
-        }
-    });
-    
-    // Close on outside click
-    document.addEventListener('click', function(e) {
-        if (!userMenuBtn.contains(e.target)) {
-            userMenuBtn.classList.remove('active');
-        }
     });
 }
 

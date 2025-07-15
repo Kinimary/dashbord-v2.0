@@ -53,7 +53,18 @@ function initializeNotifications() {
 
     notificationsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        notificationsBtn.classList.toggle('active');
+        const isActive = notificationsBtn.classList.contains('active');
+        
+        // Close user menu if open
+        const userMenu = document.getElementById('user-menu-btn');
+        if (userMenu) userMenu.classList.remove('active');
+        
+        // Toggle notifications
+        if (isActive) {
+            notificationsBtn.classList.remove('active');
+        } else {
+            notificationsBtn.classList.add('active');
+        }
     });
 
     // Close on outside click
@@ -72,7 +83,18 @@ function initializeUserMenu() {
 
     userMenuBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        userMenuBtn.classList.toggle('active');
+        const isActive = userMenuBtn.classList.contains('active');
+        
+        // Close notifications if open
+        const notificationsBtn = document.getElementById('notifications-btn');
+        if (notificationsBtn) notificationsBtn.classList.remove('active');
+        
+        // Toggle user menu
+        if (isActive) {
+            userMenuBtn.classList.remove('active');
+        } else {
+            userMenuBtn.classList.add('active');
+        }
     });
 
     // Close on outside click
