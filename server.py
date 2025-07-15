@@ -35,7 +35,7 @@ def init_db():
     conn = sqlite3.connect('visitor_data.db')
     cursor = conn.cursor()
 
-    # Create tables
+    # Create users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,6 +47,7 @@ def init_db():
         )
     ''')
 
+    # Create sensors table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sensors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +59,7 @@ def init_db():
         )
     ''')
 
+    # Create visitor_data table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS visitor_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +67,29 @@ def init_db():
             visitor_count INTEGER DEFAULT 0,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+        )
+    ''')
+
+    # Create visitor_counts table (for handlers compatibility)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visitor_counts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL,
+            count INTEGER DEFAULT 0,
+            location TEXT,
+            status TEXT DEFAULT 'active',
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Create user_sensors table for many-to-many relationship
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_sensors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            sensor_id TEXT,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
 
@@ -89,8 +114,23 @@ def init_db():
             VALUES (?, ?, ?)
         ''', sensor)
 
+    # Create sample visitor_counts data
+    sample_visitor_counts = [
+        ('SENSOR_001', 15, 'Главный вход', 'active'),
+        ('SENSOR_002', 8, 'Боковой вход', 'active'),
+        ('SENSOR_003', 0, 'Офис менеджера', 'inactive'),
+        ('SENSOR_004', 12, 'Склад', 'active')
+    ]
+
+    for count_data in sample_visitor_counts:
+        cursor.execute('''
+            INSERT OR IGNORE INTO visitor_counts (device_id, count, location, status) 
+            VALUES (?, ?, ?, ?)
+        ''', count_data)
+
     conn.commit()
     conn.close()
+    print("База данных успешно инициализирована!")
 
 # Authentication decorator
 def login_required(f):
