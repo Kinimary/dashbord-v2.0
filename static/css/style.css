@@ -5,6 +5,10 @@
     --belwest-green-dark: #006B3C;
     --belwest-green-glow: rgba(46, 139, 87, 0.3);
     --primary-color: #2E8B57;
+    --modern-purple: #8B45FF;
+    --modern-blue: #4FACFE;
+    --modern-gradient-start: #667eea;
+    --modern-gradient-end: #764ba2;
     --secondary-color: #20B2AA;
     --accent-color: #FF6B35;
     --success-color: #32CD32;
@@ -59,9 +63,11 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background: linear-gradient(135deg, 
-        var(--background-primary) 0%, 
-        var(--background-secondary) 50%, 
-        var(--belwest-green-dark) 100%);
+        #0F0F23 0%, 
+        #1A1A2E 25%, 
+        #16213E 50%, 
+        #0F3460 75%, 
+        #533483 100%);
     color: var(--text-primary);
     transition: var(--transition);
     overflow-x: hidden;
@@ -76,9 +82,10 @@ body::before {
     right: 0;
     bottom: 0;
     background: 
-        radial-gradient(circle at 20% 50%, var(--belwest-green-glow) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, var(--belwest-green-glow) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, var(--belwest-green-glow) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(139, 69, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(46, 139, 87, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 60% 40%, rgba(32, 178, 170, 0.08) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
 }
@@ -609,9 +616,11 @@ button:hover::before {
     align-items: center;
     min-height: 100vh;
     background: linear-gradient(135deg, 
-        var(--belwest-green-dark) 0%, 
-        var(--belwest-green) 50%, 
-        var(--belwest-green-light) 100%);
+        #667eea 0%, 
+        #764ba2 25%, 
+        #f093fb 50%, 
+        #f5576c 75%, 
+        #4facfe 100%);
     position: relative;
 }
 
@@ -623,8 +632,9 @@ button:hover::before {
     right: 0;
     bottom: 0;
     background: 
-        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(139, 69, 255, 0.1) 0%, transparent 70%);
 }
 
 .login-form {
