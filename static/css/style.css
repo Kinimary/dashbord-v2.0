@@ -604,6 +604,8 @@ input:checked + .toggle-slider:before {
         0 8px 32px var(--shadow-light),
         inset 0 1px 4px rgba(255, 255, 255, 0.1);
     padding: 20px 24px;
+    position: relative;
+    z-index: 10;
 }
 
 .top-bar h1 {
@@ -624,6 +626,8 @@ input:checked + .toggle-slider:before {
     display: flex;
     align-items: center;
     gap: 20px;
+    position: relative;
+    z-index: 50;
 }
 
 .notifications {
@@ -636,6 +640,7 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     transition: var(--transition);
     box-shadow: 0 4px 16px var(--shadow-light);
+    z-index: 100;
 }
 
 .notifications:hover {
@@ -686,7 +691,7 @@ input:checked + .toggle-slider:before {
     visibility: hidden;
     transform: translateY(-10px);
     transition: var(--transition);
-    z-index: 1000;
+    z-index: 9999;
     margin-top: 10px;
 }
 
@@ -798,6 +803,7 @@ input:checked + .toggle-slider:before {
     transition: var(--transition);
     position: relative;
     box-shadow: 0 4px 16px var(--shadow-light);
+    z-index: 100;
 }
 
 .user-info:hover {
@@ -862,7 +868,7 @@ input:checked + .toggle-slider:before {
     visibility: hidden;
     transform: translateY(-10px);
     transition: var(--transition);
-    z-index: 1000;
+    z-index: 9999;
     margin-top: 10px;
 }
 
