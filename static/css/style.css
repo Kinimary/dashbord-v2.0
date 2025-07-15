@@ -218,10 +218,15 @@ body::before {
 .sidebar .menu li a i {
     margin-right: 0;
     transition: margin-right 0.3s ease;
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar:hover .menu li a i {
     margin-right: 16px;
+    justify-content: flex-start;
 }
 
 .sidebar::before {
