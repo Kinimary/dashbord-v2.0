@@ -4,7 +4,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import hashlib
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 from handlers import users, sensors, reports
 
 app = Flask(__name__)
@@ -477,6 +477,59 @@ def get_sensor_data():
             'recent_activity': [],
             'sensors': []
         })
+
+
+@app.route('/api/visitor-count', methods=['POST'])
+def receive_visitor_count():
+    """Endpoint для получения данных от Arduino датчиков"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        device_id = data.get('device_id')
+        count = data.get('count', 0)
+        timestamp = data.get('timestamp')
+        status = data.get('status', 'online')
+        
+        if not device_id:
+            return jsonify({'error': 'device_id is required'}), 400
+        
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+        
+        # Обновляем или создаем запись в visitor_counts
+        cursor.execute('''
+            INSERT OR REPLACE INTO visitor_counts 
+            (device_id, count, status, timestamp, received_at) 
+            VALUES (?, ?, ?, ?, ?)
+        ''', (device_id, count, status, 
+              datetime.fromtimestamp(timestamp) if timestamp else datetime.now(),
+              datetime.now()))
+        
+        # Обновляем таблицу sensors если датчик существует
+        cursor.execute('''
+            UPDATE sensors 
+            SET visitor_count = ?, last_update = ?, status = ?
+            WHERE name LIKE ?
+        ''', (count, datetime.now(), status, f"%{device_id}%"))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"Получены данные от {device_id}: count={count}, status={status}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Data received successfully',
+            'device_id': device_id,
+            'count': count
+        })
+        
+    except Exception as e:
+        print(f"Ошибка обработки данных от Arduino: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 
 # Register blueprints
