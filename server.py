@@ -116,7 +116,10 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-
+@app.route('/users')
+@login_required
+def users_page():
+    return render_template('users.html')
 
 @app.route('/sensors')
 @login_required
@@ -253,9 +256,9 @@ def get_sensor_data():
         })
 
 # Register blueprints
-app.register_blueprint(users.bp)
-app.register_blueprint(sensors.bp)
-app.register_blueprint(reports.bp)
+app.register_blueprint(users.users)
+app.register_blueprint(sensors.sensors)
+app.register_blueprint(reports.reports)
 
 if __name__ == '__main__':
     init_db()
