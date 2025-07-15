@@ -120,14 +120,8 @@ body::before {
     width: 80px;
 }
 
-.sidebar.collapsed .logo-full {
+.sidebar.collapsed .logo span {
     display: none;
-}
-
-.sidebar.collapsed .logo-collapsed {
-    display: block;
-    font-size: 24px;
-    font-weight: 900;
 }
 
 .sidebar.collapsed .logo::after {
