@@ -74,17 +74,27 @@
                 body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
             })
             .then(response => {
-                if (response.redirected) {
+                if (response.ok && response.redirected) {
                     window.location.href = response.url;
-                } else {
-                    return response.text();
-                }
-            })
-            .then(data => {
-                if (data) {
-                    // Если есть данные, значит произошла ошибка
+                    return;
+                } else if (response.status === 401) {
                     errorDiv.textContent = 'Неверный логин или пароль';
                     errorDiv.style.display = 'block';
+                    return;
+                } else if (response.ok) {
+                    // Успешная авторизация
+                    window.location.href = '/';
+                    return;
+                }
+                return response.text();
+            })
+            .then(data => {
+                if (data && typeof data === 'string') {
+                    // Проверяем, не является ли это страницей с ошибкой
+                    if (data.includes('login-form')) {
+                        errorDiv.textContent = 'Неверный логин или пароль';
+                        errorDiv.style.display = 'block';
+                    }
                 }
             })
             .catch(error => {

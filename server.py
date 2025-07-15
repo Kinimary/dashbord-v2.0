@@ -11,6 +11,7 @@ app = Flask(__name__)
 app.secret_key = 'belwest_secret_key_2024'
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = './flask_session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 Session(app)
 
 # Database initialization
@@ -86,12 +87,17 @@ def login_required(f):
     return decorated_function
 
 @app.route('/')
-@login_required
 def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect to dashboard
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+        
     if request.method == 'POST':
         username = request.form['username']
         password = hashlib.sha256(request.form['password'].encode()).hexdigest()
@@ -107,9 +113,11 @@ def login():
             session['user_id'] = user[0]
             session['username'] = user[1]
             session['role'] = user[2]
+            session.permanent = True
             return redirect(url_for('index'))
         else:
             flash('Неверный логин или пароль')
+            return render_template('login.html'), 401
 
     return render_template('login.html')
 
