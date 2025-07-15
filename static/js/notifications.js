@@ -74,12 +74,21 @@ function initializeNotificationActions() {
     // Mark all as read
     const markAllRead = document.querySelector('.mark-all-read');
     if (markAllRead) {
-        markAllRead.addEventListener('click', function() {
+        markAllRead.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const unreadItems = document.querySelectorAll('.notification-item.unread');
             unreadItems.forEach(item => {
                 item.classList.remove('unread');
             });
             updateNotificationBadge();
+            
+            // Show confirmation
+            this.textContent = 'Отмечено!';
+            setTimeout(() => {
+                this.textContent = 'Отметить все';
+            }, 1000);
         });
     }
     
@@ -91,6 +100,15 @@ function initializeNotificationActions() {
             updateNotificationBadge();
         });
     });
+}
+
+function updateNotificationBadge() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    const badge = document.getElementById('notification-count');
+    if (badge) {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+    }
 }
 
 function initializeSettings() {

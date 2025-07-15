@@ -167,12 +167,109 @@ function initializeSettings() {
         
         if (savedValue === 'true') {
             toggle.checked = true;
+        } else if (savedValue === 'false') {
+            toggle.checked = false;
         }
         
         toggle.addEventListener('change', function() {
             localStorage.setItem(settingName, this.checked);
+            
+            // Handle specific settings
+            if (settingName === 'darkMode') {
+                handleThemeToggle(this.checked);
+            } else if (settingName === 'notifications') {
+                handleNotificationsToggle(this.checked);
+            } else if (settingName === 'autoRefresh') {
+                handleAutoRefreshToggle(this.checked);
+            } else if (settingName === 'sound') {
+                handleSoundToggle(this.checked);
+            }
         });
     });
+}
+
+function handleThemeToggle(isDark) {
+    const body = document.body;
+    if (isDark) {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+    } else {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+    }
+    console.log('Theme changed to:', isDark ? 'dark' : 'light');
+}
+
+function handleNotificationsToggle(enabled) {
+    console.log('Notifications:', enabled ? 'enabled' : 'disabled');
+    if (enabled) {
+        // Enable notifications
+        showNotification('Уведомления включены', 'success');
+    } else {
+        // Disable notifications
+        showNotification('Уведомления отключены', 'info');
+    }
+}
+
+function handleAutoRefreshToggle(enabled) {
+    console.log('Auto-refresh:', enabled ? 'enabled' : 'disabled');
+    if (enabled) {
+        // Start auto-refresh
+        startAutoRefresh();
+    } else {
+        // Stop auto-refresh
+        stopAutoRefresh();
+    }
+}
+
+function handleSoundToggle(enabled) {
+    console.log('Sound:', enabled ? 'enabled' : 'disabled');
+    window.soundEnabled = enabled;
+}
+
+function showNotification(message, type) {
+    // Simple notification system
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: var(--belwest-green);
+        color: white;
+        border-radius: 8px;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.opacity = '1', 100);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+let autoRefreshInterval;
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        console.log('Auto-refreshing data...');
+        // Refresh data here
+    }, 30000); // Refresh every 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
 }
 
 // Global logout function

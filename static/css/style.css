@@ -1591,6 +1591,15 @@ button:hover::before {
     color: var(--text-primary);
 }
 
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 /* Search Bar Styles */
 .search-bar {
     position: relative;

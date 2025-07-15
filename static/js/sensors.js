@@ -1,11 +1,10 @@
-
 document.addEventListener("DOMContentLoaded", function () {
     function loadSensors() {
         fetch("/api/sensors")
             .then((response) => response.json())
             .then((sensors) => {
                 const tbody = document.getElementById("sensors-table-body");
-                
+
                 if (sensors.length === 0) {
                     tbody.innerHTML = `
                         <tr>
@@ -34,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             </td>
                         </tr>
                     `).join('');
-                    
+
                     // Добавляем обработчики для кнопок редактирования и удаления
                     document.querySelectorAll('.edit-sensor').forEach(btn => {
                         btn.addEventListener('click', function() {
@@ -42,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             editSensor(sensorId);
                         });
                     });
-                    
+
                     document.querySelectorAll('.delete-sensor').forEach(btn => {
                         btn.addEventListener('click', function() {
                             const sensorId = this.getAttribute('data-id');
@@ -76,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById('sensor-name').value = sensor.name;
                 document.getElementById('sensor-location').value = sensor.location;
                 document.getElementById('sensor-status').value = sensor.status;
-                
+
                 // Переключаемся на вкладку редактирования
                 document.querySelector('.tab[data-tab="add-sensor"]').click();
                 document.getElementById('form-title').textContent = 'Редактировать датчик';
@@ -126,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sensorForm) {
         sensorForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const formData = {
                 id: document.getElementById('sensor-id').value,
                 name: document.getElementById('sensor-name').value,
@@ -167,4 +166,169 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Загружаем датчики при загрузке страницы
     loadSensors();
+});
+// Функции для работы с датчиками
+let editingSensorId = null;
+
+function editSensor(id) {
+    editingSensorId = id;
+
+    // Switch to add sensor tab
+    document.querySelector('[data-tab="add-sensor"]').click();
+
+    // Load sensor data (mock data)
+    const sensors = {
+        1: { name: 'Датчик входа А', location: 'Главный вход', type: 'motion', status: 'active' },
+        2: { name: 'Датчик входа Б', location: 'Служебный вход', type: 'proximity', status: 'active' },
+        3: { name: 'Датчик зоны 1', location: 'Офисная зона', type: 'motion', status: 'offline' }
+    };
+
+    const sensor = sensors[id];
+    if (sensor) {
+        document.getElementById('sensor-name').value = sensor.name;
+        document.getElementById('sensor-location').value = sensor.location;
+        document.getElementById('sensor-type').value = sensor.type;
+        document.getElementById('sensor-status').value = sensor.status;
+
+        // Change button text
+        const saveBtn = document.getElementById('save-sensor');
+        if (saveBtn) {
+            saveBtn.textContent = 'Обновить датчик';
+        }
+
+        // Show cancel button
+        showCancelEditButton();
+    }
+}
+
+function deleteSensor(id) {
+    if (confirm('Вы уверены, что хотите удалить этот датчик?')) {
+        // Here you would send delete request to backend
+        console.log(`Deleting sensor ${id}`);
+        alert(`Датчик ${id} удален`);
+
+        // Refresh sensors list
+        loadSensorsList();
+    }
+}
+
+function showCancelEditButton() {
+    let cancelBtn = document.getElementById('cancel-edit-sensor');
+    if (!cancelBtn) {
+        cancelBtn = document.createElement('button');
+        cancelBtn.id = 'cancel-edit-sensor';
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = 'Отменить редактирование';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.style.marginLeft = '10px';
+        cancelBtn.onclick = cancelSensorEdit;
+
+        const saveBtn = document.getElementById('save-sensor');
+        if (saveBtn && saveBtn.parentNode) {
+            saveBtn.parentNode.insertBefore(cancelBtn, saveBtn.nextSibling);
+        }
+    }
+    cancelBtn.style.display = 'inline-block';
+}
+
+function cancelSensorEdit() {
+    editingSensorId = null;
+
+    // Clear form
+    document.getElementById('sensor-form').reset();
+
+    // Reset button text
+    const saveBtn = document.getElementById('save-sensor');
+    if (saveBtn) {
+        saveBtn.textContent = 'Добавить датчик';
+    }
+
+    // Hide cancel button
+    const cancelBtn = document.getElementById('cancel-edit-sensor');
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    }
+}
+
+function loadSensorsList() {
+    // Mock data - replace with actual API call
+    const sensors = [
+        { id: 1, name: 'Датчик входа А', location: 'Главный вход', type: 'motion', status: 'active' },
+        { id: 2, name: 'Датчик входа Б', location: 'Служебный вход', type: 'proximity', status: 'active' },
+        { id: 3, name: 'Датчик зоны 1', location: 'Офисная зона', type: 'motion', status: 'offline' }
+    ];
+
+    const tableBody = document.querySelector('#sensors-table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = '';
+        sensors.forEach(sensor => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${sensor.id}</td>
+                <td>${sensor.name}</td>
+                <td>${sensor.location}</td>
+                <td>${getSensorTypeText(sensor.type)}</td>
+                <td><span class="status-badge ${sensor.status}">${getStatusText(sensor.status)}</span></td>
+                <td>
+                    <button class="edit-sensor" onclick="editSensor(${sensor.id})">Редактировать</button>
+                    <button class="delete-sensor" onclick="deleteSensor(${sensor.id})">Удалить</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+}
+
+function getSensorTypeText(type) {
+    const types = {
+        'motion': 'Движение',
+        'proximity': 'Приближение',
+        'door': 'Дверной',
+        'temperature': 'Температура'
+    };
+    return types[type] || type;
+}
+
+function getStatusText(status) {
+    const statuses = {
+        'active': 'Активен',
+        'offline': 'Офлайн',
+        'maintenance': 'Обслуживание'
+    };
+    return statuses[status] || status;
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    loadSensorsList();
+
+    // Handle save sensor button
+    const saveBtn = document.getElementById('save-sensor');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            const name = document.getElementById('sensor-name').value;
+            const location = document.getElementById('sensor-location').value;
+            const type = document.getElementById('sensor-type').value;
+            const status = document.getElementById('sensor-status').value;
+
+            if (!name || !location) {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+
+            const sensorData = { name, location, type, status };
+
+            if (editingSensorId) {
+                console.log('Updating sensor:', editingSensorId, sensorData);
+                alert('Датчик обновлен!');
+                cancelSensorEdit();
+            } else {
+                console.log('Adding sensor:', sensorData);
+                alert('Датчик добавлен!');
+                document.getElementById('sensor-form').reset();
+            }
+
+            loadSensorsList();
+        });
+    }
 });

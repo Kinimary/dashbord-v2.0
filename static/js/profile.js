@@ -1,68 +1,335 @@
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Theme toggle functionality
-    const themeSelect = document.getElementById("theme-select");
-    const themeToggle = document.getElementById("dark-mode-toggle");
+    // Initialize notifications
+    initializeNotifications();
     
-    // Load saved preferences
-    const savedTheme = localStorage.getItem('theme') || 'dark-mode';
-    const savedLanguage = localStorage.getItem('language') || 'ru';
+    // Initialize tabs
+    initializeTabs();
     
-    document.body.className = savedTheme;
-    themeSelect.value = savedTheme;
-    document.getElementById('language-select').value = savedLanguage;
-    updateThemeIcon(savedTheme);
-
     // Load users and sensors
     loadUsers();
     loadSensors();
+    
+    // Initialize form handlers
+    initializeFormHandlers();
+    
+    // Initialize search
+    initializeSearch();
 
-    // Theme selection handler
-    themeSelect.addEventListener("change", function () {
-        const selectedTheme = this.value;
-        document.body.className = selectedTheme;
-        localStorage.setItem('theme', selectedTheme);
-        updateThemeIcon(selectedTheme);
-    });
-
-    // Language selection handler
-    document.getElementById('language-select').addEventListener("change", function () {
-        localStorage.setItem('language', this.value);
-    });
-
-    // Theme toggle button
-    if (themeToggle) {
-        themeToggle.addEventListener("click", function () {
-            const currentTheme = document.body.classList.contains('dark-mode') ? 'light-mode' : 'dark-mode';
-            document.body.className = currentTheme;
-            themeSelect.value = currentTheme;
-            localStorage.setItem('theme', currentTheme);
-            updateThemeIcon(currentTheme);
+    function initializeNotifications() {
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+    const markAllRead = document.getElementById('mark-all-read');
+    
+    if (notificationsBtn) {
+        notificationsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationDropdown.style.display = notificationDropdown.style.display === 'block' ? 'none' : 'block';
         });
     }
-
-    function updateThemeIcon(theme) {
-        const icon = document.getElementById("dark-mode-toggle");
-        if (icon) {
-            if (theme === 'dark-mode') {
-                icon.className = 'fas fa-sun';
-            } else {
-                icon.className = 'fas fa-moon';
+    
+    if (markAllRead) {
+        markAllRead.addEventListener('click', function() {
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            unreadItems.forEach(item => item.classList.remove('unread'));
+            updateNotificationBadge();
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!notificationsBtn?.contains(e.target)) {
+            if (notificationDropdown) {
+                notificationDropdown.style.display = 'none';
             }
         }
-    }
-
-    // User selection handler
-    document.getElementById('user-select').addEventListener('change', function() {
-        const userId = this.value;
-        if (userId) {
-            loadUserData(userId);
-            document.getElementById('delete-user-btn').style.display = 'inline-block';
-        } else {
-            clearUserForm();
-            document.getElementById('delete-user-btn').style.display = 'none';
-        }
     });
+}
+
+function initializeTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            
+            // Remove active class from all tabs and contents
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to current tab
+            this.classList.add('active');
+            
+            // Show corresponding content
+            const targetContent = document.getElementById(tabName);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+}
+
+function initializeFormHandlers() {
+    const userSelect = document.getElementById('user-select');
+    const saveBtn = document.getElementById('save-user-btn');
+    const deleteBtn = document.getElementById('delete-user-btn');
+    const clearBtn = document.getElementById('clear-form-btn');
+    
+    if (userSelect) {
+        userSelect.addEventListener('change', function() {
+            const userId = this.value;
+            if (userId) {
+                loadUserData(userId);
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                clearUserForm();
+                deleteBtn.style.display = 'none';
+            }
+        });
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveUser);
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', deleteUser);
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearUserForm);
+    }
+}
+
+function initializeSearch() {
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#users-table tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+}
+
+    function loadUsers() {
+    // Mock data - replace with actual API call
+    const users = [
+        { id: 1, username: 'admin', email: 'admin@belwest.com', role: 'admin', department: 'IT', phone: '+7 123 456 7890', status: 'active' },
+        { id: 2, username: 'john_doe', email: 'john@belwest.com', role: 'user', department: 'Security', phone: '+7 123 456 7891', status: 'active' },
+        { id: 3, username: 'jane_smith', email: 'jane@belwest.com', role: 'viewer', department: 'Management', phone: '+7 123 456 7892', status: 'inactive' }
+    ];
+    
+    // Populate user select
+    const userSelect = document.getElementById('user-select');
+    if (userSelect) {
+        userSelect.innerHTML = '<option value="">-- Создать нового --</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = `${user.username} (${user.email})`;
+            userSelect.appendChild(option);
+        });
+    }
+    
+    // Populate users table
+    const tableBody = document.querySelector('#users-table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = '';
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${getRoleText(user.role)}</td>
+                <td>${user.department}</td>
+                <td><span class="status-badge ${user.status}">${getStatusText(user.status)}</span></td>
+                <td>
+                    <button class="edit-sensor" onclick="editUser(${user.id})">Редактировать</button>
+                    <button class="delete-sensor" onclick="confirmDeleteUser(${user.id})">Удалить</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+}
+
+function loadSensors() {
+    // Mock data - replace with actual API call
+    const sensors = [
+        { id: 1, name: 'Датчик входа А', location: 'Главный вход' },
+        { id: 2, name: 'Датчик входа Б', location: 'Служебный вход' },
+        { id: 3, name: 'Датчик зоны 1', location: 'Офисная зона' },
+        { id: 4, name: 'Датчик зоны 2', location: 'Складская зона' }
+    ];
+    
+    const sensorsContainer = document.getElementById('sensors-assignment');
+    if (sensorsContainer) {
+        sensorsContainer.innerHTML = '';
+        sensors.forEach(sensor => {
+            const checkboxGroup = document.createElement('div');
+            checkboxGroup.className = 'checkbox-group';
+            checkboxGroup.innerHTML = `
+                <input type="checkbox" id="sensor-${sensor.id}" value="${sensor.id}">
+                <label for="sensor-${sensor.id}">${sensor.name} - ${sensor.location}</label>
+            `;
+            sensorsContainer.appendChild(checkboxGroup);
+        });
+    }
+}
+
+function loadUserData(userId) {
+    // Mock data - replace with actual API call
+    const users = {
+        1: { username: 'admin', email: 'admin@belwest.com', role: 'admin', department: 'IT', phone: '+7 123 456 7890', sensors: [1, 2, 3, 4] },
+        2: { username: 'john_doe', email: 'john@belwest.com', role: 'user', department: 'Security', phone: '+7 123 456 7891', sensors: [1, 2] },
+        3: { username: 'jane_smith', email: 'jane@belwest.com', role: 'viewer', department: 'Management', phone: '+7 123 456 7892', sensors: [3] }
+    };
+    
+    const user = users[userId];
+    if (user) {
+        document.getElementById('username').value = user.username;
+        document.getElementById('email').value = user.email;
+        document.getElementById('user-role').value = user.role;
+        document.getElementById('department').value = user.department;
+        document.getElementById('phone').value = user.phone;
+        
+        // Clear password fields for security
+        document.getElementById('password').value = '';
+        document.getElementById('password-confirm').value = '';
+        
+        // Set assigned sensors
+        const sensorCheckboxes = document.querySelectorAll('#sensors-assignment input[type="checkbox"]');
+        sensorCheckboxes.forEach(checkbox => {
+            checkbox.checked = user.sensors.includes(parseInt(checkbox.value));
+        });
+    }
+}
+
+function clearUserForm() {
+    document.getElementById('user-management-form').reset();
+    document.getElementById('user-select').value = '';
+    
+    // Uncheck all sensors
+    const sensorCheckboxes = document.querySelectorAll('#sensors-assignment input[type="checkbox"]');
+    sensorCheckboxes.forEach(checkbox => checkbox.checked = false);
+}
+
+function saveUser() {
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const passwordConfirm = document.getElementById('password-confirm').value;
+    const role = document.getElementById('user-role').value;
+    const department = document.getElementById('department').value;
+    const phone = document.getElementById('phone').value;
+    
+    // Validation
+    if (!username || !email || !password) {
+        alert('Пожалуйста, заполните все обязательные поля');
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        alert('Пароли не совпадают');
+        return;
+    }
+    
+    if (password.length < 8) {
+        alert('Пароль должен содержать минимум 8 символов');
+        return;
+    }
+    
+    // Get assigned sensors
+    const assignedSensors = [];
+    const sensorCheckboxes = document.querySelectorAll('#sensors-assignment input[type="checkbox"]:checked');
+    sensorCheckboxes.forEach(checkbox => {
+        assignedSensors.push(parseInt(checkbox.value));
+    });
+    
+    const userData = {
+        username,
+        email,
+        password,
+        role,
+        department,
+        phone,
+        sensors: assignedSensors
+    };
+    
+    // Here you would send the data to your backend
+    console.log('Saving user:', userData);
+    alert('Пользователь успешно сохранен!');
+    
+    // Refresh the users list
+    loadUsers();
+    clearUserForm();
+}
+
+function deleteUser() {
+    const userId = document.getElementById('user-select').value;
+    if (!userId) return;
+    
+    if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+        // Here you would send delete request to your backend
+        console.log('Deleting user:', userId);
+        alert('Пользователь удален!');
+        
+        // Refresh the users list
+        loadUsers();
+        clearUserForm();
+    }
+}
+
+function editUser(userId) {
+    // Switch to user form tab
+    document.querySelector('[data-tab="user-form"]').click();
+    
+    // Select the user in dropdown
+    document.getElementById('user-select').value = userId;
+    document.getElementById('user-select').dispatchEvent(new Event('change'));
+}
+
+function confirmDeleteUser(userId) {
+    if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+        // Here you would send delete request to your backend
+        console.log('Deleting user:', userId);
+        alert('Пользователь удален!');
+        loadUsers();
+    }
+}
+
+function getRoleText(role) {
+    const roles = {
+        'admin': 'Администратор',
+        'user': 'Пользователь',
+        'viewer': 'Наблюдатель'
+    };
+    return roles[role] || role;
+}
+
+function getStatusText(status) {
+    const statuses = {
+        'active': 'Активен',
+        'inactive': 'Неактивен'
+    };
+    return statuses[status] || status;
+}
+
+function updateNotificationBadge() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    const badge = document.getElementById('notification-count');
+    if (badge) {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+    }
+}
 
     // Load users for selection
     function loadUsers() {

@@ -1,227 +1,298 @@
+
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>BELWEST - Профиль пользователя</title>
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='css/style.css') }}"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-    </head>
-    <body>
-        <div class="container">
-            <!-- Боковая панель -->
-            <div class="sidebar">
-                <div class="logo">
-                    <div class="logo-container">
-                        <img src="{{ url_for('static', filename='img/belwest-logo.png') }}" alt="BELWEST Logo">
-                        <div class="logo-text">BELWEST</div>
-                    </div>
-                    <div class="logo-subtitle">Система управления посетителями</div>
-                </div>
-                <ul class="menu">
-                    <li>
-                        <a href="/">
-                            <i class="fas fa-chart-line"></i> Дашборд
-                        </a>
-                    </li>
-                    {% if user.role == 'admin' %}
-                    <li>
-                        <a href="/users">
-                            <i class="fas fa-users"></i> Пользователи
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li>
-                        <a href="/reports">
-                            <i class="fas fa-file-alt"></i> Отчеты
-                        </a>
-                    </li>
-                    <li class="active">
-                        <a href="/profile">
-                            <i class="fas fa-user-cog"></i> Профиль
-                        </a>
-                    </li>
-                </ul>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
-                </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BELWEST - Профиль</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Боковая панель -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <span>BELWEST</span>
             </div>
-
-            <!-- Основное содержимое -->
-            <div class="main-content">
-                <div class="top-bar">
-                    <h1>Настройки профиля</h1>
-                    <div class="user-profile">
-                        <div class="notifications">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <div class="user-info">
-                            <img
-                                src="https://via.placeholder.com/30"
-                                alt="User"
-                            />
-                            <span>A</span>
-                            <div class="user-details">
-                                <p>Admin User</p>
-                                <a href="#">Выйти</a>
+            <ul class="menu">
+                <li>
+                    <a href="/">
+                        <i class="fas fa-th-large"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="/profile">
+                        <i class="fas fa-user"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/sensors">
+                        <i class="fas fa-robot"></i>
+                        <span>Датчики</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/reports">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-settings">
+                <div class="settings-dropdown">
+                    <button class="settings-btn" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>НАСТРОЙКИ</span>
+                        <i class="fas fa-chevron-down settings-arrow"></i>
+                    </button>
+                    <div class="settings-menu">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-moon"></i>
+                                <span>Темная тема</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="profile-container">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Информация профиля</h3>
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="chart-body">
-                            <form id="profile-form">
-                                <div class="form-group">
-                                    <label for="username">Имя пользователя</label>
-                                    <input type="text" id="username" name="username" value="{{ user.username if user else 'admin' }}" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="email">Email</label>
-                                    <input type="email" id="email" name="email" value="{{ user.email if user else 'admin@example.com' }}" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="role">Роль</label>
-                                    <select id="role" name="role" {% if user and user.role != 'admin' %}disabled{% endif %}>
-                                        <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Администратор</option>
-                                        <option value="manager" {% if user and user.role == 'manager' %}selected{% endif %}>Менеджер</option>
-                                        <option value="rd" {% if user and user.role == 'rd' %}selected{% endif %}>РД</option>
-                                        <option value="tu" {% if user and user.role == 'tu' %}selected{% endif %}>ТУ</option>
-                                        <option value="shop" {% if user and user.role == 'shop' %}selected{% endif %}>Магазин</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="created_at">Дата создания</label>
-                                    <input type="text" id="created_at" name="created_at" value="{{ user.created_at if user else '' }}" readonly />
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Управление пользователями</h3>
-                            <i class="fas fa-users-cog"></i>
-                        </div>
-                        <div class="chart-body">
-                            <div class="form-group">
-                                <label for="user-select">Выберите пользователя для редактирования</label>
-                                <select id="user-select">
-                                    <option value="">Создать нового пользователя</option>
-                                </select>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-bell"></i>
+                                <span>Уведомления</span>
                             </div>
-                            <div class="form-group">
-                                <label for="new-username">Имя пользователя</label>
-                                <input type="text" id="new-username" name="new-username" placeholder="Введите имя пользователя" />
-                            </div>
-                            <div class="form-group">
-                                <label for="new-email">Email</label>
-                                <input type="email" id="new-email" name="new-email" placeholder="Введите email" />
-                            </div>
-                            <div class="form-group">
-                                <label for="new-role">Роль</label>
-                                <select id="new-role" name="new-role">
-                                    <option value="admin">Администратор</option>
-                                    <option value="manager">Менеджер</option>
-                                    <option value="rd">РД</option>
-                                    <option value="tu">ТУ</option>
-                                    <option value="shop">Магазин</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="new-password">Пароль</label>
-                                <input type="password" id="new-password" name="new-password" placeholder="Введите пароль" />
-                            </div>
-                            <div class="form-group">
-                                <label for="confirm-new-password">Подтвердить пароль</label>
-                                <input type="password" id="confirm-new-password" name="confirm-new-password" placeholder="Подтвердите пароль" />
-                            </div>
-                            <div class="form-group">
-                                <label>Назначенные датчики</label>
-                                <div id="sensors-assignment">
-                                    <!-- Датчики будут загружены через JavaScript -->
-                                </div>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" id="save-user-btn">Сохранить пользователя</button>
-                                <button type="button" id="delete-user-btn" style="display: none;">Удалить пользователя</button>
-                                <button type="button" id="clear-form-btn">Очистить форму</button>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Настройки интерфейса</h3>
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <div class="chart-body">
-                            <div class="form-group">
-                                <label for="theme-select">Тема интерфейса</label>
-                                <select id="theme-select">
-                                    <option value="dark-mode">Темная</option>
-                                    <option value="light-mode">Светлая</option>
-                                </select>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-sync"></i>
+                                <span>Авто-обновление</span>
                             </div>
-                            <div class="form-group">
-                                <label for="language-select">Язык системы</label>
-                                <select id="language-select">
-                                    <option value="ru">Русский</option>
-                                    <option value="en">English</option>
-                                    <option value="de">Deutsch</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="notifications-toggle">Уведомления</label>
-                                <input type="checkbox" id="notifications-toggle" checked />
-                                <span>Получать уведомления о событиях</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="auto-refresh-toggle" data-setting="autoRefresh" checked>
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Безопасность</h3>
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <div class="chart-body">
-                            <div class="form-group">
-                                <label for="current-password">Текущий пароль</label>
-                                <input type="password" id="current-password" name="current-password" />
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Звук</span>
                             </div>
-                            <div class="form-group">
-                                <label for="new-password">Новый пароль</label>
-                                <input type="password" id="new-password" name="new-password" />
-                            </div>
-                            <div class="form-group">
-                                <label for="confirm-password">Подтвердить пароль</label>
-                                <input type="password" id="confirm-password" name="confirm-password" />
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="sound-toggle" data-setting="sound">
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button id="save-profile" type="button">Сохранить изменения</button>
-                        <button id="reset-profile" type="button">Сбросить</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}" />
-    </body>
+        <!-- Основное содержимое -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h1>Управление пользователями</h1>
+                <div class="user-profile">
+                    <div class="notifications" id="notifications-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notification-count">3</span>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header">
+                                <h4>Уведомления</h4>
+                                <button class="mark-all-read" id="mark-all-read">Отметить все</button>
+                            </div>
+                            <div class="notification-list" id="notification-list">
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-user-plus text-success"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Новый пользователь</div>
+                                        <div class="notification-text">Добавлен пользователь John Smith</div>
+                                        <div class="notification-time">5 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-robot text-warning"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Датчик офлайн</div>
+                                        <div class="notification-text">Датчик в зоне А не отвечает</div>
+                                        <div class="notification-time">15 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-shield-alt text-warning"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Безопасность</div>
+                                        <div class="notification-text">Неавторизованная попытка входа</div>
+                                        <div class="notification-time">30 минут назад</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-info" id="user-menu-btn">
+                        <div class="user-avatar">А</div>
+                        <span>Админ</span>
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-avatar">А</div>
+                                <div class="user-details">
+                                    <div class="user-name">Администратор</div>
+                                    <div class="user-role">Системный администратор</div>
+                                </div>
+                            </div>
+                            <div class="user-dropdown-menu">
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>Профиль</span>
+                                </a>
+                                <a href="/settings" class="dropdown-item">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Настройки</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-management">
+                <div class="dashboard-tabs">
+                    <button class="tab active" data-tab="user-form">Управление пользователями</button>
+                    <button class="tab" data-tab="user-list">Список пользователей</button>
+                </div>
+
+                <!-- Форма управления пользователями -->
+                <div id="user-form" class="tab-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Добавить / Редактировать пользователя</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="user-management-form">
+                                <div class="form-group">
+                                    <label>Выберите пользователя для редактирования</label>
+                                    <select id="user-select">
+                                        <option value="">-- Создать нового --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Имя пользователя *</label>
+                                    <input type="text" id="username" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Email *</label>
+                                    <input type="email" id="email" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Пароль *</label>
+                                    <input type="password" id="password" required>
+                                    <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+                                        Минимум 8 символов, включая буквы и цифры
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Подтвердите пароль *</label>
+                                    <input type="password" id="password-confirm" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Роль</label>
+                                    <select id="user-role">
+                                        <option value="user">Пользователь</option>
+                                        <option value="admin">Администратор</option>
+                                        <option value="viewer">Наблюдатель</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Телефон</label>
+                                    <input type="tel" id="phone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Отдел</label>
+                                    <input type="text" id="department">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Назначенные датчики</label>
+                                    <div id="sensors-assignment">
+                                        <!-- Датчики будут загружены динамически -->
+                                    </div>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="button" id="save-user-btn">Сохранить пользователя</button>
+                                    <button type="button" id="delete-user-btn" style="display: none;">Удалить пользователя</button>
+                                    <button type="button" id="clear-form-btn">Очистить форму</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Список пользователей -->
+                <div id="user-list" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Все пользователи</h3>
+                            <div class="search-bar">
+                                <input type="text" id="user-search" placeholder="Поиск пользователей...">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table" id="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Имя</th>
+                                        <th>Email</th>
+                                        <th>Роль</th>
+                                        <th>Отдел</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Пользователи будут загружены динамически -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
 </html>
