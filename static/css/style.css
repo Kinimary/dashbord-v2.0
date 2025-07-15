@@ -1060,6 +1060,115 @@ button:hover::before {
         inset 0 1px 4px rgba(255, 255, 255, 0.3);
 }
 
+/* User Management Styles */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.checkbox-group:hover {
+    background: var(--glass-border);
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--belwest-green);
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+#sensors-assignment {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--glass-bg);
+}
+
+#sensors-assignment::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sensors-assignment::-webkit-scrollbar-track {
+    background: var(--glass-bg);
+    border-radius: 3px;
+}
+
+#sensors-assignment::-webkit-scrollbar-thumb {
+    background: var(--belwest-green);
+    border-radius: 3px;
+}
+
+#sensors-assignment::-webkit-scrollbar-thumb:hover {
+    background: var(--belwest-green-light);
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.form-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.form-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow-light);
+}
+
+#save-user-btn {
+    background: linear-gradient(135deg, 
+        var(--belwest-green) 0%, 
+        var(--belwest-green-light) 100%);
+    color: #FFFFFF;
+    border: none;
+}
+
+#save-user-btn:hover {
+    box-shadow: 0 6px 20px var(--belwest-green-glow);
+}
+
+#delete-user-btn {
+    background: linear-gradient(135deg, 
+        var(--error-color) 0%, 
+        #ff6b6b 100%);
+    color: #FFFFFF;
+    border: none;
+}
+
+#delete-user-btn:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
 /* Login Page */
 .login-container {
     display: flex;
