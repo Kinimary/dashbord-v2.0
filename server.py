@@ -93,6 +93,50 @@ def init_db():
         )
     ''')
 
+    # Create stores table for hierarchy
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS stores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            address TEXT,
+            tu_id INTEGER,
+            rd_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tu_id) REFERENCES users (id),
+            FOREIGN KEY (rd_id) REFERENCES users (id)
+        )
+    ''')
+
+    # Create sensor_downtime table for tracking sensor disconnections
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sensor_downtime (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_id INTEGER,
+            store_id INTEGER,
+            disconnected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reconnected_at TIMESTAMP,
+            duration_minutes INTEGER,
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id),
+            FOREIGN KEY (store_id) REFERENCES stores (id)
+        )
+    ''')
+
+    # Create hourly_statistics table for detailed analytics
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS hourly_statistics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            store_id INTEGER,
+            sensor_id INTEGER,
+            hour INTEGER,
+            day_of_week INTEGER,
+            visitor_count INTEGER DEFAULT 0,
+            date DATE,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (store_id) REFERENCES stores (id),
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+        )
+    ''')
+
     # Create default admin user
     admin_password = hashlib.sha256('admin123'.encode()).hexdigest()
     cursor.execute(
@@ -115,6 +159,34 @@ def init_db():
             VALUES (?, ?, ?)
         ''', sensor)
 
+    # Create sample TU and RD users
+    tu_password = hashlib.sha256('tu123'.encode()).hexdigest()
+    rd_password = hashlib.sha256('rd123'.encode()).hexdigest()
+    
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (username, password, email, role) 
+        VALUES (?, ?, ?, ?)
+    ''', ('tu_manager', tu_password, 'tu@belwest.com', 'tu'))
+    
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (username, password, email, role) 
+        VALUES (?, ?, ?, ?)
+    ''', ('rd_manager', rd_password, 'rd@belwest.com', 'rd'))
+
+    # Create sample stores
+    sample_stores = [
+        ('Магазин №1 Центр', 'ул. Ленина, 45', 2, 3),
+        ('Магазин №2 Восток', 'ул. Гагарина, 12', 2, 3),
+        ('Магазин №3 Запад', 'ул. Мира, 78', 2, 3),
+        ('Магазин №4 Север', 'ул. Победы, 23', 2, 3)
+    ]
+
+    for store in sample_stores:
+        cursor.execute('''
+            INSERT OR IGNORE INTO stores (name, address, tu_id, rd_id) 
+            VALUES (?, ?, ?, ?)
+        ''', store)
+
     # Create sample visitor_counts data
     sample_visitor_counts = [('SENSOR_001', 15, 'Главный вход', 'active'),
                              ('SENSOR_002', 8, 'Боковой вход', 'active'),
@@ -127,6 +199,36 @@ def init_db():
             INSERT OR IGNORE INTO visitor_counts (device_id, count, location, status) 
             VALUES (?, ?, ?, ?)
         ''', count_data)
+
+    # Create sample hourly statistics
+    import random
+    from datetime import datetime, timedelta
+    
+    for store_id in range(1, 5):
+        for sensor_id in range(1, 5):
+            for day_offset in range(30):
+                date = datetime.now() - timedelta(days=day_offset)
+                for hour in range(24):
+                    visitor_count = random.randint(0, 50)
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO hourly_statistics 
+                        (store_id, sensor_id, hour, day_of_week, visitor_count, date) 
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (store_id, sensor_id, hour, date.weekday(), visitor_count, date.date()))
+
+    # Create sample sensor downtime records
+    sample_downtimes = [
+        (1, 1, datetime.now() - timedelta(hours=5), datetime.now() - timedelta(hours=3), 120),
+        (2, 2, datetime.now() - timedelta(hours=2), None, None),
+        (3, 3, datetime.now() - timedelta(days=1), datetime.now() - timedelta(hours=23), 60)
+    ]
+
+    for downtime in sample_downtimes:
+        cursor.execute('''
+            INSERT OR IGNORE INTO sensor_downtime 
+            (sensor_id, store_id, disconnected_at, reconnected_at, duration_minutes) 
+            VALUES (?, ?, ?, ?, ?)
+        ''', downtime)
 
     conn.commit()
     conn.close()
@@ -319,137 +421,157 @@ def get_sensor_data():
     try:
         user_role = session.get('role')
         user_id = session.get('user_id')
+        period = request.args.get('period', 'day')  # hour, day, week, month, year
         
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
 
-        # Build sensor filter based on role
-        sensor_filter = ""
+        # Build store filter based on role
+        store_filter = ""
         filter_params = []
         
-        if user_role not in ['admin', 'manager']:
-            # For non-admin users, filter by assigned sensors
-            cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
-            user_sensors = [row[0] for row in cursor.fetchall()]
-            
-            if user_sensors:
-                placeholders = ','.join(['?' for _ in user_sensors])
-                sensor_filter = f" WHERE s.id IN ({placeholders})"
-                filter_params = user_sensors
+        if user_role == 'store':
+            # Store managers see only their store
+            cursor.execute('SELECT id FROM stores WHERE tu_id = ? OR rd_id = ?', (user_id, user_id))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                filter_params = user_stores
             else:
-                # No sensors assigned, return empty data
-                sensor_filter = " WHERE 1=0"
+                store_filter = " WHERE 1=0"
+        elif user_role == 'tu':
+            # TU managers see stores assigned to them
+            cursor.execute('SELECT id FROM stores WHERE tu_id = ?', (user_id,))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                filter_params = user_stores
+            else:
+                store_filter = " WHERE 1=0"
+        elif user_role == 'rd':
+            # RD managers see stores under their TU managers
+            cursor.execute('SELECT id FROM stores WHERE rd_id = ?', (user_id,))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                filter_params = user_stores
+            else:
+                store_filter = " WHERE 1=0"
 
-        # Get sensor statistics
-        stats_query = f'''
+        # Get time-based statistics
+        time_condition = ""
+        if period == 'hour':
+            time_condition = "AND hs.timestamp >= datetime('now', '-1 hour')"
+        elif period == 'day':
+            time_condition = "AND hs.date = date('now')"
+        elif period == 'week':
+            time_condition = "AND hs.date >= date('now', '-7 days')"
+        elif period == 'month':
+            time_condition = "AND hs.date >= date('now', '-30 days')"
+        elif period == 'year':
+            time_condition = "AND hs.date >= date('now', '-365 days')"
+
+        # Get visitor statistics
+        visitors_query = f'''
+            SELECT COALESCE(SUM(hs.visitor_count), 0) as total_visitors
+            FROM hourly_statistics hs
+            JOIN stores s ON hs.store_id = s.id
+            {store_filter} {time_condition}
+        '''
+        cursor.execute(visitors_query, filter_params)
+        total_visitors = cursor.fetchone()[0]
+
+        # Get hourly breakdown for charts
+        hourly_query = f'''
+            SELECT hs.hour, SUM(hs.visitor_count) as visitors
+            FROM hourly_statistics hs
+            JOIN stores s ON hs.store_id = s.id
+            {store_filter} {time_condition}
+            GROUP BY hs.hour
+            ORDER BY hs.hour
+        '''
+        cursor.execute(hourly_query, filter_params)
+        hourly_data = cursor.fetchall()
+        hourly_visitors = [0] * 24
+        for hour, visitors in hourly_data:
+            hourly_visitors[hour] = visitors
+
+        # Get peak times for weekdays and weekends
+        peak_weekday_query = f'''
+            SELECT hs.hour, AVG(hs.visitor_count) as avg_visitors
+            FROM hourly_statistics hs
+            JOIN stores s ON hs.store_id = s.id
+            {store_filter} AND hs.day_of_week < 5 {time_condition}
+            GROUP BY hs.hour
+            ORDER BY avg_visitors DESC
+            LIMIT 1
+        '''
+        cursor.execute(peak_weekday_query, filter_params)
+        peak_weekday = cursor.fetchone()
+
+        peak_weekend_query = f'''
+            SELECT hs.hour, AVG(hs.visitor_count) as avg_visitors
+            FROM hourly_statistics hs
+            JOIN stores s ON hs.store_id = s.id
+            {store_filter} AND hs.day_of_week >= 5 {time_condition}
+            GROUP BY hs.hour
+            ORDER BY avg_visitors DESC
+            LIMIT 1
+        '''
+        cursor.execute(peak_weekend_query, filter_params)
+        peak_weekend = cursor.fetchone()
+
+        # Get store statistics for hierarchy view
+        store_stats_query = f'''
+            SELECT s.name, s.address, SUM(hs.visitor_count) as total_visitors
+            FROM stores s
+            LEFT JOIN hourly_statistics hs ON s.id = hs.store_id {time_condition}
+            {store_filter.replace('hs.', 's.')}
+            GROUP BY s.id, s.name, s.address
+            ORDER BY total_visitors DESC
+        '''
+        cursor.execute(store_stats_query, filter_params)
+        store_stats = cursor.fetchall()
+
+        # Get sensor status
+        sensors_query = f'''
             SELECT COUNT(*) as total, 
                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                    SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-            FROM sensors s{sensor_filter}
+            FROM sensors
         '''
-        cursor.execute(stats_query, filter_params)
+        cursor.execute(sensors_query)
         sensors_stats = cursor.fetchone()
 
-        # Get today's visitors
-        visitors_query = f'''
-            SELECT COALESCE(SUM(visitor_count), 0) as today_visitors
-            FROM visitor_data vd
-            JOIN sensors s ON vd.sensor_id = s.id
-            WHERE DATE(vd.timestamp) = DATE('now'){sensor_filter.replace('s.', 's.')}
-        '''
-        if sensor_filter:
-            visitors_query = f'''
-                SELECT COALESCE(SUM(vd.visitor_count), 0) as today_visitors
-                FROM visitor_data vd
-                JOIN sensors s ON vd.sensor_id = s.id
-                WHERE DATE(vd.timestamp) = DATE('now') AND s.id IN ({','.join(['?' for _ in filter_params])})
-            '''
-        else:
-            visitors_query = '''
-                SELECT COALESCE(SUM(visitor_count), 0) as today_visitors
-                FROM visitor_data 
-                WHERE DATE(timestamp) = DATE('now')
-            '''
-        
-        cursor.execute(visitors_query, filter_params if sensor_filter else [])
-        today_visitors = cursor.fetchone()[0]
-
-        # Get sensors data
-        sensors_query = f'''
-            SELECT s.name, s.location, s.status, s.visitor_count,
-                   COALESCE(s.last_update, 'Никогда') as last_update
-            FROM sensors s{sensor_filter}
-            ORDER BY s.name
-        '''
-        cursor.execute(sensors_query, filter_params)
-        sensors_data = cursor.fetchall()
-
-        # Generate sample hourly data
-        import random
-        hourly_visitors = [random.randint(0, 50) for _ in range(24)]
-
-        # Generate sample recent activity
-        recent_activity = [{
-            'type': 'visitor',
-            'title': 'Новый посетитель',
-            'description': 'Зарегистрирован через главный вход',
-            'time': '5 минут назад'
-        }, {
-            'type': 'sensor',
-            'title': 'Датчик подключен',
-            'description': 'Боковой вход - статус онлайн',
-            'time': '10 минут назад'
-        }, {
-            'type': 'system',
-            'title': 'Система обновлена',
-            'description': 'Обновление до версии 2.1.4',
-            'time': '1 час назад'
-        }]
-
-        # Format sensors data
-        sensors_formatted = []
-        for sensor in sensors_data:
-            sensors_formatted.append({
-                'name': sensor[0],
-                'location': sensor[1],
-                'status': sensor[2],
-                'count': sensor[3],
-                'last_update': sensor[4]
+        # Format store statistics
+        stores_formatted = []
+        for store in store_stats:
+            stores_formatted.append({
+                'name': store[0],
+                'address': store[1],
+                'visitors': store[2] if store[2] else 0
             })
 
         data = {
-            'today_visitors':
-            today_visitors,
-            'active_sensors':
-            sensors_stats[1] if sensors_stats else 0,
-            'avg_hourly':
-            round(today_visitors / 24, 1) if today_visitors > 0 else 0,
-            'peak_time':
-            '14:30',
-            'peak_count':
-            max(hourly_visitors) if hourly_visitors else 0,
-            'today_change':
-            random.randint(-5, 15),
-            'sensors_status':
-            'online' if sensors_stats and sensors_stats[1] > 0 else 'offline',
-            'new_visitors':
-            random.randint(10, 50),
-            'returning_visitors':
-            random.randint(20, 80),
-            'new_visitors_change':
-            random.randint(-10, 20),
-            'returning_visitors_change':
-            random.randint(-15, 25),
-            'hourly_visitors':
-            hourly_visitors,
+            'total_visitors': total_visitors,
+            'active_sensors': sensors_stats[1] if sensors_stats else 0,
+            'avg_hourly': round(total_visitors / 24, 1) if total_visitors > 0 else 0,
+            'peak_weekday': f"{peak_weekday[0]:02d}:00" if peak_weekday else '--:--',
+            'peak_weekend': f"{peak_weekend[0]:02d}:00" if peak_weekend else '--:--',
+            'peak_weekday_count': round(peak_weekday[1]) if peak_weekday else 0,
+            'peak_weekend_count': round(peak_weekend[1]) if peak_weekend else 0,
+            'sensors_status': 'online' if sensors_stats and sensors_stats[1] > 0 else 'offline',
+            'hourly_visitors': hourly_visitors,
             'sensors_stats': {
                 'online': sensors_stats[1] if sensors_stats else 0,
                 'offline': sensors_stats[2] if sensors_stats else 0
             },
-            'recent_activity':
-            recent_activity,
-            'sensors':
-            sensors_formatted
+            'stores': stores_formatted,
+            'period': period,
+            'user_role': user_role
         }
 
         conn.close()
@@ -458,25 +580,97 @@ def get_sensor_data():
     except Exception as e:
         print(f"Error in get_sensor_data: {e}")
         return jsonify({
-            'today_visitors': 0,
+            'total_visitors': 0,
             'active_sensors': 0,
             'avg_hourly': 0,
-            'peak_time': '--:--',
-            'peak_count': 0,
-            'today_change': 0,
+            'peak_weekday': '--:--',
+            'peak_weekend': '--:--',
+            'peak_weekday_count': 0,
+            'peak_weekend_count': 0,
             'sensors_status': 'offline',
-            'new_visitors': 0,
-            'returning_visitors': 0,
-            'new_visitors_change': 0,
-            'returning_visitors_change': 0,
             'hourly_visitors': [0] * 24,
-            'sensors_stats': {
-                'online': 0,
-                'offline': 0
-            },
-            'recent_activity': [],
-            'sensors': []
+            'sensors_stats': {'online': 0, 'offline': 0},
+            'stores': [],
+            'period': 'day',
+            'user_role': user_role
         })
+
+
+@app.route('/api/sensor-downtimes')
+@login_required
+def get_sensor_downtimes():
+    """API для получения информации об отключениях датчиков"""
+    try:
+        user_role = session.get('role')
+        user_id = session.get('user_id')
+        
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+
+        # Build filter based on role
+        store_filter = ""
+        filter_params = []
+        
+        if user_role == 'store':
+            cursor.execute('SELECT id FROM stores WHERE tu_id = ? OR rd_id = ?', (user_id, user_id))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE sd.store_id IN ({placeholders})"
+                filter_params = user_stores
+            else:
+                store_filter = " WHERE 1=0"
+        elif user_role == 'tu':
+            cursor.execute('SELECT id FROM stores WHERE tu_id = ?', (user_id,))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE sd.store_id IN ({placeholders})"
+                filter_params = user_stores
+            else:
+                store_filter = " WHERE 1=0"
+        elif user_role == 'rd':
+            cursor.execute('SELECT id FROM stores WHERE rd_id = ?', (user_id,))
+            user_stores = [row[0] for row in cursor.fetchall()]
+            if user_stores:
+                placeholders = ','.join(['?' for _ in user_stores])
+                store_filter = f" WHERE sd.store_id IN ({placeholders})"
+                filter_params = user_stores
+            else:
+                store_filter = " WHERE 1=0"
+
+        # Get sensor downtime data
+        downtime_query = f'''
+            SELECT s.name as sensor_name, st.name as store_name, st.address,
+                   sd.disconnected_at, sd.reconnected_at, sd.duration_minutes
+            FROM sensor_downtime sd
+            JOIN sensors s ON sd.sensor_id = s.id
+            JOIN stores st ON sd.store_id = st.id
+            {store_filter}
+            ORDER BY sd.disconnected_at DESC
+        '''
+        cursor.execute(downtime_query, filter_params)
+        downtime_data = cursor.fetchall()
+
+        # Format downtime data
+        downtimes = []
+        for row in downtime_data:
+            downtimes.append({
+                'sensor_name': row[0],
+                'store_name': row[1],
+                'store_address': row[2],
+                'disconnected_at': row[3],
+                'reconnected_at': row[4],
+                'duration_minutes': row[5],
+                'status': 'reconnected' if row[4] else 'offline'
+            })
+
+        conn.close()
+        return jsonify({'downtimes': downtimes})
+
+    except Exception as e:
+        print(f"Error in get_sensor_downtimes: {e}")
+        return jsonify({'downtimes': []})
 
 
 @app.route('/api/visitor-count', methods=['POST'])
@@ -499,6 +693,29 @@ def receive_visitor_count():
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
         
+        # Check if sensor went offline/online
+        cursor.execute('SELECT status FROM sensors WHERE name LIKE ?', (f"%{device_id}%",))
+        previous_status = cursor.fetchone()
+        
+        # Track sensor downtime
+        if previous_status and previous_status[0] == 'active' and status == 'offline':
+            # Sensor went offline
+            cursor.execute('''
+                INSERT INTO sensor_downtime (sensor_id, store_id, disconnected_at)
+                SELECT s.id, 1, ?
+                FROM sensors s
+                WHERE s.name LIKE ?
+            ''', (datetime.now(), f"%{device_id}%"))
+        elif previous_status and previous_status[0] == 'inactive' and status == 'online':
+            # Sensor came back online
+            cursor.execute('''
+                UPDATE sensor_downtime 
+                SET reconnected_at = ?, duration_minutes = 
+                    (julianday(?) - julianday(disconnected_at)) * 24 * 60
+                WHERE sensor_id = (SELECT id FROM sensors WHERE name LIKE ?)
+                AND reconnected_at IS NULL
+            ''', (datetime.now(), datetime.now(), f"%{device_id}%"))
+        
         # Обновляем или создаем запись в visitor_counts
         cursor.execute('''
             INSERT OR REPLACE INTO visitor_counts 
@@ -514,6 +731,16 @@ def receive_visitor_count():
             SET visitor_count = ?, last_update = ?, status = ?
             WHERE name LIKE ?
         ''', (count, datetime.now(), status, f"%{device_id}%"))
+        
+        # Add to hourly statistics
+        current_time = datetime.now()
+        cursor.execute('''
+            INSERT OR REPLACE INTO hourly_statistics 
+            (store_id, sensor_id, hour, day_of_week, visitor_count, date)
+            SELECT 1, s.id, ?, ?, ?, ?
+            FROM sensors s
+            WHERE s.name LIKE ?
+        ''', (current_time.hour, current_time.weekday(), count, current_time.date(), f"%{device_id}%"))
         
         conn.commit()
         conn.close()

@@ -1,4 +1,3 @@
-
 // BELWEST - Visitor Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
@@ -18,9 +17,10 @@ function initializeDashboard() {
 function loadDashboardData() {
     // Show loading state
     showLoadingState();
-    
+
     // Load sensor data
-    fetch('/api/sensor-data')
+    const period = document.getElementById('period-select').value;
+    fetch(`/api/sensor-data?period=${period}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -42,19 +42,19 @@ function updateDashboard(data) {
     try {
         // Update main statistics
         updateMainStats(data);
-        
+
         // Update additional statistics
         updateAdditionalStats(data);
-        
+
         // Update recent activity
         updateRecentActivity(data);
-        
+
         // Update sensors overview
         updateSensorsOverview(data);
-        
+
         // Update charts
         updateCharts(data);
-        
+
     } catch (error) {
         console.error('Ошибка обновления дашборда:', error);
         showErrorState();
@@ -71,15 +71,15 @@ function updateMainStats(data) {
         today_change: 0,
         sensors_status: 'offline'
     };
-    
+
     const stats = { ...defaultData, ...data };
-    
+
     // Update today's visitors
     const todayElement = document.getElementById('today-visitors');
     if (todayElement) {
         todayElement.textContent = stats.today_visitors;
     }
-    
+
     const changeElement = document.getElementById('today-change');
     if (changeElement) {
         const changeText = stats.today_change > 0 ? 
@@ -87,36 +87,36 @@ function updateMainStats(data) {
             `${stats.today_change}% за сегодня`;
         changeElement.textContent = changeText;
     }
-    
+
     // Update active sensors
     const sensorsElement = document.getElementById('active-sensors');
     if (sensorsElement) {
         sensorsElement.textContent = stats.active_sensors;
     }
-    
+
     const statusElement = document.getElementById('sensors-status');
     if (statusElement) {
         statusElement.textContent = stats.sensors_status === 'online' ? 
             'Все датчики онлайн' : 'Проверьте соединение';
     }
-    
+
     // Update average hourly
     const avgElement = document.getElementById('avg-hourly');
     if (avgElement) {
         avgElement.textContent = stats.avg_hourly;
     }
-    
+
     const hourlyChangeElement = document.getElementById('hourly-change');
     if (hourlyChangeElement) {
         hourlyChangeElement.textContent = 'За последний час';
     }
-    
+
     // Update peak time
     const peakTimeElement = document.getElementById('peak-time');
     if (peakTimeElement) {
         peakTimeElement.textContent = stats.peak_time;
     }
-    
+
     const peakCountElement = document.getElementById('peak-count');
     if (peakCountElement) {
         peakCountElement.textContent = `${stats.peak_count} посетителей`;
@@ -131,15 +131,15 @@ function updateAdditionalStats(data) {
             new_visitors_change: 0,
             returning_visitors_change: 0
         };
-        
+
         const stats = { ...defaultData, ...data };
-        
+
         // Update new visitors
         const newVisitorsElement = document.getElementById('new-visitors');
         if (newVisitorsElement) {
             newVisitorsElement.textContent = stats.new_visitors;
         }
-        
+
         const newVisitorsChangeElement = document.getElementById('new-visitors-change');
         if (newVisitorsChangeElement) {
             const changeText = stats.new_visitors_change > 0 ? 
@@ -147,13 +147,13 @@ function updateAdditionalStats(data) {
                 `${stats.new_visitors_change}% сегодня`;
             newVisitorsChangeElement.textContent = changeText;
         }
-        
+
         // Update returning visitors
         const returningElement = document.getElementById('returning-visitors');
         if (returningElement) {
             returningElement.textContent = stats.returning_visitors;
         }
-        
+
         const returningChangeElement = document.getElementById('returning-visitors-change');
         if (returningChangeElement) {
             const changeText = stats.returning_visitors_change > 0 ? 
@@ -161,7 +161,7 @@ function updateAdditionalStats(data) {
                 `${stats.returning_visitors_change}% сегодня`;
             returningChangeElement.textContent = changeText;
         }
-        
+
     } catch (error) {
         console.error('Ошибка обновления дополнительных статистик:', error);
     }
@@ -170,9 +170,9 @@ function updateAdditionalStats(data) {
 function updateRecentActivity(data) {
     const activityContainer = document.getElementById('recent-data');
     if (!activityContainer) return;
-    
+
     const activities = data.recent_activity || [];
-    
+
     if (activities.length === 0) {
         activityContainer.innerHTML = `
             <div class="activity-item">
@@ -187,7 +187,7 @@ function updateRecentActivity(data) {
         `;
         return;
     }
-    
+
     const activityHTML = activities.map(activity => `
         <div class="activity-item">
             <div class="activity-icon">${getActivityIcon(activity.type)}</div>
@@ -199,16 +199,16 @@ function updateRecentActivity(data) {
             </div>
         </div>
     `).join('');
-    
+
     activityContainer.innerHTML = activityHTML;
 }
 
 function updateSensorsOverview(data) {
     const sensorsContainer = document.getElementById('sensors-grid');
     if (!sensorsContainer) return;
-    
+
     const sensors = data.sensors || [];
-    
+
     if (sensors.length === 0) {
         sensorsContainer.innerHTML = `
             <div class="sensor-card">
@@ -225,7 +225,7 @@ function updateSensorsOverview(data) {
         `;
         return;
     }
-    
+
     const sensorsHTML = sensors.map(sensor => `
         <div class="sensor-card">
             <div class="sensor-header">
@@ -239,7 +239,7 @@ function updateSensorsOverview(data) {
             </div>
         </div>
     `).join('');
-    
+
     sensorsContainer.innerHTML = sensorsHTML;
 }
 
@@ -282,7 +282,7 @@ function initializeCharts() {
             }
         });
     }
-    
+
     // Initialize sensors chart
     const sensorsCtx = document.getElementById('sensors-chart');
     if (sensorsCtx) {
@@ -316,7 +316,7 @@ function updateCharts(data) {
         window.visitorsChart.data.datasets[0].data = data.hourly_visitors;
         window.visitorsChart.update();
     }
-    
+
     // Update sensors chart
     if (window.sensorsChart && data.sensors_stats) {
         window.sensorsChart.data.datasets[0].data = [
@@ -365,3 +365,191 @@ function getActivityIcon(type) {
 // Export functions for global use
 window.loadDashboardData = loadDashboardData;
 window.updateDashboard = updateDashboard;
+
+// Загрузка данных датчиков
+function loadSensorData() {
+    const period = document.getElementById('period-select').value;
+    fetch(`/api/sensor-data?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateDashboard(data);
+            updateChart(data.hourly_visitors);
+            updateStoresChart(data.stores);
+            updateStoresList(data.stores);
+        })
+        .catch(error => {
+            console.error('Error loading sensor data:', error);
+        });
+}
+
+// Загрузка данных об отключениях датчиков
+function loadDowntimeData() {
+    fetch('/api/sensor-downtimes')
+        .then(response => response.json())
+        .then(data => {
+            updateDowntimeList(data.downtimes);
+        })
+        .catch(error => {
+            console.error('Error loading downtime data:', error);
+        });
+}
+
+// Обновление элементов дашборда
+function updateDashboard(data) {
+    // Обновляем статистику
+    document.getElementById('total-visitors').textContent = data.total_visitors;
+    document.getElementById('active-sensors').textContent = data.active_sensors;
+
+    // Обновляем период
+    const periodLabels = {
+        'hour': 'за час',
+        'day': 'за день',
+        'week': 'за неделю',
+        'month': 'за месяц',
+        'year': 'за год'
+    };
+    document.getElementById('period-label').textContent = periodLabels[data.period];
+
+    // Обновляем статус датчиков
+    const sensorsStatusElement = document.getElementById('sensors-status');
+    sensorsStatusElement.textContent = data.sensors_status;
+    sensorsStatusElement.className = `stat-status ${data.sensors_status}`;
+
+    // Обновляем пиковые времена
+    document.getElementById('peak-weekday').textContent = data.peak_weekday;
+    document.getElementById('peak-weekend').textContent = data.peak_weekend;
+    document.getElementById('peak-weekday-count').textContent = `${data.peak_weekday_count} посетителей`;
+    document.getElementById('peak-weekend-count').textContent = `${data.peak_weekend_count} посетителей`;
+}
+
+// Обновление диаграммы магазинов
+function updateStoresChart(stores) {
+    const canvas = document.getElementById('storesChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // Уничтожаем предыдущий график если он существует
+    if (window.storesChart) {
+        window.storesChart.destroy();
+    }
+
+    const labels = stores.map(store => store.name);
+    const data = stores.map(store => store.visitors);
+
+    window.storesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Посетители',
+                data: data,
+                backgroundColor: [
+                    '#4f46e5',
+                    '#06b6d4',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444'
+                ],
+                borderColor: [
+                    '#4338ca',
+                    '#0891b2',
+                    '#059669',
+                    '#d97706',
+                    '#dc2626'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Обновление списка магазинов
+function updateStoresList(stores) {
+    const container = document.getElementById('stores-list-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    stores.forEach(store => {
+        const storeElement = document.createElement('div');
+        storeElement.className = 'store-item';
+        storeElement.innerHTML = `
+            <div class="store-info">
+                <h4>${store.name}</h4>
+                <p>${store.address}</p>
+            </div>
+            <div class="store-visitors">
+                <span class="visitors-count">${store.visitors}</span>
+                <span class="visitors-label">посетителей</span>
+            </div>
+        `;
+        container.appendChild(storeElement);
+    });
+}
+
+// Обновление списка отключений датчиков
+function updateDowntimeList(downtimes) {
+    const container = document.getElementById('downtime-list');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (downtimes.length === 0) {
+        container.innerHTML = '<p>Отключений не зарегистрировано</p>';
+        return;
+    }
+
+    downtimes.forEach(downtime => {
+        const downtimeElement = document.createElement('div');
+        downtimeElement.className = `downtime-item ${downtime.status}`;
+        downtimeElement.innerHTML = `
+            <div class="downtime-icon">
+                <i class="fas fa-${downtime.status === 'offline' ? 'exclamation-triangle' : 'check-circle'}"></i>
+            </div>
+            <div class="downtime-content">
+                <h4>${downtime.sensor_name}</h4>
+                <p>${downtime.store_name}</p>
+                <div class="downtime-time">
+                    <span>Отключен: ${new Date(downtime.disconnected_at).toLocaleString()}</span>
+                    ${downtime.reconnected_at ? 
+                        `<span>Подключен: ${new Date(downtime.reconnected_at).toLocaleString()}</span>
+                         <span>Длительность: ${downtime.duration_minutes} мин.</span>` : 
+                        '<span class="offline-status">Сейчас отключен</span>'
+                    }
+                </div>
+            </div>
+        `;
+        container.appendChild(downtimeElement);
+    });
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadSensorData();
+    loadDowntimeData();
+
+    // Обработчик изменения периода
+    document.getElementById('period-select').addEventListener('change', function() {
+        loadSensorData();
+    });
+
+    // Обновляем данные каждые 30 секунд
+    setInterval(() => {
+        loadSensorData();
+        loadDowntimeData();
+    }, 30000);
+});
