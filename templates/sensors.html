@@ -46,6 +46,47 @@
                     </a>
                 </li>
             </ul>
+            <div class="sidebar-settings">
+                <div class="settings-dropdown">
+                    <button class="settings-btn" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                        <i class="fas fa-chevron-down settings-arrow"></i>
+                    </button>
+                    <div class="settings-menu">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-moon"></i>
+                                <span>Темная тема</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-bell"></i>
+                                <span>Уведомления</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Авто-обновление</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Основной контент -->
@@ -53,13 +94,17 @@
             <div class="top-bar">
                 <h1>Управление датчиками</h1>
                 <div class="user-profile">
-                    <div class="notifications">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Поиск...">
+                    </div>
+                    <div class="notifications" id="notifications-btn">
                         <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                        <div class="notification-dropdown">
+                        <span class="notification-badge" id="notification-count">3</span>
+                        <div class="notification-dropdown" id="notification-dropdown">
                             <div class="notification-header">
                                 <h4>Уведомления</h4>
-                                <button class="mark-all-read">Отметить все</button>
+                                <button class="mark-all-read">Прочитать все</button>
                             </div>
                             <div class="notification-list">
                                 <div class="notification-item unread">
@@ -67,9 +112,19 @@
                                         <i class="fas fa-exclamation-triangle text-warning"></i>
                                     </div>
                                     <div class="notification-content">
-                                        <div class="notification-title">Датчик offline</div>
-                                        <div class="notification-text">Датчик 001 не отвечает</div>
+                                        <div class="notification-title">Датчик офлайн</div>
+                                        <div class="notification-text">Датчик "Вход основной" не отвечает</div>
                                         <div class="notification-time">5 минут назад</div>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-users text-success"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <div class="notification-title">Пиковая нагрузка</div>
+                                        <div class="notification-text">Превышен порог посетителей (200+)</div>
+                                        <div class="notification-time">15 минут назад</div>
                                     </div>
                                 </div>
                                 <div class="notification-item">
@@ -77,38 +132,40 @@
                                         <i class="fas fa-check-circle text-success"></i>
                                     </div>
                                     <div class="notification-content">
-                                        <div class="notification-title">Датчик подключен</div>
-                                        <div class="notification-text">Датчик 003 успешно подключен</div>
-                                        <div class="notification-time">10 минут назад</div>
+                                        <div class="notification-title">Система обновлена</div>
+                                        <div class="notification-text">Версия 2.1.4 успешно установлена</div>
+                                        <div class="notification-time">1 час назад</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="user-info">
-                        <div class="user-avatar">А</div>
-                        <span>Администратор</span>
-                        <div class="user-dropdown">
+                    <div class="user-info" id="user-menu-btn">
+                        <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
+                        <span>Админ</span>
+                        <div class="user-dropdown" id="user-dropdown">
                             <div class="user-dropdown-header">
-                                <div class="user-avatar">А</div>
+                                <div class="user-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
                                 <div class="user-details">
                                     <div class="user-name">Администратор</div>
-                                    <div class="user-role">Системный администратор</div>
+                                    <div class="user-role">Полный доступ</div>
                                 </div>
                             </div>
                             <div class="user-dropdown-menu">
                                 <a href="/profile" class="dropdown-item">
                                     <i class="fas fa-user"></i>
-                                    Профиль
+                                    <span>Профиль</span>
                                 </a>
                                 <a href="/settings" class="dropdown-item">
                                     <i class="fas fa-cog"></i>
-                                    Настройки
+                                    <span>Настройки</span>
                                 </a>
                                 <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item">
+                                <a href="#" class="dropdown-item" onclick="logout()">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
+                                    <span>Выйти</span>
                                 </a>
                             </div>
                         </div>
@@ -284,8 +341,8 @@
                                 <td><span class="status-badge ${sensor.status === 'active' ? 'online' : 'offline'}">${sensor.status === 'active' ? 'Активен' : 'Неактивен'}</span></td>
                                 <td>${sensor.last_updated}</td>
                                 <td>
-                                    <button class="edit-sensor" data-id="${sensor.id}">Редактировать</button>
-                                    <button class="delete-sensor" data-id="${sensor.id}">Удалить</button>
+                                    <button class="edit-sensor" onclick="editSensor('${sensor.id}')">Редактировать</button>
+                                    <button class="delete-sensor" onclick="deleteSensor('${sensor.id}')">Удалить</button>
                                 </td>
                             </tr>
                         `).join('');
@@ -308,320 +365,3 @@
     </script>
 </body>
 </html>
-```
-
-```html
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BELWEST - Управление датчиками</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-</head>
-<body>
-    <div class="container">
-        <!-- Боковая панель -->
-        <div class="sidebar" id="sidebar">
-            <div class="logo">
-                <span>BELWEST</span>
-            </div>
-            <ul class="menu">
-                <li>
-                    <a href="/">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Дашборд</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/users">
-                        <i class="fas fa-users"></i>
-                        <span>Пользователи</span>
-                    </a>
-                </li>
-                <li class="active">
-                    <a href="/sensors">
-                        <i class="fas fa-robot"></i>
-                        <span>Датчики</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/reports">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Отчеты</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Настройки</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Основной контент -->
-        <div class="main-content">
-            <div class="top-bar">
-                <h1>Управление датчиками</h1>
-                <div class="user-profile">
-                    <div class="notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                        <div class="notification-dropdown">
-                            <div class="notification-header">
-                                <h4>Уведомления</h4>
-                                <button class="mark-all-read">Отметить все</button>
-                            </div>
-                            <div class="notification-list">
-                                <div class="notification-item unread">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Датчик offline</div>
-                                        <div class="notification-text">Датчик 001 не отвечает</div>
-                                        <div class="notification-time">5 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Датчик подключен</div>
-                                        <div class="notification-text">Датчик 003 успешно подключен</div>
-                                        <div class="notification-time">10 минут назад</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-avatar">А</div>
-                        <span>Администратор</span>
-                        <div class="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <div class="user-avatar">А</div>
-                                <div class="user-details">
-                                    <div class="user-name">Администратор</div>
-                                    <div class="user-role">Системный администратор</div>
-                                </div>
-                            </div>
-                            <div class="user-dropdown-menu">
-                                <a href="/profile" class="dropdown-item">
-                                    <i class="fas fa-user"></i>
-                                    Профиль
-                                </a>
-                                <a href="/settings" class="dropdown-item">
-                                    <i class="fas fa-cog"></i>
-                                    Настройки
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Вкладки -->
-            <div class="dashboard-tabs">
-                <button class="tab active" data-tab="sensors-list">Список датчиков</button>
-                <button class="tab" data-tab="add-sensor">Добавить датчик</button>
-            </div>
-
-            <!-- Список датчиков -->
-            <div id="sensors-list" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Список датчиков</h3>
-                        <div class="search-bar">
-                            <input type="text" id="sensor-search" placeholder="Поиск датчиков...">
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <table class="table" id="sensors-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Расположение</th>
-                                    <th>Тип</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Sensors will be loaded dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Форма добавления датчика -->
-            <div class="sensor-form" id="add-sensor" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 id="form-title">Добавить датчик</h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="sensor-form">
-                            <div class="form-group">
-                                <label for="sensor-id">ID датчика</label>
-                                <input type="text" id="sensor-id" required />
-                            </div>
-                            <div class="form-group">
-                                <label>Название датчика *</label>
-                                <input type="text" id="sensor-name" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Расположение *</label>
-                                <input type="text" id="sensor-location" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Тип датчика</label>
-                                <select id="sensor-type">
-                                    <option value="motion">Датчик движения</option>
-                                    <option value="proximity">Датчик приближения</option>
-                                    <option value="door">Дверной датчик</option>
-                                    <option value="temperature">Датчик температуры</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Статус</label>
-                                <select id="sensor-status">
-                                    <option value="active">Активен</option>
-                                    <option value="offline">Офлайн</option>
-                                    <option value="maintenance">Обслуживание</option>
-                                </select>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" id="cancel-sensor">Отмена</button>
-                                <button type="submit" id="save-sensor">Сохранить</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sensors.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Переключение вкладок
-            const tabs = document.querySelectorAll('.tab');
-            const sensorsList = document.getElementById('sensors-list');
-            const addSensorForm = document.getElementById('add-sensor');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabName = this.getAttribute('data-tab');
-
-                    // Убираем активный класс со всех вкладок
-                    tabs.forEach(t => t.classList.remove('active'));
-                    // Добавляем активный класс к текущей вкладке
-                    this.classList.add('active');
-
-                    // Показываем нужную секцию
-                    if (tabName === 'sensors-list') {
-                        sensorsList.style.display = 'block';
-                        addSensorForm.style.display = 'none';
-                    } else if (tabName === 'add-sensor') {
-                        sensorsList.style.display = 'none';
-                        addSensorForm.style.display = 'block';
-                    }
-                });
-            });
-
-            // Обработка формы
-            document.getElementById('cancel-sensor').addEventListener('click', function() {
-                // Возврат к списку датчиков
-                tabs[0].click();
-            });
-
-            // Обработка уведомлений
-            const notificationsBell = document.querySelector('.notifications');
-            const userInfo = document.querySelector('.user-info');
-
-            notificationsBell.addEventListener('click', function(e) {
-                e.stopPropagation();
-                this.classList.toggle('active');
-                userInfo.classList.remove('active');
-            });
-
-            userInfo.addEventListener('click', function(e) {
-                e.stopPropagation();
-                this.classList.toggle('active');
-                notificationsBell.classList.remove('active');
-            });
-
-            // Закрытие выпадающих меню при клике вне
-            document.addEventListener('click', function() {
-                notificationsBell.classList.remove('active');
-                userInfo.classList.remove('active');
-            });
-
-            // Загрузка данных датчиков
-            loadSensors();
-        });
-
-        function loadSensors() {
-            fetch('/api/sensors')
-                .then(response => response.json())
-                .then(sensors => {
-                    const tbody = document.getElementById('sensors-table-body');
-                    if (sensors.length === 0) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
-                                    <i class="fas fa-robot" style="font-size: 48px; color: var(--belwest-green); margin-bottom: 16px;"></i>
-                                    <br>
-                                    Датчики не найдены
-                                </td>
-                            </tr>
-                        `;
-                    } else {
-                        tbody.innerHTML = sensors.map(sensor => `
-                            <tr>
-                                <td>${sensor.id}</td>
-                                <td>${sensor.name}</td>
-                                <td>${sensor.location}</td>
-                                <td><span class="status-badge ${sensor.status === 'active' ? 'online' : 'offline'}">${sensor.status === 'active' ? 'Активен' : 'Неактивен'}</span></td>
-                                <td>${sensor.last_updated}</td>
-                                <td>
-                                    <button class="edit-sensor" data-id="${sensor.id}">Редактировать</button>
-                                    <button class="delete-sensor" data-id="${sensor.id}">Удалить</button>
-                                </td>
-                            </tr>
-                        `).join('');
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки датчиков:', error);
-                    const tbody = document.getElementById('sensors-table-body');
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--error-color);">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                                <br>
-                                Ошибка загрузки данных
-                            </td>
-                        </tr>
-                    `;
-                });
-        }
-    </script>
-</body>
-</html>
-```

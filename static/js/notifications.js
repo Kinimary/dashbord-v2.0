@@ -64,11 +64,30 @@ class NotificationSystem {
 
 // Initialize notification system
 const notifications = new NotificationSystem();
+
 // Notification system
 document.addEventListener('DOMContentLoaded', function() {
     initializeNotificationActions();
-    initializeSettings();
+    initializeGlobalNotifications();
 });
+
+function initializeGlobalNotifications() {
+    const notificationsBtn = document.querySelector('.notifications');
+    const notificationDropdown = document.querySelector('.notification-dropdown');
+    
+    if (notificationsBtn && notificationDropdown) {
+        notificationsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!notificationsBtn.contains(e.target)) {
+                notificationsBtn.classList.remove('active');
+            }
+        });
+    }
+}
 
 function initializeNotificationActions() {
     // Mark all as read

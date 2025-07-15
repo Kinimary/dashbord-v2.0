@@ -300,35 +300,233 @@ function getStatusText(status) {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    loadSensorsList();
+    // Load sensors on page load
+    loadSensors();
 
-    // Handle save sensor button
-    const saveBtn = document.getElementById('save-sensor');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            const name = document.getElementById('sensor-name').value;
-            const location = document.getElementById('sensor-location').value;
-            const type = document.getElementById('sensor-type').value;
-            const status = document.getElementById('sensor-status').value;
-
-            if (!name || !location) {
-                alert('Пожалуйста, заполните все обязательные поля');
-                return;
-            }
-
-            const sensorData = { name, location, type, status };
-
-            if (editingSensorId) {
-                console.log('Updating sensor:', editingSensorId, sensorData);
-                alert('Датчик обновлен!');
-                cancelSensorEdit();
-            } else {
-                console.log('Adding sensor:', sensorData);
-                alert('Датчик добавлен!');
-                document.getElementById('sensor-form').reset();
-            }
-
-            loadSensorsList();
+    // Initialize search
+    const searchInput = document.getElementById('sensor-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterSensors(this.value);
         });
     }
+
+    // Form submission
+    const sensorForm = document.getElementById('sensor-form');
+    if (sensorForm) {
+        sensorForm.addEventListener('submit', handleSensorSubmit);
+    }
+
+    // Initialize notifications
+    initializeNotifications();
+
+    // Initialize user menu
+    initializeUserMenu();
 });
+
+let editingSensorId = null;
+
+function editSensor(sensorId) {
+    editingSensorId = sensorId;
+
+    // Fetch sensor data
+    fetch(`/api/sensors/${sensorId}`)
+        .then(response => response.json())
+        .then(sensor => {
+            // Fill form with sensor data
+            document.getElementById('sensor-id').value = sensor.id;
+            document.getElementById('sensor-name').value = sensor.name;
+            document.getElementById('sensor-location').value = sensor.location;
+            document.getElementById('sensor-status').value = sensor.status;
+
+            // Update form title
+            document.getElementById('form-title').textContent = 'Редактировать датчик';
+
+            // Switch to form tab
+            document.querySelector('[data-tab="add-sensor"]').click();
+
+            // Make ID field readonly
+            document.getElementById('sensor-id').readOnly = true;
+        })
+        .catch(error => {
+            console.error('Error loading sensor:', error);
+            showNotification('Ошибка загрузки данных датчика', 'error');
+        });
+}
+
+function deleteSensor(sensorId) {
+    if (confirm('Вы уверены, что хотите удалить этот датчик?')) {
+        fetch(`/api/sensors/${sensorId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Датчик успешно удален', 'success');
+            loadSensors();
+        })
+        .catch(error => {
+            console.error('Error deleting sensor:', error);
+            showNotification('Ошибка удаления датчика', 'error');
+        });
+    }
+}
+
+function initializeNotifications() {
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+    const markAllRead = document.querySelector('.mark-all-read');
+
+    if (!notificationsBtn || !notificationDropdown) return;
+
+    notificationsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = notificationsBtn.classList.contains('active');
+
+        // Close user menu if open
+        const userMenu = document.getElementById('user-menu-btn');
+        if (userMenu) userMenu.classList.remove('active');
+
+        // Toggle notifications
+        if (isActive) {
+            notificationsBtn.classList.remove('active');
+            notificationDropdown.style.display = 'none';
+        } else {
+            notificationsBtn.classList.add('active');
+            notificationDropdown.style.display = 'block';
+        }
+    });
+
+    // Mark all as read functionality
+    if (markAllRead) {
+        markAllRead.addEventListener('click', function() {
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+
+            const badge = document.getElementById('notification-count');
+            if (badge) {
+                badge.textContent = '0';
+                badge.style.display = 'none';
+            }
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!notificationsBtn.contains(e.target)) {
+            notificationsBtn.classList.remove('active');
+            notificationDropdown.style.display = 'none';
+        }
+    });
+}
+
+function initializeUserMenu() {
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+
+    if (!userMenuBtn || !userDropdown) return;
+
+    userMenuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = userMenuBtn.classList.contains('active');
+
+        // Close notifications if open
+        const notificationsBtn = document.getElementById('notifications-btn');
+        if (notificationsBtn) {
+            notificationsBtn.classList.remove('active');
+            document.getElementById('notification-dropdown').style.display = 'none';
+        }
+
+        // Toggle user menu
+        if (isActive) {
+            userMenuBtn.classList.remove('active');
+        } else {
+            userMenuBtn.classList.add('active');
+        }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!userMenuBtn.contains(e.target)) {
+            userMenuBtn.classList.remove('active');
+        }
+    });
+}
+
+function showNotification(message, type) {
+    // Simple notification system
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: var(--belwest-green);
+        color: white;
+        border-radius: 8px;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+
+    if (type === 'error') {
+        notification.style.background = 'var(--error-color)';
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.style.opacity = '1', 100);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function handleSensorSubmit(e) {
+    e.preventDefault();
+
+    const sensorData = {
+        id: document.getElementById('sensor-id').value,
+        name: document.getElementById('sensor-name').value,
+        location: document.getElementById('sensor-location').value,
+        status: document.getElementById('sensor-status').value
+    };
+
+    const method = editingSensorId ? 'PUT' : 'POST';
+    const url = editingSensorId ? `/api/sensors/${editingSensorId}` : '/api/sensors';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sensorData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotification(data.error, 'error');
+        } else {
+            const message = editingSensorId ? 'Датчик успешно обновлен' : 'Датчик успешно добавлен';
+            showNotification(message, 'success');
+            resetForm();
+            loadSensors();
+            // Return to sensors list
+            document.querySelector('[data-tab="sensors-list"]').click();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Произошла ошибка при сохранении датчика', 'error');
+    });
+}
+
+function resetForm() {
+    editingSensorId = null;
+    document.getElementById('sensor-form').reset();
+    document.getElementById('form-title').textContent = 'Добавить датчик';
+    document.getElementById('sensor-id').readOnly = false;
+}

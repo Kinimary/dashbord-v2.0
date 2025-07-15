@@ -275,12 +275,12 @@ function stopAutoRefresh() {
 // Global logout function
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
-        // Clear session data
+        // Clear local storage
         localStorage.clear();
         sessionStorage.clear();
         
-        // Redirect to login
-        window.location.href = '/login';
+        // Redirect to logout route
+        window.location.href = '/logout';
     }
 }
 
