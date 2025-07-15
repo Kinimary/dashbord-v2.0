@@ -713,6 +713,25 @@ input:checked + .toggle-slider:before {
 
 .text-warning { color: var(--warning-color); }
 .text-success { color: var(--success-color); }
+.text-error { color: var(--error-color); }
+.text-info { color: var(--info-color); }
+
+.no-notifications {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.no-notifications i {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.no-notifications p {
+    margin: 0;
+    font-size: 14px;
+}
 
 .user-info {
     display: flex;

@@ -123,46 +123,20 @@
                     <div class="user-profile">
                         <div class="search-bar">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Поиск по дашборду...">
+                            <input type="text" id="dashboard-search" placeholder="Поиск по дашборду...">
                         </div>
                         <div class="notifications" id="notifications-btn">
                             <i class="fas fa-bell"></i>
-                            <span class="notification-badge" id="notification-count">3</span>
+                            <span class="notification-badge" id="notification-count">0</span>
                             <div class="notification-dropdown" id="notification-dropdown">
                                 <div class="notification-header">
                                     <h4>Уведомления</h4>
-                                    <button class="mark-all-read">Прочитать все</button>
+                                    <button class="mark-all-read" id="mark-all-read">Прочитать все</button>
                                 </div>
-                                <div class="notification-list">
-                                    <div class="notification-item unread">
-                                        <div class="notification-icon">
-                                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">Датчик офлайн</div>
-                                            <div class="notification-text">Датчик "Вход основной" не отвечает</div>
-                                            <div class="notification-time">5 минут назад</div>
-                                        </div>
-                                    </div>
-                                    <div class="notification-item unread">
-                                        <div class="notification-icon">
-                                            <i class="fas fa-users text-success"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">Пиковая нагрузка</div>
-                                            <div class="notification-text">Превышен порог посетителей (200+)</div>
-                                            <div class="notification-time">15 минут назад</div>
-                                        </div>
-                                    </div>
-                                    <div class="notification-item">
-                                        <div class="notification-icon">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">Система обновлена</div>
-                                            <div class="notification-text">Версия 2.1.4 успешно установлена</div>
-                                            <div class="notification-time">1 час назад</div>
-                                        </div>
+                                <div class="notification-list" id="notification-list">
+                                    <div class="no-notifications">
+                                        <i class="fas fa-bell-slash"></i>
+                                        <p>Нет новых уведомлений</p>
                                     </div>
                                 </div>
                             </div>
@@ -418,6 +392,9 @@
                 if (userInfo) userInfo.classList.remove('active');
             });
 
+            // Инициализация поиска
+            initializeDashboardSearch();
+
             // Инициализация настроек
             const settingsBtn = document.getElementById('settings-btn');
             const settingsDropdown = document.querySelector('.settings-dropdown');
@@ -560,8 +537,193 @@
             const autoUpdate = document.getElementById('auto-update-toggle');
             if (autoUpdate && autoUpdate.checked) {
                 loadDashboardData();
+                loadNotifications();
             }
         }, 30000); // Каждые 30 секунд
+
+        // Функция поиска по дашборду
+        function initializeDashboardSearch() {
+            const searchInput = document.getElementById('dashboard-search');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value.toLowerCase().trim();
+                    performDashboardSearch(query);
+                });
+            }
+        }
+
+        function performDashboardSearch(query) {
+            // Поиск по метрикам
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (query === '' || text.includes(query)) {
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Поиск по элементам активности
+            const activityItems = document.querySelectorAll('.activity-item');
+            activityItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (query === '' || text.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Поиск по датчикам
+            const sensorItems = document.querySelectorAll('.sensor-item');
+            sensorItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (query === '' || text.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Поиск по графикам
+            const chartCards = document.querySelectorAll('.chart-card');
+            chartCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (query === '' || text.includes(query)) {
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Функция загрузки уведомлений
+        function loadNotifications() {
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    updateNotificationsList(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки уведомлений:', error);
+                });
+        }
+
+        function updateNotificationsList(notifications) {
+            const notificationList = document.getElementById('notification-list');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div class="no-notifications">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>Нет новых уведомлений</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notificationList.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${notification.is_read ? '' : 'unread'}" data-id="${notification.id}">
+                    <div class="notification-icon">
+                        <i class="fas ${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${notification.title}</div>
+                        <div class="notification-text">${notification.message}</div>
+                        <div class="notification-time">${formatTime(notification.created_at)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Добавляем обработчики клика для уведомлений
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const notificationId = this.dataset.id;
+                    markNotificationAsRead(notificationId);
+                    this.classList.remove('unread');
+                });
+            });
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-count');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'sensor_offline': 'fa-exclamation-triangle',
+                'sensor_online': 'fa-check-circle',
+                'high_traffic': 'fa-users',
+                'low_traffic': 'fa-user-minus',
+                'system_update': 'fa-sync-alt',
+                'system_error': 'fa-times-circle'
+            };
+            return icons[type] || 'fa-info-circle';
+        }
+
+        function getNotificationColor(type) {
+            const colors = {
+                'sensor_offline': 'text-error',
+                'sensor_online': 'text-success',
+                'high_traffic': 'text-warning',
+                'low_traffic': 'text-info',
+                'system_update': 'text-success',
+                'system_error': 'text-error'
+            };
+            return colors[type] || 'text-info';
+        }
+
+        function formatTime(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diff = now - time;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (minutes < 1) return 'Только что';
+            if (minutes < 60) return `${minutes} мин назад`;
+            if (hours < 24) return `${hours} ч назад`;
+            if (days < 7) return `${days} дн назад`;
+            return time.toLocaleDateString();
+        }
+
+        function markNotificationAsRead(notificationId) {
+            fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+        }
+
+        // Обработка кнопки "Прочитать все"
+        document.getElementById('mark-all-read').addEventListener('click', function() {
+            fetch('/api/notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(() => {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                updateNotificationBadge(0);
+            });
+        });
+
+        // Загрузка уведомлений при загрузке страницы
+        loadNotifications();
     </script>
 </body>
 </html>

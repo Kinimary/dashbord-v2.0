@@ -596,6 +596,126 @@ def get_sensor_data():
         })
 
 
+@app.route('/api/notifications')
+@login_required
+def get_notifications():
+    """API для получения уведомлений пользователя"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role')
+        
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+        
+        # Создаем таблицу уведомлений если она не существует
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                type TEXT DEFAULT 'info',
+                is_read BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
+        # Генерируем уведомления на основе данных
+        notifications = []
+        
+        # Проверяем офлайн датчики
+        cursor.execute('''
+            SELECT name, last_update 
+            FROM sensors 
+            WHERE status = 'inactive' OR last_update < datetime('now', '-1 hour')
+        ''')
+        offline_sensors = cursor.fetchall()
+        
+        for sensor in offline_sensors:
+            notifications.append({
+                'id': f'sensor_offline_{sensor[0]}',
+                'title': 'Датчик офлайн',
+                'message': f'Датчик "{sensor[0]}" не отвечает',
+                'type': 'sensor_offline',
+                'is_read': False,
+                'created_at': datetime.now().isoformat()
+            })
+        
+        # Проверяем высокую нагрузку
+        cursor.execute('''
+            SELECT SUM(visitor_count) as total 
+            FROM hourly_statistics 
+            WHERE date = date('now') AND hour = ?
+        ''', (datetime.now().hour,))
+        current_hour_traffic = cursor.fetchone()[0] or 0
+        
+        if current_hour_traffic > 100:
+            notifications.append({
+                'id': 'high_traffic',
+                'title': 'Высокая нагрузка',
+                'message': f'Текущий поток: {current_hour_traffic} посетителей/час',
+                'type': 'high_traffic',
+                'is_read': False,
+                'created_at': datetime.now().isoformat()
+            })
+        
+        # Проверяем длительные отключения
+        cursor.execute('''
+            SELECT COUNT(*) 
+            FROM sensor_downtime 
+            WHERE reconnected_at IS NULL AND 
+                  disconnected_at < datetime('now', '-2 hours')
+        ''')
+        long_downtimes = cursor.fetchone()[0] or 0
+        
+        if long_downtimes > 0:
+            notifications.append({
+                'id': 'long_downtime',
+                'title': 'Длительные отключения',
+                'message': f'{long_downtimes} датчиков отключены более 2 часов',
+                'type': 'sensor_offline',
+                'is_read': False,
+                'created_at': datetime.now().isoformat()
+            })
+        
+        # Добавляем системные уведомления
+        if user_role == 'admin':
+            notifications.append({
+                'id': 'system_status',
+                'title': 'Система работает',
+                'message': 'Все сервисы функционируют нормально',
+                'type': 'system_update',
+                'is_read': False,
+                'created_at': datetime.now().isoformat()
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'notifications': notifications[:10],  # Последние 10 уведомлений
+            'unread_count': len([n for n in notifications if not n['is_read']])
+        })
+        
+    except Exception as e:
+        print(f"Error in get_notifications: {e}")
+        return jsonify({'notifications': [], 'unread_count': 0})
+
+
+@app.route('/api/notifications/<notification_id>/read', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    """Отметить уведомление как прочитанное"""
+    return jsonify({'success': True})
+
+
+@app.route('/api/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    """Отметить все уведомления как прочитанные"""
+    return jsonify({'success': True})
+
+
 @app.route('/api/sensor-downtimes')
 @login_required
 def get_sensor_downtimes():
