@@ -3,6 +3,7 @@ run = "python server.py"
 
 [nix]
 channel = "stable-24_05"
+packages = ["glibcLocales"]
 
 [deployment]
 run = ["sh", "-c", "python server.py"]
