@@ -175,41 +175,66 @@
 
             <!-- Вкладки -->
             <div class="dashboard-tabs">
-                <button class="tab active" data-tab="sensors-list">Список датчиков</button>
+                <button class="tab active" data-tab="sensor-status">Статус датчика</button>
                 <button class="tab" data-tab="add-sensor">Добавить датчик</button>
             </div>
 
-            <!-- Список датчиков -->
-            <div class="sensor-list" id="sensors-list">
+            <!-- Статус датчика -->
+            <div class="sensor-status" id="sensor-status">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Датчики</h3>
-                        <div class="search-bar">
-                            <input type="text" id="sensor-search" placeholder="Поиск датчиков..." />
-                        </div>
+                        <h3>Проверка статуса датчика</h3>
                     </div>
                     <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Местоположение</th>
-                                    <th>Статус</th>
-                                    <th>Последнее обновление</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sensors-table-body">
-                                <tr>
-                                    <td colspan="6" style="text-align: center; padding: 40px;">
-                                        <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--belwest-green);"></i>
-                                        <br><br>
-                                        Загрузка данных...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="sensor-selector">
+                            <div class="form-group">
+                                <label for="sensor-input">Номер датчика</label>
+                                <input type="text" id="sensor-input" placeholder="Введите номер датчика" />
+                            </div>
+                            <div class="form-group">
+                                <label for="sensor-select">Или выберите из списка</label>
+                                <select id="sensor-select">
+                                    <option value="">Выберите датчик...</option>
+                                </select>
+                            </div>
+                            <button id="check-sensor-btn" class="btn btn-primary">Проверить статус</button>
+                        </div>
+                        
+                        <div id="sensor-info" class="sensor-info" style="display: none;">
+                            <div class="sensor-card">
+                                <div class="sensor-header">
+                                    <h4 id="sensor-title">Информация о датчике</h4>
+                                    <span id="sensor-status-badge" class="status-badge">Неизвестно</span>
+                                </div>
+                                <div class="sensor-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">ID датчика:</span>
+                                        <span id="sensor-id-display">-</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Название:</span>
+                                        <span id="sensor-name-display">-</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Местоположение:</span>
+                                        <span id="sensor-location-display">-</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Последнее обновление:</span>
+                                        <span id="sensor-update-display">-</span>
+                                    </div>
+                                </div>
+                                <div class="sensor-actions">
+                                    <button id="edit-current-sensor" class="btn btn-secondary">Редактировать</button>
+                                    <button id="delete-current-sensor" class="btn btn-danger">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="sensor-error" class="error-message" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="error-text">Датчик не найден</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -262,7 +287,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Переключение вкладок
             const tabs = document.querySelectorAll('.tab');
-            const sensorsList = document.getElementById('sensors-list');
+            const sensorStatus = document.getElementById('sensor-status');
             const addSensorForm = document.getElementById('add-sensor');
 
             tabs.forEach(tab => {
@@ -275,11 +300,11 @@
                     this.classList.add('active');
 
                     // Показываем нужную секцию
-                    if (tabName === 'sensors-list') {
-                        sensorsList.style.display = 'block';
+                    if (tabName === 'sensor-status') {
+                        document.getElementById('sensor-status').style.display = 'block';
                         addSensorForm.style.display = 'none';
                     } else if (tabName === 'add-sensor') {
-                        sensorsList.style.display = 'none';
+                        document.getElementById('sensor-status').style.display = 'none';
                         addSensorForm.style.display = 'block';
                     }
                 });
@@ -287,7 +312,7 @@
 
             // Обработка формы
             document.getElementById('cancel-sensor').addEventListener('click', function() {
-                // Возврат к списку датчиков
+                // Возврат к статусу датчиков
                 tabs[0].click();
             });
 
@@ -313,54 +338,153 @@
                 userInfo.classList.remove('active');
             });
 
-            // Загрузка данных датчиков
-            loadSensors();
+            // Инициализация интерфейса проверки датчиков
+            initializeSensorCheck();
         });
 
-        function loadSensors() {
+        function initializeSensorCheck() {
+            // Загружаем список датчиков для выпадающего списка
+            loadSensorsList();
+            
+            // Обработчики событий
+            const sensorInput = document.getElementById('sensor-input');
+            const sensorSelect = document.getElementById('sensor-select');
+            const checkBtn = document.getElementById('check-sensor-btn');
+            
+            // Синхронизация ввода и выбора
+            sensorInput.addEventListener('input', function() {
+                if (this.value) {
+                    sensorSelect.value = '';
+                }
+            });
+            
+            sensorSelect.addEventListener('change', function() {
+                if (this.value) {
+                    sensorInput.value = this.value;
+                }
+            });
+            
+            // Проверка статуса датчика
+            checkBtn.addEventListener('click', checkSensorStatus);
+            
+            // Обработчики для кнопок в карточке датчика
+            document.getElementById('edit-current-sensor').addEventListener('click', function() {
+                const sensorId = document.getElementById('sensor-id-display').textContent;
+                editSensor(sensorId);
+            });
+            
+            document.getElementById('delete-current-sensor').addEventListener('click', function() {
+                const sensorId = document.getElementById('sensor-id-display').textContent;
+                deleteSensor(sensorId);
+            });
+        }
+
+        function loadSensorsList() {
             fetch('/api/sensors')
                 .then(response => response.json())
                 .then(sensors => {
-                    const tbody = document.getElementById('sensors-table-body');
-                    if (sensors.length === 0) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
-                                    <i class="fas fa-robot" style="font-size: 48px; color: var(--belwest-green); margin-bottom: 16px;"></i>
-                                    <br>
-                                    Датчики не найдены
-                                </td>
-                            </tr>
-                        `;
-                    } else {
-                        tbody.innerHTML = sensors.map(sensor => `
-                            <tr>
-                                <td>${sensor.id}</td>
-                                <td>${sensor.name}</td>
-                                <td>${sensor.location}</td>
-                                <td><span class="status-badge ${sensor.status === 'active' ? 'online' : 'offline'}">${sensor.status === 'active' ? 'Активен' : 'Неактивен'}</span></td>
-                                <td>${sensor.last_updated}</td>
-                                <td>
-                                    <button class="edit-sensor" onclick="editSensor('${sensor.id}')">Редактировать</button>
-                                    <button class="delete-sensor" onclick="deleteSensor('${sensor.id}')">Удалить</button>
-                                </td>
-                            </tr>
-                        `).join('');
-                    }
+                    const sensorSelect = document.getElementById('sensor-select');
+                    sensorSelect.innerHTML = '<option value="">Выберите датчик...</option>';
+                    
+                    sensors.forEach(sensor => {
+                        const option = document.createElement('option');
+                        option.value = sensor.id;
+                        option.textContent = `${sensor.id} - ${sensor.name}`;
+                        sensorSelect.appendChild(option);
+                    });
                 })
                 .catch(error => {
-                    console.error('Ошибка загрузки датчиков:', error);
-                    const tbody = document.getElementById('sensors-table-body');
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--error-color);">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                                <br>
-                                Ошибка загрузки данных
-                            </td>
-                        </tr>
-                    `;
+                    console.error('Ошибка загрузки списка датчиков:', error);
                 });
+        }
+
+        function checkSensorStatus() {
+            const sensorInput = document.getElementById('sensor-input');
+            const sensorSelect = document.getElementById('sensor-select');
+            const sensorId = sensorInput.value || sensorSelect.value;
+            
+            if (!sensorId) {
+                showError('Введите номер датчика или выберите из списка');
+                return;
+            }
+            
+            hideError();
+            hideSensorInfo();
+            
+            fetch(`/api/sensors/${sensorId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Датчик не найден');
+                    }
+                    return response.json();
+                })
+                .then(sensor => {
+                    showSensorInfo(sensor);
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки датчика:', error);
+                    showError('Датчик не найден или произошла ошибка');
+                });
+        }
+
+        function showSensorInfo(sensor) {
+            document.getElementById('sensor-id-display').textContent = sensor.id;
+            document.getElementById('sensor-name-display').textContent = sensor.name;
+            document.getElementById('sensor-location-display').textContent = sensor.location;
+            document.getElementById('sensor-update-display').textContent = sensor.last_updated;
+            
+            const statusBadge = document.getElementById('sensor-status-badge');
+            statusBadge.textContent = sensor.status === 'active' ? 'Активен' : 'Неактивен';
+            statusBadge.className = `status-badge ${sensor.status === 'active' ? 'online' : 'offline'}`;
+            
+            document.getElementById('sensor-info').style.display = 'block';
+        }
+
+        function hideSensorInfo() {
+            document.getElementById('sensor-info').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('sensor-error').style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('sensor-error').style.display = 'none';
+        }
+
+        function editSensor(sensorId) {
+            // Переключаемся на вкладку добавления/редактирования
+            document.querySelector('.tab[data-tab="add-sensor"]').click();
+            
+            // Загружаем данные датчика в форму
+            fetch(`/api/sensors/${sensorId}`)
+                .then(response => response.json())
+                .then(sensor => {
+                    document.getElementById('sensor-id').value = sensor.id;
+                    document.getElementById('sensor-name').value = sensor.name;
+                    document.getElementById('sensor-location').value = sensor.location;
+                    document.getElementById('sensor-status').value = sensor.status;
+                    document.getElementById('form-title').textContent = 'Редактировать датчик';
+                });
+        }
+
+        function deleteSensor(sensorId) {
+            if (confirm('Вы уверены, что хотите удалить этот датчик?')) {
+                fetch(`/api/sensors/${sensorId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Датчик успешно удален');
+                    hideSensorInfo();
+                    loadSensorsList(); // Обновляем список датчиков
+                })
+                .catch(error => {
+                    console.error('Ошибка при удалении датчика:', error);
+                    alert('Ошибка при удалении датчика');
+                });
+            }
         }
     </script>
 </body>
