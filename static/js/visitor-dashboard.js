@@ -1,270 +1,367 @@
 
-let visitorsChart;
-let sensorsChart;
-
-// Загрузка данных при загрузке страницы
+// BELWEST - Visitor Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
     loadDashboardData();
-    initCharts();
-    
-    // Обновление данных каждые 30 секунд
-    setInterval(loadDashboardData, 30000);
+    setupPeriodicUpdates();
+    initializeCharts();
 });
 
-async function loadDashboardData() {
+function initializeDashboard() {
+    // Add smooth loading animation
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+}
+
+function loadDashboardData() {
+    // Show loading state
+    showLoadingState();
+    
+    // Load sensor data
+    fetch('/api/sensor-data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            updateDashboard(data);
+            hideLoadingState();
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки данных:', error);
+            showErrorState();
+            hideLoadingState();
+        });
+}
+
+function updateDashboard(data) {
     try {
-        const response = await fetch('/api/sensor-data');
-        const data = await response.json();
+        // Update main statistics
+        updateMainStats(data);
         
-        updateStats(data);
-        updateRecentActivity(data);
-        updateSensorsOverview(data);
-        updateCharts(data);
+        // Update additional statistics
         updateAdditionalStats(data);
+        
+        // Update recent activity
+        updateRecentActivity(data);
+        
+        // Update sensors overview
+        updateSensorsOverview(data);
+        
+        // Update charts
+        updateCharts(data);
+        
     } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
+        console.error('Ошибка обновления дашборда:', error);
+        showErrorState();
+    }
+}
+
+function updateMainStats(data) {
+    const defaultData = {
+        today_visitors: 0,
+        active_sensors: 0,
+        avg_hourly: 0,
+        peak_time: '--:--',
+        peak_count: 0,
+        today_change: 0,
+        sensors_status: 'offline'
+    };
+    
+    const stats = { ...defaultData, ...data };
+    
+    // Update today's visitors
+    const todayElement = document.getElementById('today-visitors');
+    if (todayElement) {
+        todayElement.textContent = stats.today_visitors;
+    }
+    
+    const changeElement = document.getElementById('today-change');
+    if (changeElement) {
+        const changeText = stats.today_change > 0 ? 
+            `+${stats.today_change}% за сегодня` : 
+            `${stats.today_change}% за сегодня`;
+        changeElement.textContent = changeText;
+    }
+    
+    // Update active sensors
+    const sensorsElement = document.getElementById('active-sensors');
+    if (sensorsElement) {
+        sensorsElement.textContent = stats.active_sensors;
+    }
+    
+    const statusElement = document.getElementById('sensors-status');
+    if (statusElement) {
+        statusElement.textContent = stats.sensors_status === 'online' ? 
+            'Все датчики онлайн' : 'Проверьте соединение';
+    }
+    
+    // Update average hourly
+    const avgElement = document.getElementById('avg-hourly');
+    if (avgElement) {
+        avgElement.textContent = stats.avg_hourly;
+    }
+    
+    const hourlyChangeElement = document.getElementById('hourly-change');
+    if (hourlyChangeElement) {
+        hourlyChangeElement.textContent = 'За последний час';
+    }
+    
+    // Update peak time
+    const peakTimeElement = document.getElementById('peak-time');
+    if (peakTimeElement) {
+        peakTimeElement.textContent = stats.peak_time;
+    }
+    
+    const peakCountElement = document.getElementById('peak-count');
+    if (peakCountElement) {
+        peakCountElement.textContent = `${stats.peak_count} посетителей`;
     }
 }
 
 function updateAdditionalStats(data) {
     try {
-        // Calculate monthly total
-        const currentMonth = new Date().getMonth();
-        const monthlyTotal = data.reduce((total, record) => {
-            const recordDate = new Date(record.received_at);
-            if (recordDate.getMonth() === currentMonth) {
-                return total + (record.count || 0);
-            }
-            return total;
-        }, 0);
+        const defaultData = {
+            new_visitors: 0,
+            returning_visitors: 0,
+            new_visitors_change: 0,
+            returning_visitors_change: 0
+        };
         
-        // Calculate processing speed (records per minute)
-        const recentRecords = data.slice(0, 10);
-        const timeSpan = recentRecords.length > 1 ? 
-            new Date(recentRecords[0].received_at) - new Date(recentRecords[recentRecords.length - 1].received_at) : 0;
-        const processingSpeed = timeSpan > 0 ? Math.round((recentRecords.length / (timeSpan / 60000)) * 10) / 10 : 0;
+        const stats = { ...defaultData, ...data };
         
-        // Update monthly total
-        document.getElementById('monthly-total').textContent = monthlyTotal.toLocaleString();
-        document.getElementById('monthly-change').textContent = '+12.5% с прошлого месяца';
+        // Update new visitors
+        const newVisitorsElement = document.getElementById('new-visitors');
+        if (newVisitorsElement) {
+            newVisitorsElement.textContent = stats.new_visitors;
+        }
         
-        // Update processing speed
-        document.getElementById('processing-speed').textContent = processingSpeed + '/мин';
-        document.getElementById('speed-status').textContent = processingSpeed > 5 ? 'Высокая скорость' : 'Нормальная скорость';
+        const newVisitorsChangeElement = document.getElementById('new-visitors-change');
+        if (newVisitorsChangeElement) {
+            const changeText = stats.new_visitors_change > 0 ? 
+                `+${stats.new_visitors_change}% сегодня` : 
+                `${stats.new_visitors_change}% сегодня`;
+            newVisitorsChangeElement.textContent = changeText;
+        }
+        
+        // Update returning visitors
+        const returningElement = document.getElementById('returning-visitors');
+        if (returningElement) {
+            returningElement.textContent = stats.returning_visitors;
+        }
+        
+        const returningChangeElement = document.getElementById('returning-visitors-change');
+        if (returningChangeElement) {
+            const changeText = stats.returning_visitors_change > 0 ? 
+                `+${stats.returning_visitors_change}% сегодня` : 
+                `${stats.returning_visitors_change}% сегодня`;
+            returningChangeElement.textContent = changeText;
+        }
         
     } catch (error) {
         console.error('Ошибка обновления дополнительных статистик:', error);
-        document.getElementById('monthly-total').textContent = '0';
-        document.getElementById('monthly-change').textContent = 'Нет данных';
-        document.getElementById('processing-speed').textContent = '0/мин';
-        document.getElementById('speed-status').textContent = 'Нет данных';
     }
-}
-
-function updateStats(data) {
-    const today = new Date().toDateString();
-    const todayData = data.filter(item => new Date(item.timestamp * 1000).toDateString() === today);
-    
-    // Подсчет посетителей за сегодня
-    const todayVisitors = todayData.reduce((sum, item) => sum + item.count, 0);
-    document.getElementById('today-visitors').textContent = todayVisitors;
-    
-    // Активные датчики
-    const uniqueSensors = [...new Set(data.map(item => item.device_id))];
-    const activeSensors = uniqueSensors.filter(sensorId => {
-        const sensorData = data.filter(item => item.device_id === sensorId);
-        const latestData = sensorData[0];
-        return latestData && latestData.status === 'online';
-    });
-    
-    document.getElementById('active-sensors').textContent = activeSensors.length;
-    document.getElementById('sensors-status').textContent = `из ${uniqueSensors.length} датчиков`;
-    
-    // Средний поток в час
-    const hourlyData = getHourlyData(todayData);
-    const avgHourly = hourlyData.length > 0 ? 
-        Math.round(hourlyData.reduce((sum, val) => sum + val, 0) / hourlyData.length) : 0;
-    document.getElementById('avg-hourly').textContent = avgHourly;
-    
-    // Пиковое время
-    const peakHour = findPeakHour(todayData);
-    document.getElementById('peak-time').textContent = peakHour.hour || '-';
-    document.getElementById('peak-count').textContent = peakHour.count ? `${peakHour.count} посетителей` : '-';
-}
-
-function getHourlyData(data) {
-    const hourlyCount = {};
-    
-    data.forEach(item => {
-        const hour = new Date(item.timestamp * 1000).getHours();
-        hourlyCount[hour] = (hourlyCount[hour] || 0) + item.count;
-    });
-    
-    return Object.values(hourlyCount);
-}
-
-function findPeakHour(data) {
-    const hourlyCount = {};
-    
-    data.forEach(item => {
-        const hour = new Date(item.timestamp * 1000).getHours();
-        hourlyCount[hour] = (hourlyCount[hour] || 0) + item.count;
-    });
-    
-    let maxCount = 0;
-    let peakHour = null;
-    
-    for (const [hour, count] of Object.entries(hourlyCount)) {
-        if (count > maxCount) {
-            maxCount = count;
-            peakHour = `${hour}:00`;
-        }
-    }
-    
-    return { hour: peakHour, count: maxCount };
 }
 
 function updateRecentActivity(data) {
-    const recentData = data.slice(0, 10);
-    const activityList = document.getElementById('recent-data');
+    const activityContainer = document.getElementById('recent-data');
+    if (!activityContainer) return;
     
-    activityList.innerHTML = recentData.map(item => `
+    const activities = data.recent_activity || [];
+    
+    if (activities.length === 0) {
+        activityContainer.innerHTML = `
+            <div class="activity-item">
+                <div class="activity-icon">📊</div>
+                <div class="activity-content">
+                    <div class="activity-title">Нет данных</div>
+                    <div class="activity-meta">
+                        Данные о посетителях отсутствуют
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    const activityHTML = activities.map(activity => `
         <div class="activity-item">
-            <div class="activity-icon">📊</div>
+            <div class="activity-icon">${getActivityIcon(activity.type)}</div>
             <div class="activity-content">
-                <div class="activity-title">Датчик ${item.device_id}</div>
+                <div class="activity-title">${activity.title}</div>
                 <div class="activity-meta">
-                    ${item.count} посетителей • ${formatTime(item.timestamp)}
-                    <span class="status-badge ${item.status === 'online' ? 'online' : 'offline'}">
-                        ${item.status === 'online' ? 'Онлайн' : 'Оффлайн'}
-                    </span>
+                    ${activity.description} • ${activity.time}
                 </div>
             </div>
         </div>
     `).join('');
+    
+    activityContainer.innerHTML = activityHTML;
 }
 
 function updateSensorsOverview(data) {
-    const sensorsGrid = document.getElementById('sensors-grid');
-    const sensorGroups = {};
+    const sensorsContainer = document.getElementById('sensors-grid');
+    if (!sensorsContainer) return;
     
-    data.forEach(item => {
-        if (!sensorGroups[item.device_id]) {
-            sensorGroups[item.device_id] = {
-                id: item.device_id,
-                location: item.location || 'Не указано',
-                status: item.status,
-                count: 0,
-                lastUpdate: item.timestamp
-            };
-        }
-        sensorGroups[item.device_id].count += item.count;
-    });
+    const sensors = data.sensors || [];
     
-    sensorsGrid.innerHTML = Object.values(sensorGroups).map(sensor => `
+    if (sensors.length === 0) {
+        sensorsContainer.innerHTML = `
+            <div class="sensor-card">
+                <div class="sensor-header">
+                    <h4>Нет датчиков</h4>
+                    <span class="status-indicator offline"></span>
+                </div>
+                <div class="sensor-info">
+                    <div class="sensor-location">Датчики не настроены</div>
+                    <div class="sensor-count">0 посетителей</div>
+                    <div class="sensor-update">Настройте датчики в разделе "Датчики"</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    const sensorsHTML = sensors.map(sensor => `
         <div class="sensor-card">
             <div class="sensor-header">
-                <h4>Датчик ${sensor.id}</h4>
-                <span class="status-indicator ${sensor.status === 'online' ? 'online' : 'offline'}"></span>
+                <h4>${sensor.name}</h4>
+                <span class="status-indicator ${sensor.status}"></span>
             </div>
             <div class="sensor-info">
                 <div class="sensor-location">${sensor.location}</div>
                 <div class="sensor-count">${sensor.count} посетителей</div>
-                <div class="sensor-update">Обновлено: ${formatTime(sensor.lastUpdate)}</div>
+                <div class="sensor-update">Обновлено: ${sensor.last_update}</div>
             </div>
         </div>
     `).join('');
+    
+    sensorsContainer.innerHTML = sensorsHTML;
 }
 
-function initCharts() {
-    // График посетителей по часам
-    const visitorsCtx = document.getElementById('visitors-chart').getContext('2d');
-    visitorsChart = new Chart(visitorsCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Посетители',
-                data: [],
-                borderColor: '#4CAF50',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
+function initializeCharts() {
+    // Initialize visitors chart
+    const visitorsCtx = document.getElementById('visitors-chart');
+    if (visitorsCtx) {
+        window.visitorsChart = new Chart(visitorsCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                datasets: [{
+                    label: 'Посетители',
+                    data: Array(24).fill(0),
+                    borderColor: '#2E8B57',
+                    backgroundColor: 'rgba(46, 139, 87, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#A8D8A8'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#A8D8A8'
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
     
-    // График данных с датчиков
-    const sensorsCtx = document.getElementById('sensors-chart').getContext('2d');
-    sensorsChart = new Chart(sensorsCtx, {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Показания датчиков',
-                data: [],
-                backgroundColor: '#2196F3',
-                borderColor: '#1976D2',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
+    // Initialize sensors chart
+    const sensorsCtx = document.getElementById('sensors-chart');
+    if (sensorsCtx) {
+        window.sensorsChart = new Chart(sensorsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Онлайн', 'Офлайн'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#2E8B57', '#FF4757']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#A8D8A8'
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 }
 
 function updateCharts(data) {
-    // Обновление графика посетителей по часам
-    const today = new Date().toDateString();
-    const todayData = data.filter(item => new Date(item.timestamp * 1000).toDateString() === today);
-    
-    const hourlyData = {};
-    for (let i = 0; i < 24; i++) {
-        hourlyData[i] = 0;
+    // Update visitors chart
+    if (window.visitorsChart && data.hourly_visitors) {
+        window.visitorsChart.data.datasets[0].data = data.hourly_visitors;
+        window.visitorsChart.update();
     }
     
-    todayData.forEach(item => {
-        const hour = new Date(item.timestamp * 1000).getHours();
-        hourlyData[hour] += item.count;
-    });
-    
-    visitorsChart.data.labels = Object.keys(hourlyData).map(hour => `${hour}:00`);
-    visitorsChart.data.datasets[0].data = Object.values(hourlyData);
-    visitorsChart.update();
-    
-    // Обновление графика датчиков
-    const sensorData = {};
-    data.forEach(item => {
-        if (!sensorData[item.device_id]) {
-            sensorData[item.device_id] = 0;
-        }
-        sensorData[item.device_id] += item.count;
-    });
-    
-    sensorsChart.data.labels = Object.keys(sensorData).map(id => `Датчик ${id}`);
-    sensorsChart.data.datasets[0].data = Object.values(sensorData);
-    sensorsChart.update();
+    // Update sensors chart
+    if (window.sensorsChart && data.sensors_stats) {
+        window.sensorsChart.data.datasets[0].data = [
+            data.sensors_stats.online || 0,
+            data.sensors_stats.offline || 0
+        ];
+        window.sensorsChart.update();
+    }
 }
 
-function formatTime(timestamp) {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit'
+function setupPeriodicUpdates() {
+    // Update data every 30 seconds
+    setInterval(loadDashboardData, 30000);
+}
+
+function showLoadingState() {
+    const cards = document.querySelectorAll('.card .stat-value');
+    cards.forEach(card => {
+        card.textContent = '...';
     });
 }
+
+function hideLoadingState() {
+    // Loading state is automatically hidden when data is updated
+}
+
+function showErrorState() {
+    const cards = document.querySelectorAll('.card .stat-change');
+    cards.forEach(card => {
+        card.textContent = 'Ошибка загрузки';
+        card.style.color = '#FF4757';
+    });
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'visitor': '👤',
+        'sensor': '📡',
+        'system': '⚙️',
+        'alert': '⚠️',
+        'success': '✅'
+    };
+    return icons[type] || '📊';
+}
+
+// Export functions for global use
+window.loadDashboardData = loadDashboardData;
+window.updateDashboard = updateDashboard;

@@ -1,15 +1,27 @@
+
 // Universal sidebar and theme functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize sidebar and theme functionality if elements exist
     initializeSidebar();
     initializeTheme();
-	initializeNotifications();
+    initializeNotifications();
     initializeUserMenu();
+    initializeSettings();
 });
 
 function initializeSidebar() {
-    // Sidebar now uses CSS hover functionality
-    // No JavaScript needed for expand/collapse
+    // Set active menu item based on current page
+    const currentPath = window.location.pathname;
+    const menuItems = document.querySelectorAll('.menu li a');
+    
+    menuItems.forEach(item => {
+        const link = item.getAttribute('href');
+        if (link === currentPath || (currentPath === '/' && link === '/')) {
+            item.parentElement.classList.add('active');
+        } else {
+            item.parentElement.classList.remove('active');
+        }
+    });
 }
 
 function initializeTheme() {
@@ -48,6 +60,7 @@ function initializeTheme() {
 function initializeNotifications() {
     const notificationsBtn = document.getElementById('notifications-btn');
     const notificationDropdown = document.getElementById('notification-dropdown');
+    const markAllRead = document.querySelector('.mark-all-read');
 
     if (!notificationsBtn || !notificationDropdown) return;
 
@@ -66,6 +79,22 @@ function initializeNotifications() {
             notificationsBtn.classList.add('active');
         }
     });
+
+    // Mark all as read functionality
+    if (markAllRead) {
+        markAllRead.addEventListener('click', function() {
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            const badge = document.getElementById('notification-count');
+            if (badge) {
+                badge.textContent = '0';
+                badge.style.display = 'none';
+            }
+        });
+    }
 
     // Close on outside click
     document.addEventListener('click', function(e) {
@@ -105,9 +134,97 @@ function initializeUserMenu() {
     });
 }
 
+function initializeSettings() {
+    const settingsBtn = document.querySelector('.settings-btn');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+    const settingsArrow = document.querySelector('.settings-arrow');
+
+    if (!settingsBtn || !settingsDropdown) return;
+
+    settingsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = settingsDropdown.classList.contains('active');
+        
+        if (isActive) {
+            settingsDropdown.classList.remove('active');
+        } else {
+            settingsDropdown.classList.add('active');
+        }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!settingsBtn.contains(e.target)) {
+            settingsDropdown.classList.remove('active');
+        }
+    });
+
+    // Initialize toggle switches
+    const toggles = document.querySelectorAll('.toggle-switch input');
+    toggles.forEach(toggle => {
+        const settingName = toggle.getAttribute('data-setting');
+        const savedValue = localStorage.getItem(settingName);
+        
+        if (savedValue === 'true') {
+            toggle.checked = true;
+        }
+        
+        toggle.addEventListener('change', function() {
+            localStorage.setItem(settingName, this.checked);
+        });
+    });
+}
+
 // Global logout function
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
+        // Clear session data
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Redirect to login
         window.location.href = '/login';
     }
 }
+
+// Page navigation with smooth transitions
+function navigateTo(url) {
+    // Add transition overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'page-transition-overlay active';
+    overlay.innerHTML = `
+        <div class="transition-spinner"></div>
+        <div class="transition-text">Загрузка...</div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Navigate after short delay
+    setTimeout(() => {
+        window.location.href = url;
+    }, 300);
+}
+
+// Enhanced search functionality
+function initializeSearch() {
+    const searchInput = document.querySelector('.search-bar input');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const searchableElements = document.querySelectorAll('[data-searchable]');
+        
+        searchableElements.forEach(element => {
+            const text = element.textContent.toLowerCase();
+            const parent = element.closest('.card, .table tr, .notification-item');
+            
+            if (text.includes(query)) {
+                if (parent) parent.style.display = '';
+            } else {
+                if (parent) parent.style.display = 'none';
+            }
+        });
+    });
+}
+
+// Initialize search on page load
+document.addEventListener('DOMContentLoaded', initializeSearch);

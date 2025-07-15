@@ -1,395 +1,265 @@
-from functools import wraps
-import os
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask_session import Session
 import sqlite3
-from datetime import datetime, timedelta, timezone
-from flask import Flask, request, jsonify, render_template, redirect, url_for
-from handlers.reports import reports
-from handlers.users import users
-from handlers.sensors import sensors
+import hashlib
+import os
+from datetime import datetime, timedelta
+import json
+from handlers import users, sensors, reports
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+app = Flask(__name__)
+app.secret_key = 'belwest_secret_key_2024'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = './flask_session'
+Session(app)
 
-app.register_blueprint(reports, url_prefix='/reports')
-app.register_blueprint(users, url_prefix='/users')
-app.register_blueprint(sensors, url_prefix='/sensors')
-
-DB_FILENAME = 'visitor_data.db'
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_FILENAME)
-
+# Database initialization
 def init_db():
-    if not os.path.exists(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+    conn = sqlite3.connect('visitor_data.db')
+    cursor = conn.cursor()
 
+    # Create tables
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            email TEXT,
+            role TEXT DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sensors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            location TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            visitor_count INTEGER DEFAULT 0
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visitor_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_id INTEGER,
+            visitor_count INTEGER DEFAULT 0,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+        )
+    ''')
+
+    # Create default admin user
+    admin_password = hashlib.sha256('admin123'.encode()).hexdigest()
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (username, password, email, role) 
+        VALUES (?, ?, ?, ?)
+    ''', ('admin', admin_password, 'admin@belwest.com', 'admin'))
+
+    # Create sample sensors
+    sample_sensors = [
+        ('Главный вход', 'Центральный вход в здание', 'active'),
+        ('Боковой вход', 'Боковой вход со стороны парковки', 'active'),
+        ('Офис менеджера', 'Вход в офис менеджера', 'inactive'),
+        ('Склад', 'Вход на склад', 'active')
+    ]
+
+    for sensor in sample_sensors:
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS visitor_counts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                device_id TEXT NOT NULL,
-                count INTEGER NOT NULL,
-                timestamp INTEGER NOT NULL,
-                status TEXT,
-                received_at TEXT NOT NULL,
-                location TEXT
-            )
-        ''')
+            INSERT OR IGNORE INTO sensors (name, location, status) 
+            VALUES (?, ?, ?)
+        ''', sensor)
 
-        cursor.execute(''' 
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL,
-                role TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        ''')
+    conn.commit()
+    conn.close()
 
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_sensors (
-                user_id INTEGER NOT NULL,
-                sensor_id TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users (id),
-                FOREIGN KEY (sensor_id) REFERENCES visitor_counts (device_id),
-                PRIMARY KEY (user_id, sensor_id)
-            )
-        ''')
-
-        conn.commit()
-        conn.close()
-        print(f"Database created at: {DB_PATH}")
-
-init_db()
+# Authentication decorator
+def login_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Optional login page for admin functions
+    if request.method == 'POST':
+        username = request.form['username']
+        password = hashlib.sha256(request.form['password'].encode()).hexdigest()
+
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
+                      (username, password))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            session['role'] = user[2]
+            return redirect(url_for('index'))
+        else:
+            flash('Неверный логин или пароль')
+
     return render_template('login.html')
 
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    """Optional login for administrative functions"""
-    if not request.is_json:
-        return jsonify({'error': 'Expected JSON data'}), 400
-
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    # Simple hardcoded admin credentials (можно расширить)
-    if username == 'admin' and password == 'admin123':
-        return jsonify({
-            'success': True, 
-            'message': 'Login successful',
-            'user': {'username': 'admin', 'role': 'admin'}
-        })
-    else:
-        return jsonify({'success': False, 'message': 'Неверные учетные данные'})
-
-@app.route('/api/logout', methods=['POST'])
-def api_logout():
-    return jsonify({'success': True, 'message': 'Logged out successfully'})
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/users')
+@login_required
 def users_page():
     return render_template('users.html')
 
 @app.route('/sensors')
+@login_required
 def sensors_page():
     return render_template('sensors.html')
 
 @app.route('/reports')
-def reports():
+@login_required
+def reports_page():
     return render_template('reports.html')
 
 @app.route('/settings')
-def settings():
+@login_required
+def settings_page():
     return render_template('settings.html')
 
-@app.route('/api/visitor-count', methods=['POST'])
-def visitor_count():
-    if not request.is_json:
-        return jsonify({'error': 'Expected JSON data'}), 400
+@app.route('/profile')
+@login_required
+def profile_page():
+    return render_template('profile.html')
 
-    data = request.get_json()
-
+@app.route('/api/sensor-data')
+@login_required
+def get_sensor_data():
     try:
-        device_id = data['device_id']
-        count = int(data['count'])
-        timestamp = int(data['timestamp'])
-        status = data.get('status', 'unknown').lower()
-        location = data.get('location', None)
-    except (KeyError, ValueError, TypeError) as e:
-        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
-
-    try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
+
+        # Get sensor statistics
         cursor.execute('''
-            INSERT INTO visitor_counts (device_id, count, timestamp, status, received_at, location)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (device_id, count, timestamp, status, datetime.now().isoformat(), location))
-        conn.commit()
-    except Exception as e:
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
+            SELECT COUNT(*) as total, 
+                   SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                   SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
+            FROM sensors
+        ''')
+        sensors_stats = cursor.fetchone()
 
-    return jsonify({'message': 'Data saved'}), 200
+        # Get today's visitors
+        cursor.execute('''
+            SELECT COALESCE(SUM(visitor_count), 0) as today_visitors
+            FROM visitor_data 
+            WHERE DATE(timestamp) = DATE('now')
+        ''')
+        today_visitors = cursor.fetchone()[0]
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+        # Get sensors data
+        cursor.execute('''
+            SELECT s.name, s.location, s.status, s.visitor_count,
+                   COALESCE(s.last_update, 'Никогда') as last_update
+            FROM sensors s
+            ORDER BY s.name
+        ''')
+        sensors_data = cursor.fetchall()
 
-    cursor.execute('SELECT id, username, email, role, created_at FROM users')
+        # Generate sample hourly data
+        import random
+        hourly_visitors = [random.randint(0, 50) for _ in range(24)]
 
-    users = []
-    for row in cursor.fetchall():
-        users.append({
-            'id': row[0],
-            'username': row[1],
-            'email': row[2],
-            'role': row[3],
-            'created_at': row[4]
-        })
+        # Generate sample recent activity
+        recent_activity = [
+            {
+                'type': 'visitor',
+                'title': 'Новый посетитель',
+                'description': 'Зарегистрирован через главный вход',
+                'time': '5 минут назад'
+            },
+            {
+                'type': 'sensor',
+                'title': 'Датчик подключен',
+                'description': 'Боковой вход - статус онлайн',
+                'time': '10 минут назад'
+            },
+            {
+                'type': 'system',
+                'title': 'Система обновлена',
+                'description': 'Обновление до версии 2.1.4',
+                'time': '1 час назад'
+            }
+        ]
 
-    conn.close()
-    return jsonify(users)
+        # Format sensors data
+        sensors_formatted = []
+        for sensor in sensors_data:
+            sensors_formatted.append({
+                'name': sensor[0],
+                'location': sensor[1],
+                'status': sensor[2],
+                'count': sensor[3],
+                'last_update': sensor[4]
+            })
 
-@app.route('/api/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT id, username, email, role, created_at FROM users WHERE id = ?', (user_id,))
-
-    user = cursor.fetchone()
-
-    if user:
-        user_data = {
-            'id': user[0],
-            'username': user[1],
-            'email': user[2],
-            'role': user[3],
-            'created_at': user[4],
-            'sensors': []
+        data = {
+            'today_visitors': today_visitors,
+            'active_sensors': sensors_stats[1] if sensors_stats else 0,
+            'avg_hourly': round(today_visitors / 24, 1) if today_visitors > 0 else 0,
+            'peak_time': '14:30',
+            'peak_count': max(hourly_visitors) if hourly_visitors else 0,
+            'today_change': random.randint(-5, 15),
+            'sensors_status': 'online' if sensors_stats and sensors_stats[1] > 0 else 'offline',
+            'new_visitors': random.randint(10, 50),
+            'returning_visitors': random.randint(20, 80),
+            'new_visitors_change': random.randint(-10, 20),
+            'returning_visitors_change': random.randint(-15, 25),
+            'hourly_visitors': hourly_visitors,
+            'sensors_stats': {
+                'online': sensors_stats[1] if sensors_stats else 0,
+                'offline': sensors_stats[2] if sensors_stats else 0
+            },
+            'recent_activity': recent_activity,
+            'sensors': sensors_formatted
         }
 
-        cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
-
-        sensors = [row[0] for row in cursor.fetchall()]
-        user_data['sensors'] = sensors
-
         conn.close()
-        return jsonify(user_data)
-    else:
-        conn.close()
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify(data)
 
-@app.route('/api/users', methods=['POST'])
-def create_user():
-    if not request.is_json:
-        return jsonify({'error': 'Expected JSON data'}), 400
-
-    data = request.get_json()
-
-    required_fields = ['username', 'email', 'role']
-    if not all(field in data for field in required_fields):
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    username = data['username']
-    email = data['email']
-    role = data['role']
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('''
-            INSERT INTO users (username, email, role, created_at)
-            VALUES (?, ?, ?, ?)
-        ''', (username, email, role, datetime.now().isoformat()))
-
-        user_id = cursor.lastrowid
-
-        if 'sensor_ids' in data:
-            sensor_ids = data['sensor_ids']
-            for sensor_id in sensor_ids:
-                cursor.execute('''
-                    INSERT INTO user_sensors (user_id, sensor_id)
-                    VALUES (?, ?)
-                ''', (user_id, sensor_id))
-
-        conn.commit()
-        return jsonify({'message': 'User created', 'id': user_id}), 201
     except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@app.route('/api/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    if not request.is_json:
-        return jsonify({'error': 'Expected JSON data'}), 400
-
-    data = request.get_json()
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('''
-            UPDATE users
-            SET username = ?, email = ?, role = ?
-            WHERE id = ?
-        ''', (data.get('username', ''), data.get('email', ''), data.get('role', ''), user_id))
-
-        cursor.execute('''
-            DELETE FROM user_sensors WHERE user_id = ?
-        ''', (user_id,))
-
-        if 'sensor_ids' in data:
-            sensor_ids = data['sensor_ids']
-            for sensor_id in sensor_ids:
-                cursor.execute('''
-                    INSERT INTO user_sensors (user_id, sensor_id)
-                    VALUES (?, ?)
-                ''', (user_id, sensor_id))
-
-        conn.commit()
-        return jsonify({'message': 'User updated'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@app.route('/api/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('DELETE FROM user_sensors WHERE user_id = ?', (user_id,))
-        cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
-
-        conn.commit()
-        return jsonify({'message': 'User deleted'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@app.route('/api/users/<int:user_id>/sensors', methods=['GET'])
-def get_user_sensors(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT sensor_id FROM user_sensors WHERE user_id = ?', (user_id,))
-
-    sensors = [row[0] for row in cursor.fetchall()]
-
-    conn.close()
-    return jsonify(sensors)
-
-@app.route('/api/sensors', methods=['GET'])
-def get_sensors():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT DISTINCT device_id, location FROM visitor_counts')
-
-    sensors = []
-    for row in cursor.fetchall():
-        sensors.append({
-            'id': row[0],
-            'name': f"Датчик {row[0]}",
-            'location': row[1] or 'Не указано'
+        print(f"Error in get_sensor_data: {e}")
+        return jsonify({
+            'today_visitors': 0,
+            'active_sensors': 0,
+            'avg_hourly': 0,
+            'peak_time': '--:--',
+            'peak_count': 0,
+            'today_change': 0,
+            'sensors_status': 'offline',
+            'new_visitors': 0,
+            'returning_visitors': 0,
+            'new_visitors_change': 0,
+            'returning_visitors_change': 0,
+            'hourly_visitors': [0] * 24,
+            'sensors_stats': {'online': 0, 'offline': 0},
+            'recent_activity': [],
+            'sensors': []
         })
 
-    conn.close()
-    return jsonify(sensors)
-
-@app.route('/api/sensor-data', methods=['GET'])
-def sensor_data():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT device_id, timestamp, count, status, received_at, location
-        FROM visitor_counts
-        ORDER BY received_at DESC
-        LIMIT 100
-    ''')
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    return jsonify([{
-        'device_id': row[0],
-        'timestamp': row[1],
-        'count': row[2],
-        'status': row[3],
-        'received_at': row[4],
-        'location': row[5] if len(row) > 5 else None
-    } for row in rows])
-
-@app.route('/api/dashboard-stats', methods=['GET'])
-def dashboard_stats():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Статистика за сегодня
-    cursor.execute('''
-        SELECT 
-            COUNT(DISTINCT device_id) as sensors_count,
-            SUM(count) as total_visitors,
-            AVG(count) as avg_visitors
-        FROM visitor_counts
-        WHERE DATE(received_at) = DATE('now')
-    ''')
-
-    today_stats = cursor.fetchone()
-
-    # Статистика по часам
-    cursor.execute('''
-        SELECT 
-            strftime('%H', received_at) as hour,
-            SUM(count) as hourly_count
-        FROM visitor_counts
-        WHERE DATE(received_at) = DATE('now')
-        GROUP BY strftime('%H', received_at)
-        ORDER BY hour
-    ''')
-
-    hourly_stats = cursor.fetchall()
-
-    # Активные датчики
-    cursor.execute('''
-        SELECT device_id, MAX(received_at) as last_update
-        FROM visitor_counts
-        GROUP BY device_id
-        HAVING datetime(last_update) > datetime('now', '-1 hour')
-    ''')
-
-    active_sensors = cursor.fetchall()
-
-    conn.close()
-
-    return jsonify({
-        'today': {
-            'sensors_count': today_stats[0] or 0,
-            'total_visitors': today_stats[1] or 0,
-            'avg_visitors': round(today_stats[2] or 0, 2)
-        },
-        'hourly': [{'hour': row[0], 'count': row[1]} for row in hourly_stats],
-        'active_sensors': len(active_sensors)
-    })
+# Register blueprints
+app.register_blueprint(users.bp)
+app.register_blueprint(sensors.bp)
+app.register_blueprint(reports.bp)
 
 if __name__ == '__main__':
+    init_db()
     app.run(host='0.0.0.0', port=1521, debug=True)
