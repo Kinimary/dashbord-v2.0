@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from flask_session import Session
+from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import hashlib
 import os
@@ -9,9 +10,24 @@ from handlers import users, sensors, reports
 
 app = Flask(__name__)
 app.secret_key = 'belwest_secret_key_2024'
+
+# Fix for Replit proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Session configuration
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = './flask_session'
+app.config['SESSION_COOKIE_NAME'] = 'visitor_session'
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+
+# Ensure session directory exists
+session_dir = './flask_session'
+if not os.path.exists(session_dir):
+    os.makedirs(session_dir)
+
 Session(app)
 
 # Database initialization
