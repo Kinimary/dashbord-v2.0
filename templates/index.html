@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -11,7 +10,7 @@
 <body>
     <div class="container">
         <!-- Боковая панель -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="logo">
                 <span>BELWEST</span>
             </div>
@@ -47,8 +46,11 @@
                     </a>
                 </li>
             </ul>
-            <div class="theme-toggle" onclick="toggleTheme()">
+            <div class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">
                 <i class="fas fa-moon" id="theme-icon"></i>
+            </div>
+            <div class="sidebar-toggle" id="sidebar-toggle">
+                <i class="fas fa-chevron-left"></i>
             </div>
         </div>
 
@@ -146,32 +148,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/page-transitions.js"></script>
     <script src="/static/js/visitor-dashboard.js"></script>
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const themeIcon = document.getElementById('theme-icon');
-            
-            if (body.classList.contains('dark-mode')) {
-                body.classList.remove('dark-mode');
-                themeIcon.className = 'fas fa-moon';
-                localStorage.setItem('theme', 'light');
-            } else {
-                body.classList.add('dark-mode');
-                themeIcon.className = 'fas fa-sun';
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-
-        // Загрузка сохраненной темы
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme');
-            const themeIcon = document.getElementById('theme-icon');
-            
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeIcon.className = 'fas fa-sun';
-            }
-        });
-    </script>
+    <script src="/static/js/sidebar.js"></script>
 </body>
 </html>

@@ -10,8 +10,11 @@
     <body>
         <div class="container">
             <!-- Боковая панель -->
-            <div class="sidebar">
+            <div class="sidebar" id="sidebar">
                 <div class="logo">
+                    <button class="sidebar-toggle" id="sidebar-toggle">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
                     <span>BELWEST</span>
                 </div>
                 <ul class="menu">
@@ -121,7 +124,8 @@
         <script src="/static/js/page-transitions.js"></script>
         <script>
             // Theme toggle functionality
-            document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+            const themeToggle = document.getElementById('dark-mode-toggle');
+            themeToggle.addEventListener('click', function() {
                 document.body.classList.toggle('light-mode');
                 const icon = this;
                 if (document.body.classList.contains('light-mode')) {
@@ -132,6 +136,15 @@
                     icon.classList.add('fa-moon');
                 }
             });
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+            });
+
 
             document.getElementById('save-settings').addEventListener('click', function() {
                 alert('Настройки сохранены!');
