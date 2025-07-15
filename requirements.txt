@@ -3,3 +3,4 @@ openpyxl
 Flask==2.3.3
 xlsxwriter
 PyJWT==2.8.0
+flask-session
