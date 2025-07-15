@@ -7,33 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    
-    if (!sidebar || !sidebarToggle) return;
-    
-    // Load saved sidebar state
-    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (isCollapsed) {
-        sidebar.classList.add('collapsed');
-        const icon = sidebarToggle.querySelector('i');
-        icon.className = 'fas fa-chevron-right';
-    }
-    
-    // Toggle sidebar
-    sidebarToggle.addEventListener('click', function() {
-        sidebar.classList.toggle('collapsed');
-        const icon = this.querySelector('i');
-        const collapsed = sidebar.classList.contains('collapsed');
-        
-        if (collapsed) {
-            icon.className = 'fas fa-chevron-right';
-            localStorage.setItem('sidebarCollapsed', 'true');
-        } else {
-            icon.className = 'fas fa-chevron-left';
-            localStorage.setItem('sidebarCollapsed', 'false');
-        }
-    });
+    // Sidebar now uses CSS hover functionality
+    // No JavaScript needed for expand/collapse
 }
 
 function initializeTheme() {

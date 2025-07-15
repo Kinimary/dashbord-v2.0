@@ -98,7 +98,7 @@ body::before {
 
 /* BELWEST Sidebar Styling */
 .sidebar {
-    width: 300px;
+    width: 80px;
     background: linear-gradient(180deg, 
         rgba(46, 139, 87, 0.15) 0%, 
         rgba(46, 139, 87, 0.05) 100%);
@@ -116,16 +116,26 @@ body::before {
     transition: var(--transition);
 }
 
-.sidebar.collapsed {
-    width: 80px;
+.sidebar:hover {
+    width: 300px;
 }
 
-.sidebar.collapsed .logo span {
-    display: none;
+.sidebar .logo span {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.1s;
 }
 
-.sidebar.collapsed .logo::after {
-    display: none;
+.sidebar:hover .logo span {
+    opacity: 1;
+}
+
+.sidebar .logo::after {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.sidebar:hover .logo::after {
+    opacity: 1;
 }
 
 .logo-collapsed {
@@ -140,12 +150,7 @@ body::before {
     opacity: 0.7;
 }
 
-.sidebar.collapsed .logo-icon {
-    position: static;
-    margin-top: 8px;
-}
-
-.sidebar.collapsed .logo::before {
+.sidebar .logo::before {
     content: 'BW';
     display: flex;
     align-items: center;
@@ -167,6 +172,12 @@ body::before {
         inset 0 1px 4px rgba(255, 255, 255, 0.2);
     z-index: 10;
     animation: bwGlow 2s ease-in-out infinite alternate;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .logo::before {
+    opacity: 0;
 }
 
 @keyframes bwGlow {
@@ -184,17 +195,33 @@ body::before {
     }
 }
 
-.sidebar.collapsed .menu li a span {
-    display: none;
+.sidebar .menu li a span {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.1s;
 }
 
-.sidebar.collapsed .menu li a {
+.sidebar:hover .menu li a span {
+    opacity: 1;
+}
+
+.sidebar .menu li a {
     justify-content: center;
     padding: 16px;
+    transition: all 0.3s ease;
 }
 
-.sidebar.collapsed .menu li a i {
+.sidebar:hover .menu li a {
+    justify-content: flex-start;
+    padding: 16px 20px;
+}
+
+.sidebar .menu li a i {
     margin-right: 0;
+    transition: margin-right 0.3s ease;
+}
+
+.sidebar:hover .menu li a i {
+    margin-right: 16px;
 }
 
 .sidebar::before {
@@ -212,7 +239,7 @@ body::before {
 }
 
 .logo {
-    padding: 32px 50px 32px 24px;
+    padding: 32px 24px;
     text-align: center;
     border-bottom: 2px solid var(--belwest-green);
     margin-bottom: 24px;
@@ -225,34 +252,7 @@ body::before {
         inset 0 2px 8px rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-toggle {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-    z-index: 102;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
 
-.sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.sidebar-toggle i {
-    color: white;
-    font-size: 14px;
-}
 
 .logo span {
     font-weight: 800;
@@ -511,29 +511,57 @@ input:checked + .toggle-slider:before {
     transform: translateX(20px);
 }
 
-.sidebar.collapsed .settings-btn span {
-    display: none;
+.sidebar .settings-btn span {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.1s;
 }
 
-.sidebar.collapsed .settings-btn {
+.sidebar:hover .settings-btn span {
+    opacity: 1;
+}
+
+.sidebar .settings-btn {
     justify-content: center;
     padding: 16px;
+    transition: all 0.3s ease;
 }
 
-.sidebar.collapsed .settings-btn i:first-child {
+.sidebar:hover .settings-btn {
+    justify-content: space-between;
+    padding: 16px 20px;
+}
+
+.sidebar .settings-btn i:first-child {
     margin-right: 0;
+    transition: margin-right 0.3s ease;
 }
 
-.sidebar.collapsed .settings-arrow {
-    display: none;
+.sidebar:hover .settings-btn i:first-child {
+    margin-right: 12px;
 }
 
-.sidebar.collapsed .settings-menu {
+.sidebar .settings-arrow {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.sidebar:hover .settings-arrow {
+    opacity: 1;
+}
+
+.sidebar .settings-menu {
     position: absolute;
     right: 100%;
     top: 0;
     margin-right: 8px;
     width: 200px;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .settings-menu {
+    position: static;
+    margin-right: 0;
+    width: auto;
 }
 
 /* Main Content Styling */
