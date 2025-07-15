@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_session import Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import hashlib
 import os
-from datetime import datetime, timedelta
-import json
+from datetime import timedelta
 from handlers import users, sensors, reports
 
 app = Flask(__name__)
@@ -29,6 +28,7 @@ if not os.path.exists(session_dir):
     os.makedirs(session_dir)
 
 Session(app)
+
 
 # Database initialization
 def init_db():
@@ -95,35 +95,35 @@ def init_db():
 
     # Create default admin user
     admin_password = hashlib.sha256('admin123'.encode()).hexdigest()
-    cursor.execute('''
+    cursor.execute(
+        '''
         INSERT OR IGNORE INTO users (username, password, email, role) 
         VALUES (?, ?, ?, ?)
     ''', ('admin', admin_password, 'admin@belwest.com', 'admin'))
 
     # Create sample sensors
-    sample_sensors = [
-        ('Главный вход', 'Центральный вход в здание', 'active'),
-        ('Боковой вход', 'Боковой вход со стороны парковки', 'active'),
-        ('Офис менеджера', 'Вход в офис менеджера', 'inactive'),
-        ('Склад', 'Вход на склад', 'active')
-    ]
+    sample_sensors = [('Главный вход', 'Центральный вход в здание', 'active'),
+                      ('Боковой вход', 'Боковой вход со стороны парковки',
+                       'active'),
+                      ('Офис менеджера', 'Вход в офис менеджера', 'inactive'),
+                      ('Склад', 'Вход на склад', 'active')]
 
     for sensor in sample_sensors:
-        cursor.execute('''
+        cursor.execute(
+            '''
             INSERT OR IGNORE INTO sensors (name, location, status) 
             VALUES (?, ?, ?)
         ''', sensor)
 
     # Create sample visitor_counts data
-    sample_visitor_counts = [
-        ('SENSOR_001', 15, 'Главный вход', 'active'),
-        ('SENSOR_002', 8, 'Боковой вход', 'active'),
-        ('SENSOR_003', 0, 'Офис менеджера', 'inactive'),
-        ('SENSOR_004', 12, 'Склад', 'active')
-    ]
+    sample_visitor_counts = [('SENSOR_001', 15, 'Главный вход', 'active'),
+                             ('SENSOR_002', 8, 'Боковой вход', 'active'),
+                             ('SENSOR_003', 0, 'Офис менеджера', 'inactive'),
+                             ('SENSOR_004', 12, 'Склад', 'active')]
 
     for count_data in sample_visitor_counts:
-        cursor.execute('''
+        cursor.execute(
+            '''
             INSERT OR IGNORE INTO visitor_counts (device_id, count, location, status) 
             VALUES (?, ?, ?, ?)
         ''', count_data)
@@ -132,15 +132,19 @@ def init_db():
     conn.close()
     print("База данных успешно инициализирована!")
 
+
 # Authentication decorator
 def login_required(f):
     from functools import wraps
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 @app.route('/')
 def index():
@@ -148,20 +152,21 @@ def index():
         return redirect(url_for('login'))
     return render_template('index.html')
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # If user is already logged in, redirect to dashboard
+    # Если пользователь уже вошел в систему, просто отобразите страницу входа
     if 'user_id' in session:
-        return redirect(url_for('index'))
-        
+        return render_template('login.html')  # Отображение страницы логина
     if request.method == 'POST':
         username = request.form['username']
-        password = hashlib.sha256(request.form['password'].encode()).hexdigest()
-
+        password = hashlib.sha256(
+            request.form['password'].encode()).hexdigest()
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
-        cursor.execute('SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
-                      (username, password))
+        cursor.execute(
+            'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
+            (username, password))
         user = cursor.fetchone()
         conn.close()
 
@@ -170,12 +175,10 @@ def login():
             session['username'] = user[1]
             session['role'] = user[2]
             session.permanent = True
-            return redirect(url_for('index'))
-        else:
-            flash('Неверный логин или пароль')
-            return render_template('login.html'), 401
+            return redirect(
+                url_for('index'))  # Перенаправление на главную страницу
+    return render_template('login.html')  # Отображение страницы логина
 
-    return render_template('login.html')
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -185,8 +188,9 @@ def api_login():
 
     conn = sqlite3.connect('visitor_data.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
-                  (username, password))
+    cursor.execute(
+        'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
+        (username, password))
     user = cursor.fetchone()
     conn.close()
 
@@ -208,35 +212,42 @@ def api_login():
             'message': 'Неверный логин или пароль'
         }), 401
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
 
 @app.route('/users')
 @login_required
 def users_page():
     return render_template('users.html')
 
+
 @app.route('/sensors')
 @login_required
 def sensors_page():
     return render_template('sensors.html')
+
 
 @app.route('/reports')
 @login_required
 def reports_page():
     return render_template('reports.html')
 
+
 @app.route('/settings')
 @login_required
 def settings_page():
     return render_template('settings.html')
 
+
 @app.route('/profile')
 @login_required
 def profile_page():
     return render_template('profile.html')
+
 
 @app.route('/api/sensor-data')
 @login_required
@@ -276,26 +287,22 @@ def get_sensor_data():
         hourly_visitors = [random.randint(0, 50) for _ in range(24)]
 
         # Generate sample recent activity
-        recent_activity = [
-            {
-                'type': 'visitor',
-                'title': 'Новый посетитель',
-                'description': 'Зарегистрирован через главный вход',
-                'time': '5 минут назад'
-            },
-            {
-                'type': 'sensor',
-                'title': 'Датчик подключен',
-                'description': 'Боковой вход - статус онлайн',
-                'time': '10 минут назад'
-            },
-            {
-                'type': 'system',
-                'title': 'Система обновлена',
-                'description': 'Обновление до версии 2.1.4',
-                'time': '1 час назад'
-            }
-        ]
+        recent_activity = [{
+            'type': 'visitor',
+            'title': 'Новый посетитель',
+            'description': 'Зарегистрирован через главный вход',
+            'time': '5 минут назад'
+        }, {
+            'type': 'sensor',
+            'title': 'Датчик подключен',
+            'description': 'Боковой вход - статус онлайн',
+            'time': '10 минут назад'
+        }, {
+            'type': 'system',
+            'title': 'Система обновлена',
+            'description': 'Обновление до версии 2.1.4',
+            'time': '1 час назад'
+        }]
 
         # Format sensors data
         sensors_formatted = []
@@ -309,24 +316,38 @@ def get_sensor_data():
             })
 
         data = {
-            'today_visitors': today_visitors,
-            'active_sensors': sensors_stats[1] if sensors_stats else 0,
-            'avg_hourly': round(today_visitors / 24, 1) if today_visitors > 0 else 0,
-            'peak_time': '14:30',
-            'peak_count': max(hourly_visitors) if hourly_visitors else 0,
-            'today_change': random.randint(-5, 15),
-            'sensors_status': 'online' if sensors_stats and sensors_stats[1] > 0 else 'offline',
-            'new_visitors': random.randint(10, 50),
-            'returning_visitors': random.randint(20, 80),
-            'new_visitors_change': random.randint(-10, 20),
-            'returning_visitors_change': random.randint(-15, 25),
-            'hourly_visitors': hourly_visitors,
+            'today_visitors':
+            today_visitors,
+            'active_sensors':
+            sensors_stats[1] if sensors_stats else 0,
+            'avg_hourly':
+            round(today_visitors / 24, 1) if today_visitors > 0 else 0,
+            'peak_time':
+            '14:30',
+            'peak_count':
+            max(hourly_visitors) if hourly_visitors else 0,
+            'today_change':
+            random.randint(-5, 15),
+            'sensors_status':
+            'online' if sensors_stats and sensors_stats[1] > 0 else 'offline',
+            'new_visitors':
+            random.randint(10, 50),
+            'returning_visitors':
+            random.randint(20, 80),
+            'new_visitors_change':
+            random.randint(-10, 20),
+            'returning_visitors_change':
+            random.randint(-15, 25),
+            'hourly_visitors':
+            hourly_visitors,
             'sensors_stats': {
                 'online': sensors_stats[1] if sensors_stats else 0,
                 'offline': sensors_stats[2] if sensors_stats else 0
             },
-            'recent_activity': recent_activity,
-            'sensors': sensors_formatted
+            'recent_activity':
+            recent_activity,
+            'sensors':
+            sensors_formatted
         }
 
         conn.close()
@@ -347,10 +368,14 @@ def get_sensor_data():
             'new_visitors_change': 0,
             'returning_visitors_change': 0,
             'hourly_visitors': [0] * 24,
-            'sensors_stats': {'online': 0, 'offline': 0},
+            'sensors_stats': {
+                'online': 0,
+                'offline': 0
+            },
             'recent_activity': [],
             'sensors': []
         })
+
 
 # Register blueprints
 app.register_blueprint(users.users)
