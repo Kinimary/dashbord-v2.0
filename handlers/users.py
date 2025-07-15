@@ -82,14 +82,18 @@ def create_user():
 
     data = request.get_json()
     
-    required_fields = ['username', 'email', 'role', 'password']
+    required_fields = ['username', 'email', 'role']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
 
     username = data['username']
     email = data['email']
     role = data['role']
-    password = data['password']
+    password = data.get('password', '')
+    
+    # Password is required for new users
+    if not password or password.strip() == '':
+        return jsonify({'error': 'Password is required for new users'}), 400
     
     conn = get_db_connection()
     cursor = conn.cursor()

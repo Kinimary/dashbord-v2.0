@@ -279,8 +279,16 @@ function logout() {
         localStorage.clear();
         sessionStorage.clear();
         
-        // Redirect to logout route
-        window.location.href = '/logout';
+        // Redirect to logout route which will clear session and redirect to login
+        fetch('/logout', {
+            method: 'GET',
+            credentials: 'same-origin'
+        }).then(() => {
+            window.location.href = '/login';
+        }).catch(() => {
+            // Fallback if fetch fails
+            window.location.href = '/logout';
+        });
     }
 }
 
