@@ -101,8 +101,12 @@ def sensors_page():
     return render_template('sensors.html')
 
 @app.route('/reports')
-def reports_page():
+def reports():
     return render_template('reports.html')
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
 
 @app.route('/api/visitor-count', methods=['POST'])
 def visitor_count():
@@ -339,7 +343,7 @@ def sensor_data():
 def dashboard_stats():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     # Статистика за сегодня
     cursor.execute('''
         SELECT 
@@ -349,9 +353,9 @@ def dashboard_stats():
         FROM visitor_counts
         WHERE DATE(received_at) = DATE('now')
     ''')
-    
+
     today_stats = cursor.fetchone()
-    
+
     # Статистика по часам
     cursor.execute('''
         SELECT 
@@ -362,9 +366,9 @@ def dashboard_stats():
         GROUP BY strftime('%H', received_at)
         ORDER BY hour
     ''')
-    
+
     hourly_stats = cursor.fetchall()
-    
+
     # Активные датчики
     cursor.execute('''
         SELECT device_id, MAX(received_at) as last_update
@@ -372,11 +376,11 @@ def dashboard_stats():
         GROUP BY device_id
         HAVING datetime(last_update) > datetime('now', '-1 hour')
     ''')
-    
+
     active_sensors = cursor.fetchall()
-    
+
     conn.close()
-    
+
     return jsonify({
         'today': {
             'sensors_count': today_stats[0] or 0,

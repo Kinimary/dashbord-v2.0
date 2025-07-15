@@ -46,8 +46,8 @@
                         </a>
                     </li>
                 </ul>
-                <div class="theme-toggle">
-                    <i class="fas fa-moon" id="dark-mode-toggle"></i>
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon" id="theme-icon"></i>
                 </div>
             </div>
 
@@ -56,17 +56,40 @@
                 <div class="top-bar">
                     <h1>Настройки</h1>
                     <div class="user-profile">
-                        <div class="notifications">
+                        <div class="notifications" id="notifications-btn">
                             <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-count">0</span>
+                            <div class="notification-dropdown" id="notification-dropdown">
+                                <div class="notification-header">
+                                    <h4>Уведомления</h4>
+                                </div>
+                                <div class="notification-list">
+                                    <div class="notification-item">
+                                        <div class="notification-content">
+                                            <div class="notification-text">Нет новых уведомлений</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="user-info">
+                        <div class="user-info" id="user-menu-btn">
                             <div class="user-avatar">
                                 <i class="fas fa-user"></i>
                             </div>
                             <span>Админ</span>
-                            <div class="user-details">
-                                <p>Samantha Maybury</p>
-                                <a href="/logout">Выйти</a>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-details">
+                                        <div class="user-name">Samantha Maybury</div>
+                                        <div class="user-role">Администратор</div>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-menu">
+                                    <a href="#" class="dropdown-item" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Выйти</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -123,32 +146,12 @@
         </div>
 
         <script src="/static/js/page-transitions.js"></script>
+        <script src="/static/js/sidebar.js"></script>
         <script>
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('dark-mode-toggle');
-            themeToggle.addEventListener('click', function() {
-                document.body.classList.toggle('light-mode');
-                const icon = this;
-                if (document.body.classList.contains('light-mode')) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                } else {
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
-            });
-
-            // Sidebar toggle functionality
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const sidebar = document.getElementById('sidebar');
-
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-            });
-
-
-            document.getElementById('save-settings').addEventListener('click', function() {
-                alert('Настройки сохранены!');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('save-settings').addEventListener('click', function() {
+                    alert('Настройки сохранены!');
+                });
             });
         </script>
     </body>
