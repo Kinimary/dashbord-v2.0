@@ -3203,7 +3203,64 @@ body:not(.light-mode) .sensor-list-details {
     min-width: 80px;
 }
 
-/* Responsive Design */
+/* User dropdown menu */
+.user-info {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    margin-top: 10px;
+}
+
+.user-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-dropdown-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-dropdown-menu {
+    padding: 10px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 5px 0;
+}
+
 /* Стили для кнопки выхода */
 .logout-btn {
     color: var(--error-color) !important;
@@ -3218,6 +3275,50 @@ body:not(.light-mode) .sensor-list-details {
 .logout-btn i {
     color: var(--error-color);
 }
+
+/* Store statistics */
+.store-statistics {
+    padding: 20px;
+}
+
+.store-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: 8px 0;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.store-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.store-address {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.store-visitors {
+    font-weight: 600;
+    color: var(--belwest-green);
+}
+
+/* Hierarchy selectors */
+#hierarchy-type,
+#entity-selector {
+    margin-right: 10px;
+    min-width: 150px;
+}
+
+#entity-selector {
+    transition: all 0.3s ease;
+}
+
+/* Responsive Design */
 
 /* Стили для динамических селекторов */
 .analytics-controls .modern-select {

@@ -62,16 +62,21 @@
                 </div>
                 <div class="top-bar-center">
                     <div class="time-filter">
+                        <select id="hierarchy-type">
+                            <option value="">Все данные</option>
+                            <option value="manager">По менеджеру</option>
+                            <option value="rd">По РД</option>
+                            <option value="tu">По ТУ</option>
+                            <option value="store">По магазину</option>
+                        </select>
+                        <select id="entity-selector" style="display: none;">
+                            <option value="">Выберите...</option>
+                        </select>
                         <select id="period-select">
-                            <option value="day">Все данные</option>
+                            <option value="day">День</option>
                             <option value="hour">Час</option>
                             <option value="week">Неделя</option>
                             <option value="month">Месяц</option>
-                        </select>
-                        <select id="time-unit">
-                            <option value="hour">Час</option>
-                            <option value="day">День</option>
-                            <option value="week">Неделя</option>
                         </select>
                         <button class="refresh-btn" id="refresh-data">
                             <i class="fas fa-sync-alt"></i>
@@ -91,6 +96,29 @@
                         <div class="user-info" id="user-menu-btn">
                             <div class="user-avatar">А</div>
                             <span>Админ</span>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-details">
+                                        <div class="user-name">Администратор</div>
+                                        <div class="user-role">Полный доступ</div>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-menu">
+                                    <a href="/profile" class="dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Профиль</span>
+                                    </a>
+                                    <a href="/settings" class="dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Настройки</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" class="dropdown-item logout-btn" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Выйти</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
