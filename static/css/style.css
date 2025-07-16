@@ -959,9 +959,10 @@ input:checked + .toggle-slider:before {
     position: relative;
     z-index: 1;
     font-weight: 500;
-}
+```text
+*/
 
-/*/* Enhanced Tables */
+/* Enhanced Tables */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -1497,8 +1498,8 @@ button:hover::before {
 
 .stats-cards .card:nth-child(1) { animation-delay: 0.1s; }
 .stats-cards .card:nth-child(2) { animation-delay: 0.2s; }
-.stats-cards .card:nth-child(3) { animation-delay: 0.3s; }
-.stats-cards .card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
 
 @keyframes cardStagger {
     to {
@@ -1934,6 +1935,40 @@ button:hover::before {
     margin-bottom: 8px;
 }
 
+/* Улучшенная контрастность для датчиков в темной теме */
+body:not(.light-mode) .sensor-name,
+body:not(.light-mode) .sensor-list-name {
+    color: #FFFFFF;
+}
+
+body:not(.light-mode) .sensor-location,
+body:not(.light-mode) .sensor-list-details {
+    color: #E8F5E8;
+}
+
+.sensor-list-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.sensor-list-details {
+    font-size: 12px;```text
+    color: var(--text-secondary);
+}
+
+/* Улучшенная контрастность для датчиков в темной теме */
+body:not(.light-mode) .sensor-name,
+body:not(.light-mode) .sensor-list-name {
+    color: #FFFFFF;
+}
+
+body:not(.light-mode) .sensor-location,
+body:not(.light-mode) .sensor-list-details {
+    color: #E8F5E8;
+}
+
 .sensor-visitors {
     font-size: 16px;
     font-weight: 700;
@@ -1976,6 +2011,17 @@ button:hover::before {
 .sensor-list-details {
     font-size: 12px;
     color: var(--text-secondary);
+}
+
+/* Улучшенная контрастность для датчиков в темной теме */
+body:not(.light-mode) .sensor-name,
+body:not(.light-mode) .sensor-list-name {
+    color: #FFFFFF;
+}
+
+body:not(.light-mode) .sensor-location,
+body:not(.light-mode) .sensor-list-details {
+    color: #E8F5E8;
 }
 
 .sensor-list-stats {
@@ -2322,17 +2368,17 @@ button:hover::before {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .details-container {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .top-bar {
         flex-wrap: wrap;
         gap: 12px;
     }
-    
+
     .top-bar h1 {
         font-size: 28px;
     }
