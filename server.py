@@ -7,6 +7,10 @@ import os
 import sys
 from datetime import timedelta, datetime
 
+# Fix SQLite datetime adapters warning
+sqlite3.register_adapter(datetime, lambda dt: dt.isoformat())
+sqlite3.register_converter("TIMESTAMP", lambda b: datetime.fromisoformat(b.decode()))
+
 # Добавляем текущую директорию в Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
