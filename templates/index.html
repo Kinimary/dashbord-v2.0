@@ -197,100 +197,104 @@
             </div>
 
             <!-- Основные метрики -->
-            <div class="metrics-grid">
-                <div class="metric-card visitors-today">
-                    <div class="metric-icon">
-                        <i class="fas fa-users"></i>
+            <div class="dashboard-metrics">
+                <div class="metric-widget">
+                    <div class="metric-header">
+                        <div class="metric-icon green">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-info">
+                            <div class="metric-number" id="today-visitors">141</div>
+                            <div class="metric-label">Количество посетителей</div>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <div class="metric-label">Все посетители</div>
-                        <div class="metric-value" id="today-visitors">141</div>
-                        <div class="metric-subtitle">За сегодня</div>
-                    </div>
-                    <div class="metric-chart">
+                    <div class="metric-mini-chart">
                         <canvas id="visitors-mini-chart"></canvas>
                     </div>
                 </div>
 
-                <div class="metric-card active-sensors">
-                    <div class="metric-icon">
-                        <i class="fas fa-wifi"></i>
+                <div class="metric-widget">
+                    <div class="metric-header">
+                        <div class="metric-icon teal">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="metric-info">
+                            <div class="metric-number" id="active-sensors">98</div>
+                            <div class="metric-label">Датчиков работают</div>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <div class="metric-label">Активные датчики</div>
-                        <div class="metric-value" id="active-sensors">98</div>
-                        <div class="metric-subtitle">Из 100</div>
-                    </div>
-                    <div class="metric-chart">
+                    <div class="metric-mini-chart">
                         <canvas id="sensors-mini-chart"></canvas>
                     </div>
                 </div>
 
-                <div class="metric-card peak-time">
-                    <div class="metric-icon">
-                        <i class="fas fa-clock"></i>
+                <div class="metric-widget">
+                    <div class="metric-header">
+                        <div class="metric-icon green">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="metric-info">
+                            <div class="metric-number" id="peak-time">05:00</div>
+                            <div class="metric-label">Пиковое время</div>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <div class="metric-label">Пиковое время</div>
-                        <div class="metric-value" id="peak-time">05:00</div>
-                        <div class="metric-subtitle">Сегодня</div>
-                    </div>
-                    <div class="metric-chart">
+                    <div class="metric-mini-chart">
                         <canvas id="peak-mini-chart"></canvas>
                     </div>
                 </div>
 
-                <div class="metric-card hourly-avg">
-                    <div class="metric-icon">
-                        <i class="fas fa-chart-line"></i>
+                <div class="metric-widget">
+                    <div class="metric-header">
+                        <div class="metric-icon blue">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="metric-info">
+                            <div class="metric-number" id="hourly-avg">0</div>
+                            <div class="metric-label">Посетители в минуту</div>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <div class="metric-label">Посетители в минуту</div>
-                        <div class="metric-value" id="hourly-avg">0</div>
-                        <div class="metric-subtitle">Сейчас</div>
-                    </div>
-                    <div class="metric-chart">
+                    <div class="metric-mini-chart">
                         <canvas id="avg-mini-chart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Основной график динамики -->
-            <div class="main-chart-container">
-                <div class="chart-card">
+            <div class="main-chart-section">
+                <div class="main-chart-card">
                     <div class="chart-header">
                         <h3>Динамика посетителей</h3>
-                        <div class="chart-controls">
-                            <button class="chart-btn active" data-period="today">Сегодня</button>
-                            <button class="chart-btn" data-period="week">Неделя</button>
-                            <button class="chart-btn" data-period="month">Месяц</button>
+                        <div class="chart-period-selector">
+                            <button class="period-btn active" data-period="today">Сегодня</button>
+                            <button class="period-btn" data-period="week">Неделя</button>
+                            <button class="period-btn" data-period="month">Месяц</button>
                         </div>
                     </div>
-                    <div class="chart-content">
+                    <div class="main-chart-area">
                         <canvas id="main-visitors-chart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Нижняя секция -->
-            <div class="bottom-section">
+            <div class="dashboard-bottom">
                 <!-- Состояние датчиков -->
-                <div class="detail-card sensors-status">
-                    <div class="detail-header">
+                <div class="sensors-section">
+                    <div class="section-header">
                         <h3>Состояние датчиков</h3>
-                        <div class="detail-controls">
-                            <button class="detail-btn active" id="sensors-list-btn">
+                        <div class="sensor-view-controls">
+                            <button class="view-btn active" id="sensors-list-btn">
                                 <i class="fas fa-list"></i>
                             </button>
-                            <button class="detail-btn" id="sensors-grid-btn">
+                            <button class="view-btn" id="sensors-grid-btn">
                                 <i class="fas fa-th"></i>
                             </button>
-                            <button class="detail-btn" id="sensors-map-btn">
+                            <button class="view-btn" id="sensors-map-btn">
                                 <i class="fas fa-map"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="detail-content">
+                    <div class="sensors-content">
                         <div class="sensors-view active" id="sensors-list-view">
                             <div class="sensors-list" id="sensors-list"></div>
                         </div>
@@ -299,87 +303,62 @@
                         </div>
                         <div class="sensors-view" id="sensors-map-view">
                             <div class="sensors-map" id="sensors-map">
-                                <div id="yandex-map" style="width: 100%; height: 400px; border-radius: 12px;"></div>
+                                <div id="yandex-map" style="width: 100%; height: 300px; border-radius: 8px;"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Активность в реальном времени -->
-                <div class="detail-card activity-feed">
-                    <div class="detail-header">
+                <div class="activity-section">
+                    <div class="section-header">
                         <h3>Активность в реальном времени</h3>
-                        <div class="activity-controls">
-                            <button class="activity-filter active" data-filter="all">Все</button>
-                            <button class="activity-filter" data-filter="visitors">Посетители</button>
-                            <button class="activity-filter" data-filter="sensors">Датчики</button>
-                            <button class="activity-filter" data-filter="alerts">Алерты</button>
+                        <div class="activity-filter-controls">
+                            <button class="filter-btn active" data-filter="all">Все</button>
+                            <button class="filter-btn" data-filter="visitors">Посетители</button>
+                            <button class="filter-btn" data-filter="sensors">Датчики</button>
+                            <button class="filter-btn" data-filter="alerts">Алерты</button>
                         </div>
                     </div>
-                    <div class="detail-content">
+                    <div class="activity-content">
                         <div class="activity-stream" id="activity-stream"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Отключенные датчики -->
-            <div class="sensor-downtime-section">
-                <div class="downtime-card">
-                    <div class="downtime-header">
+            <div class="downtime-dashboard-section">
+                <div class="downtime-widget">
+                    <div class="widget-header">
                         <h3>Отключенные датчики</h3>
-                        <div class="downtime-controls">
-                            <select id="downtime-period" class="modern-select">
+                        <div class="downtime-filter-controls">
+                            <select id="downtime-period" class="select-control">
                                 <option value="today">Сегодня</option>
                                 <option value="week">Неделя</option>
                                 <option value="month">Месяц</option>
                             </select>
-                            <select id="downtime-filter" class="modern-select">
+                            <select id="downtime-filter" class="select-control">
                                 <option value="all">Все статусы</option>
                                 <option value="offline">Офлайн</option>
                                 <option value="error">Ошибки</option>
                             </select>
                         </div>
                     </div>
-                    <div class="downtime-content">
-                        <div class="downtime-list" id="downtime-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Отключенные датчики -->
-            <div class="downtime-section">
-                <div class="downtime-card">
-                    <div class="downtime-header">
-                        <h3>Отключения датчиков</h3>
-                        <div class="downtime-controls">
-                            <select id="downtime-filter" class="modern-select">
-                                <option value="all">Все локации</option>
-                                <option value="store">Магазины</option>
-                                <option value="tu">ТУ</option>
-                                <option value="rd">РД</option>
-                            </select>
-                            <select id="downtime-period" class="modern-select">
-                                <option value="today">Сегодня</option>
-                                <option value="week">Неделя</option>
-                                <option value="month">Месяц</option>
-                            </select>
+                    <div class="downtime-stats-row">
+                        <div class="stat-item">
+                            <div class="stat-number">12</div>
+                            <div class="stat-text">Отключений</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2.3ч</div>
+                            <div class="stat-text">Среднее время</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">98.7%</div>
+                            <div class="stat-text">Время работы</div>
                         </div>
                     </div>
-                    <div class="downtime-content">
-                        <div class="downtime-stats">
-                            <div class="downtime-stat">
-                                <div class="stat-value">12</div>
-                                <div class="stat-label">Отключений</div>
-                            </div>
-                            <div class="downtime-stat">
-                                <div class="stat-value">2.3ч</div>
-                                <div class="stat-label">Среднее время</div>
-                            </div>
-                            <div class="downtime-stat">
-                                <div class="stat-value">98.7%</div>
-                                <div class="stat-label">Время работы</div>
-                            </div>
-                        </div>
+                    <div class="downtime-list-container">
                         <div class="downtime-list" id="downtime-list"></div>
                     </div>
                 </div>

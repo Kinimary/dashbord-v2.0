@@ -1033,7 +1033,7 @@ function filterActivityStream(filter) {
         }
 
 function switchSensorsView(view) {
-            const buttons = document.querySelectorAll('.detail-btn');
+            const buttons = document.querySelectorAll('.view-btn');
             const views = document.querySelectorAll('.sensors-view');
 
             buttons.forEach(btn => btn.classList.remove('active'));
@@ -1043,7 +1043,7 @@ function switchSensorsView(view) {
             document.getElementById(`sensors-${view}-view`).classList.add('active');
 
             if (view === 'map' && typeof ymaps !== 'undefined') {
-                initializeMap();
+                setTimeout(initYandexMap, 100);
             }
         }
 
@@ -1134,6 +1134,135 @@ function updateDashboard(data) {
 // Экспорт функций для глобального использования
 window.loadDashboardData = loadDashboardData;
 window.updateDashboard = updateDashboard;
+
+function loadDowntimeData() {
+    const filter = document.getElementById('downtime-filter')?.value || 'all';
+    const period = document.getElementById('downtime-period')?.value || 'today';
+
+    // Симуляция данных для отключенных датчиков
+    const mockDowntimes = [
+        {
+            id: 1,
+            sensor_name: 'Датчик входа А',
+            store_name: 'Магазин Центр',
+            store_address: 'ул. Ленина, 15',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+            duration_minutes: 45
+        },
+        {
+            id: 2,
+            sensor_name: 'Датчик зала 2',
+            store_name: 'ТУ Восток',
+            store_address: 'пр. Независимости, 89',
+            status: 'error',
+            disconnected_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+            duration_minutes: 120
+        },
+        {
+            id: 3,
+            sensor_name: 'Датчик кассы',
+            store_name: 'РД Запад',
+            store_address: 'ул. Якуба Коласа, 34',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+            duration_minutes: 30
+        }
+    ];
+
+    setTimeout(() => {
+        updateDowntimeDisplay(mockDowntimes);
+    }, 100);
+}
+
+function setupEventListeners() {
+            // Фильтры и управление
+            const locationFilter = document.getElementById('location-filter');
+            const periodSelect = document.getElementById('period-select');
+            const refreshBtn = document.getElementById('refresh-data');
+
+            // Обработка иерархических фильтров
+            const hierarchyType = document.getElementById('hierarchy-type');
+            const entitySelector = document.getElementById('entity-selector');
+
+            if (hierarchyType) {
+                hierarchyType.addEventListener('change', function() {
+                    const selectedType = this.value;
+                    if (selectedType === 'all') {
+                        entitySelector.style.display = 'none';
+                        loadDashboardData();
+                    } else {
+                        entitySelector.style.display = 'block';
+                        loadEntityOptions(selectedType);
+                    }
+                });
+            }
+
+            if (entitySelector) {
+                entitySelector.addEventListener('change', function() {
+                    if (this.value) {
+                        loadDashboardData();
+                    }
+                });
+            }
+
+            if (periodSelect) {
+                periodSelect.addEventListener('change', function() {
+                    loadDashboardData();
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    this.classList.add('rotating');
+                    loadDashboardData();
+                    setTimeout(() => this.classList.remove('rotating'), 1000);
+                });
+            }
+
+            // Переключение видов датчиков
+            const sensorsGridBtn = document.getElementById('sensors-grid-btn');
+            const sensorsListBtn = document.getElementById('sensors-list-btn');
+            const sensorsMapBtn = document.getElementById('sensors-map-btn');
+
+            if (sensorsGridBtn) {
+                sensorsGridBtn.addEventListener('click', function() {
+                    switchSensorsView('grid');
+                });
+            }
+
+            if (sensorsListBtn) {
+                sensorsListBtn.addEventListener('click', function() {
+                    switchSensorsView('list');
+                });
+            }
+
+            if (sensorsMapBtn) {
+                sensorsMapBtn.addEventListener('click', function() {
+                    switchSensorsView('map');
+                });
+            }
+
+            // Фильтры активности - обновленные селекторы
+            const activityFilters = document.querySelectorAll('.filter-btn');
+            activityFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    activityFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    filterActivityStream(this.dataset.filter);
+                });
+            });
+
+            // Контролы графиков - обновленные селекторы  
+            const periodBtns = document.querySelectorAll('.period-btn');
+            periodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    periodBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    switchMainChart(this.dataset.period);
+                });
+            });
+        }
 
 function loadDowntimeData() {
     const filter = document.getElementById('downtime-filter')?.value || 'all';
