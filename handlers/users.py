@@ -23,7 +23,7 @@ def get_users():
     # Check if user has permission to view users
     user_role = session.get('role')
     user_id = session.get('user_id')
-    
+
     if user_role not in ['admin', 'manager', 'rd', 'tu']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
 
@@ -55,7 +55,7 @@ def get_users():
             WHERE role = 'store'
         ''')
 
-    users = []
+    users_list = []
     for row in cursor.fetchall():
         # Get sensors for each user
         cursor.execute('''
@@ -64,8 +64,8 @@ def get_users():
             WHERE us.user_id = ?
         ''', (row[0],))
         sensors = [{'id': s[0], 'name': s[1]} for s in cursor.fetchall()]
-        
-        users.append({
+
+        users_list.append({
             'id': row[0],
             'username': row[1],
             'email': row[2],
@@ -75,7 +75,7 @@ def get_users():
         })
 
     conn.close()
-    return jsonify(users)
+    return jsonify(users_list)
 
 @users.route('/api/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
@@ -266,9 +266,8 @@ def update_user(user_id):
     finally:
         conn.close()
 
-
-@users.route('/api/stores', methods=['GET'])
-def get_stores():
+@users.route('/api/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
     from flask import session
 
     user_role = session.get('role')
@@ -279,126 +278,30 @@ def get_stores():
     cursor = conn.cursor()
 
     try:
+        cursor.execute('DELETE FROM user_sensors WHERE user_id = ?', (user_id,))
+        cursor.execute('DELETE FROM user_hierarchy WHERE parent_id = ? OR child_id = ?', (user_id, user_id))
+        cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
+
+        conn.commit()
+        return jsonify({'message': 'User deleted'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/sensors', methods=['GET'])
+def get_sensors():
+    """Get all sensors for assignment"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
         cursor.execute('''
-            SELECT s.id, s.name, s.address, s.tu_id, s.rd_id, 
-                   tu.username as tu_name, rd.username as rd_name
-            FROM stores s
-            LEFT JOIN users tu ON s.tu_id = tu.id
-            LEFT JOIN users rd ON s.rd_id = rd.id
-            ORDER BY s.name
+            SELECT id, name, location, status, last_update
+            FROM sensors
+            ORDER BY name
         ''')
-
-        stores = []
-        for row in cursor.fetchall():
-            stores.append({
-                'id': row[0],
-                'name': row[1],
-                'address': row[2],
-                'tu_id': row[3],
-                'rd_id': row[4],
-                'tu_name': row[5],
-                'rd_name': row[6]
-            })
-
-        return jsonify(stores)
-    except Exception as e:
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/stores', methods=['POST'])
-def create_store():
-    from flask import session
-
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-
-    data = request.get_json()
-
-    if not data.get('name') or not data.get('address'):
-        return jsonify({'error': 'Название и адрес обязательны'}), 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('''
-            INSERT INTO stores (name, address, tu_id, rd_id, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (data['name'], data['address'], data.get('tu_id'), data.get('rd_id'), datetime.now().isoformat()))
-
-        store_id = cursor.lastrowid
-        conn.commit()
-        return jsonify({'message': 'Store created', 'id': store_id}), 201
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/stores/<int:store_id>', methods=['PUT'])
-def update_store(store_id):
-    from flask import session
-
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-
-    data = request.get_json()
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('''
-            UPDATE stores
-            SET name = ?, address = ?, tu_id = ?, rd_id = ?
-            WHERE id = ?
-        ''', (data['name'], data['address'], data.get('tu_id'), data.get('rd_id'), store_id))
-
-        conn.commit()
-        return jsonify({'message': 'Store updated'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/stores/<int:store_id>', methods=['DELETE'])
-def delete_store(store_id):
-    from flask import session
-
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('DELETE FROM stores WHERE id = ?', (store_id,))
-        conn.commit()
-        return jsonify({'message': 'Store deleted'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/store-sensors/<int:store_id>', methods=['GET'])
-def get_store_sensors(store_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('''
-            SELECT s.id, s.name, s.location, s.status
-            FROM sensors s
-            JOIN user_sensors us ON s.id = us.sensor_id
-            JOIN stores st ON st.id = ?
-            WHERE us.user_id IN (st.tu_id, st.rd_id)
-        ''', (store_id,))
 
         sensors = []
         for row in cursor.fetchall():
@@ -406,7 +309,8 @@ def get_store_sensors(store_id):
                 'id': row[0],
                 'name': row[1],
                 'location': row[2],
-                'status': row[3]
+                'status': row[3],
+                'last_update': row[4]
             })
 
         return jsonify(sensors)
@@ -415,80 +319,82 @@ def get_store_sensors(store_id):
     finally:
         conn.close()
 
-@users.route('/api/store-sensors/<int:store_id>/<int:sensor_id>', methods=['POST'])
-def assign_sensor_to_store(store_id, sensor_id):
+@users.route('/api/sensors', methods=['POST'])
+def create_sensor():
+    """Create a new sensor"""
     from flask import session
 
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
 
+    data = request.get_json()
+
+    if not data.get('name') or not data.get('location'):
+        return jsonify({'error': 'Название и местоположение обязательны'}), 400
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        # Get store's TU and RD
-        cursor.execute('SELECT tu_id, rd_id FROM stores WHERE id = ?', (store_id,))
-        store = cursor.fetchone()
+        cursor.execute('''
+            INSERT INTO sensors (name, location, status, last_update)
+            VALUES (?, ?, ?, ?)
+        ''', (data['name'], data['location'], data.get('status', 'active'), datetime.now().isoformat()))
 
-        if not store:
-            return jsonify({'error': 'Store not found'}), 404
-
-        # Assign sensor to TU and RD if they exist
-        if store[0]:  # tu_id
-            cursor.execute('''
-                INSERT OR IGNORE INTO user_sensors (user_id, sensor_id)
-                VALUES (?, ?)
-            ''', (store[0], sensor_id))
-
-        if store[1]:  # rd_id
-            cursor.execute('''
-                INSERT OR IGNORE INTO user_sensors (user_id, sensor_id)
-                VALUES (?, ?)
-            ''', (store[1], sensor_id))
-
+        sensor_id = cursor.lastrowid
         conn.commit()
-        return jsonify({'message': 'Sensor assigned to store'}), 200
+        return jsonify({'message': 'Sensor created', 'id': sensor_id}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'error': 'Database error'}), 500
     finally:
         conn.close()
 
-@users.route('/api/store-sensors/<int:store_id>/<int:sensor_id>', methods=['DELETE'])
-def unassign_sensor_from_store(store_id, sensor_id):
+@users.route('/api/sensors/<int:sensor_id>', methods=['PUT'])
+def update_sensor(sensor_id):
+    """Update sensor information"""
     from flask import session
 
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
 
+    data = request.get_json()
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        # Get store's TU and RD
-        cursor.execute('SELECT tu_id, rd_id FROM stores WHERE id = ?', (store_id,))
-        store = cursor.fetchone()
+        update_fields = []
+        update_values = []
 
-        if not store:
-            return jsonify({'error': 'Store not found'}), 404
+        if 'name' in data:
+            update_fields.append('name = ?')
+            update_values.append(data['name'])
 
-        # Remove sensor from TU and RD
-        if store[0]:  # tu_id
-            cursor.execute('''
-                DELETE FROM user_sensors 
-                WHERE user_id = ? AND sensor_id = ?
-            ''', (store[0], sensor_id))
+        if 'location' in data:
+            update_fields.append('location = ?')
+            update_values.append(data['location'])
 
-        if store[1]:  # rd_id
-            cursor.execute('''
-                DELETE FROM user_sensors 
-                WHERE user_id = ? AND sensor_id = ?
-            ''', (store[1], sensor_id))
+        if 'status' in data:
+            update_fields.append('status = ?')
+            update_values.append(data['status'])
+
+        update_fields.append('last_update = ?')
+        update_values.append(datetime.now().isoformat())
+
+        update_values.append(sensor_id)
+
+        if update_fields:
+            cursor.execute(f'''
+                UPDATE sensors
+                SET {', '.join(update_fields)}
+                WHERE id = ?
+            ''', update_values)
 
         conn.commit()
-        return jsonify({'message': 'Sensor unassigned from store'}), 200
+        return jsonify({'message': 'Sensor updated'}), 200
     except Exception as e:
         conn.rollback()
         return jsonify({'error': 'Database error'}), 500
@@ -526,228 +432,18 @@ def delete_sensor(sensor_id):
     finally:
         conn.close()
 
-
-@users.route('/api/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('DELETE FROM user_sensors WHERE user_id = ?', (user_id,))
-        cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
-
-        conn.commit()
-        return jsonify({'message': 'User deleted'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/sensors', methods=['GET'])
-def get_sensors():
-    """Get all sensors for assignment"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('''
-            SELECT id, name, location, status, last_update
-            FROM sensors
-            ORDER BY name
-        ''')
-        
-        sensors = []
-        for row in cursor.fetchall():
-            sensors.append({
-                'id': row[0],
-                'name': row[1],
-                'location': row[2],
-                'status': row[3],
-                'last_update': row[4]
-            })
-        
-        return jsonify(sensors)
-    except Exception as e:
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/sensors', methods=['POST'])
-def create_sensor():
-    """Create a new sensor"""
-    from flask import session
-    
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
-    data = request.get_json()
-    
-    if not data.get('name') or not data.get('location'):
-        return jsonify({'error': 'Название и местоположение обязательны'}), 400
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('''
-            INSERT INTO sensors (name, location, status, last_update)
-            VALUES (?, ?, ?, ?)
-        ''', (data['name'], data['location'], data.get('status', 'active'), datetime.now().isoformat()))
-        
-        sensor_id = cursor.lastrowid
-        conn.commit()
-        return jsonify({'message': 'Sensor created', 'id': sensor_id}), 201
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/sensors/<int:sensor_id>', methods=['PUT'])
-def update_sensor(sensor_id):
-    """Update sensor information"""
-    from flask import session
-    
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
-    data = request.get_json()
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        update_fields = []
-        update_values = []
-        
-        if 'name' in data:
-            update_fields.append('name = ?')
-            update_values.append(data['name'])
-        
-        if 'location' in data:
-            update_fields.append('location = ?')
-            update_values.append(data['location'])
-        
-        if 'status' in data:
-            update_fields.append('status = ?')
-            update_values.append(data['status'])
-        
-        update_fields.append('last_update = ?')
-        update_values.append(datetime.now().isoformat())
-        
-        update_values.append(sensor_id)
-        
-        if update_fields:
-            cursor.execute(f'''
-                UPDATE sensors
-                SET {', '.join(update_fields)}
-                WHERE id = ?
-            ''', update_values)
-        
-        conn.commit()
-        return jsonify({'message': 'Sensor updated'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/user-sensors/<int:user_id>', methods=['GET'])
-def get_user_sensors(user_id):
-    """Get sensors assigned to a specific user"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('''
-            SELECT s.id, s.name, s.location, s.status
-            FROM sensors s
-            JOIN user_sensors us ON s.id = us.sensor_id
-            WHERE us.user_id = ?
-        ''', (user_id,))
-        
-        sensors = []
-        for row in cursor.fetchall():
-            sensors.append({
-                'id': row[0],
-                'name': row[1],
-                'location': row[2],
-                'status': row[3]
-            })
-        
-        return jsonify(sensors)
-    except Exception as e:
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/user-sensors/<int:user_id>/<int:sensor_id>', methods=['POST'])
-def assign_sensor_to_user(user_id, sensor_id):
-    """Assign sensor to user"""
-    from flask import session
-    
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager', 'rd', 'tu']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('''
-            INSERT OR IGNORE INTO user_sensors (user_id, sensor_id)
-            VALUES (?, ?)
-        ''', (user_id, sensor_id))
-        
-        conn.commit()
-        return jsonify({'message': 'Sensor assigned to user'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
-@users.route('/api/user-sensors/<int:user_id>/<int:sensor_id>', methods=['DELETE'])
-def unassign_sensor_from_user(user_id, sensor_id):
-    """Unassign sensor from user"""
-    from flask import session
-    
-    user_role = session.get('role')
-    if user_role not in ['admin', 'manager', 'rd', 'tu']:
-        return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('''
-            DELETE FROM user_sensors 
-            WHERE user_id = ? AND sensor_id = ?
-        ''', (user_id, sensor_id))
-        
-        conn.commit()
-        return jsonify({'message': 'Sensor unassigned from user'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        conn.close()
-
 @users.route('/api/user-hierarchy', methods=['GET'])
 def get_user_hierarchy():
     """Get all hierarchy relationships"""
     from flask import session
-    
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('''
             SELECT 
@@ -764,7 +460,7 @@ def get_user_hierarchy():
             JOIN users child ON uh.child_id = child.id
             ORDER BY parent.username, child.username
         ''')
-        
+
         hierarchies = []
         for row in cursor.fetchall():
             hierarchies.append({
@@ -777,7 +473,7 @@ def get_user_hierarchy():
                 'child_name': row[6],
                 'child_role': row[7]
             })
-        
+
         return jsonify(hierarchies)
     except Exception as e:
         return jsonify({'error': 'Database error'}), 500
@@ -788,62 +484,62 @@ def get_user_hierarchy():
 def create_user_hierarchy():
     """Create hierarchy relationship between users"""
     from flask import session
-    
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
+
     data = request.get_json()
-    
+
     if not data.get('parent_id') or not data.get('child_id'):
         return jsonify({'error': 'Parent ID и Child ID обязательны'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         # Проверяем роли пользователей для валидации иерархии
         cursor.execute('SELECT role FROM users WHERE id = ?', (data['parent_id'],))
         parent_role = cursor.fetchone()
-        
+
         cursor.execute('SELECT role FROM users WHERE id = ?', (data['child_id'],))
         child_role = cursor.fetchone()
-        
+
         if not parent_role or not child_role:
             return jsonify({'error': 'Пользователь не найден'}), 404
-        
+
         parent_role = parent_role[0]
         child_role = child_role[0]
-        
+
         # Валидация иерархии ролей
         valid_hierarchies = {
             'manager': ['rd', 'tu', 'store'],
             'rd': ['tu', 'store'],
             'tu': ['store']
         }
-        
+
         if parent_role not in valid_hierarchies or child_role not in valid_hierarchies[parent_role]:
             return jsonify({'error': 'Недопустимая иерархия ролей'}), 400
-        
+
         # Проверяем, не существует ли уже такая связь
         cursor.execute('''
             SELECT id FROM user_hierarchy 
             WHERE parent_id = ? AND child_id = ?
         ''', (data['parent_id'], data['child_id']))
-        
+
         if cursor.fetchone():
             return jsonify({'error': 'Иерархическая связь уже существует'}), 400
-        
+
         hierarchy_type = f"{parent_role}-{child_role}"
-        
+
         cursor.execute('''
             INSERT INTO user_hierarchy (parent_id, child_id, hierarchy_type, created_at)
             VALUES (?, ?, ?, ?)
         ''', (data['parent_id'], data['child_id'], hierarchy_type, datetime.now().isoformat()))
-        
+
         hierarchy_id = cursor.lastrowid
         conn.commit()
-        
+
         return jsonify({'message': 'Иерархическая связь создана', 'id': hierarchy_id}), 201
     except Exception as e:
         conn.rollback()
@@ -855,14 +551,14 @@ def create_user_hierarchy():
 def delete_user_hierarchy(hierarchy_id):
     """Delete hierarchy relationship"""
     from flask import session
-    
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('DELETE FROM user_hierarchy WHERE id = ?', (hierarchy_id,))
         conn.commit()
@@ -877,16 +573,16 @@ def delete_user_hierarchy(hierarchy_id):
 def get_accessible_users(user_id):
     """Get users accessible to a specific user based on hierarchy"""
     from flask import session
-    
+
     user_role = session.get('role')
     current_user_id = session.get('user_id')
-    
+
     if user_role not in ['admin', 'manager', 'rd', 'tu'] and current_user_id != user_id:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         # Получаем пользователей, доступных данному пользователю через иерархию
         cursor.execute('''
@@ -901,7 +597,7 @@ def get_accessible_users(user_id):
             WHERE uh.parent_id = ?
             ORDER BY u.username
         ''', (user_id,))
-        
+
         accessible_users = []
         for row in cursor.fetchall():
             accessible_users.append({
@@ -911,7 +607,7 @@ def get_accessible_users(user_id):
                 'role': row[3],
                 'created_at': row[4]
             })
-        
+
         return jsonify(accessible_users)
     except Exception as e:
         return jsonify({'error': 'Database error'}), 500
@@ -922,36 +618,36 @@ def get_accessible_users(user_id):
 def get_hierarchy_candidates(parent_id):
     """Get potential child users for hierarchy based on parent role"""
     from flask import session
-    
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         # Получаем роль родительского пользователя
         cursor.execute('SELECT role FROM users WHERE id = ?', (parent_id,))
         parent_user = cursor.fetchone()
-        
+
         if not parent_user:
             return jsonify({'error': 'Родительский пользователь не найден'}), 404
-        
+
         parent_role = parent_user[0]
-        
+
         # Определяем допустимые роли для подчиненных
         valid_child_roles = {
             'manager': ['rd', 'tu', 'store'],
             'rd': ['tu', 'store'],
             'tu': ['store']
         }
-        
+
         if parent_role not in valid_child_roles:
             return jsonify([])
-        
+
         roles_filter = "', '".join(valid_child_roles[parent_role])
-        
+
         # Получаем пользователей, которые могут быть подчиненными и еще не связаны
         cursor.execute(f'''
             SELECT u.id, u.username, u.email, u.role
@@ -963,7 +659,7 @@ def get_hierarchy_candidates(parent_id):
             )
             ORDER BY u.username
         ''', (parent_id, parent_id))
-        
+
         candidates = []
         for row in cursor.fetchall():
             candidates.append({
@@ -972,10 +668,75 @@ def get_hierarchy_candidates(parent_id):
                 'email': row[2],
                 'role': row[3]
             })
-        
+
         return jsonify(candidates)
     except Exception as e:
         return jsonify({'error': 'Database error'}), 500
     finally:
         conn.close()
 
+# API для управления ролями и правами доступа
+@users.route('/api/user-permissions', methods=['GET'])
+def get_user_permissions():
+    """Get detailed user permissions based on role"""
+    from flask import session
+
+    user_role = session.get('role')
+    user_id = session.get('user_id')
+
+    if not user_role:
+        return jsonify({'error': 'Не авторизован'}), 401
+
+    permissions = {
+        'admin': {
+            'can_create_users': True,
+            'can_edit_users': True,
+            'can_delete_users': True,
+            'can_manage_sensors': True,
+            'can_view_reports': True,
+            'can_manage_hierarchy': True,
+            'accessible_roles': ['admin', 'manager', 'rd', 'tu', 'store']
+        },
+        'manager': {
+            'can_create_users': True,
+            'can_edit_users': True,
+            'can_delete_users': True,
+            'can_manage_sensors': True,
+            'can_view_reports': True,
+            'can_manage_hierarchy': True,
+            'accessible_roles': ['rd', 'tu', 'store']
+        },
+        'rd': {
+            'can_create_users': False,
+            'can_edit_users': False,
+            'can_delete_users': False,
+            'can_manage_sensors': False,
+            'can_view_reports': True,
+            'can_manage_hierarchy': False,
+            'accessible_roles': ['tu', 'store']
+        },
+        'tu': {
+            'can_create_users': False,
+            'can_edit_users': False,
+            'can_delete_users': False,
+            'can_manage_sensors': False,
+            'can_view_reports': True,
+            'can_manage_hierarchy': False,
+            'accessible_roles': ['store']
+        },
+        'store': {
+            'can_create_users': False,
+            'can_edit_users': False,
+            'can_delete_users': False,
+            'can_manage_sensors': False,
+            'can_view_reports': True,
+            'can_manage_hierarchy': False,
+            'accessible_roles': []
+        }
+    }
+
+    return jsonify({
+        'user_id': user_id,
+        'role': user_role,
+        'permissions': permissions.get(user_role, permissions['store'])
+    })

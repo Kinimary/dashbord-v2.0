@@ -1026,6 +1026,7 @@ class HierarchyManager {
         this.initEventListeners();
         this.loadHierarchy();
         this.loadUsersForHierarchy();
+        this.loadUserPermissions();
     }
 
     initEventListeners() {
@@ -1279,6 +1280,69 @@ class HierarchyManager {
         return roleNames[role] || role;
     }
 
+    async loadUserPermissions() {
+        try {
+            const response = await fetch('/api/user-permissions');
+            const data = await response.json();
+            
+            if (response.ok) {
+                this.userPermissions = data.permissions;
+                this.currentUserRole = data.role;
+                this.updateUIBasedOnPermissions();
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки прав пользователя:', error);
+        }
+    }
+
+    updateUIBasedOnPermissions() {
+        // Скрыть/показать элементы интерфейса в зависимости от прав
+        const hierarchyTab = document.querySelector('[data-tab="hierarchy-management"]');
+        const userFormTab = document.querySelector('[data-tab="user-form"]');
+        const sensorManagementTab = document.querySelector('[data-tab="sensor-management"]');
+        
+        if (!this.userPermissions.can_manage_hierarchy && hierarchyTab) {
+            hierarchyTab.style.display = 'none';
+        }
+        
+        if (!this.userPermissions.can_create_users && userFormTab) {
+            userFormTab.style.display = 'none';
+        }
+        
+        if (!this.userPermissions.can_manage_sensors && sensorManagementTab) {
+            sensorManagementTab.style.display = 'none';
+        }
+
+        // Обновить роли в выпадающих списках
+        this.updateRoleSelectors();
+    }
+
+    updateRoleSelectors() {
+        const roleSelect = document.getElementById('new-role');
+        if (roleSelect && this.userPermissions) {
+            // Очищаем текущие опции
+            roleSelect.innerHTML = '';
+            
+            // Добавляем только доступные роли
+            const roleNames = {
+                'admin': 'Администратор',
+                'manager': 'Менеджер',
+                'rd': 'РД',
+                'tu': 'ТУ',
+                'store': 'Магазин'
+            };
+
+            this.userPermissions.accessible_roles.forEach(role => {
+                if (this.currentUserRole !== 'manager' || role !== 'admin') {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = roleNames[role];
+                    roleSelect.appendChild(option);
+                }
+            });
+        }
+    }
+
     showMessage(message, type) {
         // Создаем временное уведомление
         const notification = document.createElement('div');
@@ -1309,6 +1373,22 @@ let hierarchyManager;
 document.addEventListener('DOMContentLoaded', function() {
     // Проверяем, находимся ли мы на странице пользователей
     if (document.getElementById('hierarchy-management')) {
-        hierarchyManager = new HierarchyManager();
+        // Проверяем права доступа перед инициализацией
+        fetch('/api/user-permissions')
+            .then(response => response.json())
+            .then(data => {
+                if (data.permissions && data.permissions.can_manage_hierarchy) {
+                    hierarchyManager = new HierarchyManager();
+                } else {
+                    // Скрыть вкладку управления иерархией, если нет прав
+                    const hierarchyTab = document.querySelector('[data-tab="hierarchy-management"]');
+                    if (hierarchyTab) {
+                        hierarchyTab.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка проверки прав:', error);
+            });
     }
 });

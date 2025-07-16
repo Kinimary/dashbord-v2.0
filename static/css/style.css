@@ -1446,6 +1446,225 @@ input:checked+.toggle-slider:before {
     margin-bottom: 12px;
     font-weight: 700;
     color: var(--text-primary);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: var(--transition);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--belwest-green);
+    box-shadow: 
+        inset 0 2px 8px rgba(0, 0, 0, 0.1),
+        0 0 20px var(--belwest-green-glow);
+    transform: translateY(-2px);
+}
+
+/* Hierarchy management specific styles */
+.hierarchy-rules {
+    background: linear-gradient(135deg, 
+        var(--glass-bg) 0%, 
+        rgba(46, 139, 87, 0.1) 100%);
+    border: 1px solid var(--belwest-green);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px var(--belwest-green-glow);
+}
+
+.hierarchy-rules h4 {
+    color: var(--belwest-green-light);
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.hierarchy-rules ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hierarchy-rules li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: 25px;
+}
+
+.hierarchy-rules li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--belwest-green);
+    font-weight: bold;
+}
+
+.hierarchy-rules li:last-child {
+    border-bottom: none;
+}
+
+.hierarchy-rules strong {
+    color: var(--belwest-green-light);
+    font-weight: 700;
+}
+
+/* Access preview styles */
+.access-preview-list {
+    background: var(--background-tertiary);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.access-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--glass-bg);
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+}
+
+.access-item:hover {
+    background: var(--glass-border);
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.2);
+}
+
+.access-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Enhanced role badges */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Permission indicators */
+.permission-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.permission-indicator.allowed {
+    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+    color: white;
+}
+
+.permission-indicator.denied {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+}
+
+/* Enhanced buttons for hierarchy management */
+.hierarchy-btn {
+    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px var(--belwest-green-glow);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hierarchy-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px var(--belwest-green-glow);
+}
+
+.hierarchy-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Table enhancements for hierarchy */
+.table.hierarchy-table th {
+    background: linear-gradient(135deg,
+        var(--background-tertiary) 0%,
+        rgba(46, 139, 87, 0.3) 100%);
+}
+
+.table.hierarchy-table tr:hover {
+    background: linear-gradient(135deg,
+        var(--glass-bg) 0%,
+        rgba(46, 139, 87, 0.1) 100%);
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    color: white;
+    z-index: 10000;
+    font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}or: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
     font-size: 14px;

@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, Response
 from flask_session import Session
 import sqlite3
@@ -48,19 +47,33 @@ def hash_password(password):
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     # Создание таблицы пользователей
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            email TEXT,
-            role TEXT DEFAULT 'user',
+            role TEXT NOT NULL DEFAULT 'user',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
+
+    # Создание таблицы иерархии пользователей
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_hierarchy (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            parent_id INTEGER NOT NULL,
+            child_id INTEGER NOT NULL,
+            hierarchy_type TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parent_id) REFERENCES users (id) ON DELETE CASCADE,
+            FOREIGN KEY (child_id) REFERENCES users (id) ON DELETE CASCADE,
+            UNIQUE(parent_id, child_id)
+        )
+    ''')
+
     # Создание таблицы датчиков
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sensors (
@@ -74,7 +87,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
-    
+
     # Создание таблицы данных посетителей
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS visitor_data (
@@ -85,7 +98,7 @@ def init_db():
             FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
-    
+
     # Создание таблицы магазинов
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS stores (
@@ -101,7 +114,7 @@ def init_db():
             FOREIGN KEY (rd_id) REFERENCES users (id)
         )
     ''')
-    
+
     # Создание таблицы привязки датчиков к пользователям
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_sensors (
@@ -113,7 +126,7 @@ def init_db():
             FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
-    
+
     # Создание таблицы привязки датчиков к магазинам
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS store_sensors (
@@ -125,20 +138,7 @@ def init_db():
             FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
-    
-    # Создание таблицы для иерархии пользователей
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_hierarchy (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parent_id INTEGER,
-            child_id INTEGER,
-            hierarchy_type TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES users (id),
-            FOREIGN KEY (child_id) REFERENCES users (id)
-        )
-    ''')
-    
+
     # Создание таблицы для статистики по часам
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS hourly_statistics (
@@ -153,7 +153,7 @@ def init_db():
             FOREIGN KEY (store_id) REFERENCES stores (id)
         )
     ''')
-    
+
     # Создание таблицы для простоев датчиков
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sensor_downtime (
@@ -165,7 +165,7 @@ def init_db():
             FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
-    
+
     # Проверяем, есть ли пользователь admin
     cursor.execute('SELECT COUNT(*) FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone()[0] == 0:
@@ -174,7 +174,7 @@ def init_db():
             INSERT INTO users (username, password, email, role)
             VALUES (?, ?, ?, ?)
         ''', ('admin', hashed_password, 'admin@belwest.com', 'admin'))
-    
+
     # Добавляем тестовые данные датчиков
     cursor.execute('SELECT COUNT(*) FROM sensors')
     if cursor.fetchone()[0] == 0:
@@ -185,12 +185,12 @@ def init_db():
             ('Касса №1', 'Основная касса', 'active'),
             ('Касса №2', 'Дополнительная касса', 'inactive')
         ]
-        
+
         cursor.executemany('''
             INSERT INTO sensors (name, location, status)
             VALUES (?, ?, ?)
         ''', test_sensors)
-    
+
     # Добавляем тестовые данные магазинов
     cursor.execute('SELECT COUNT(*) FROM stores')
     if cursor.fetchone()[0] == 0:
@@ -201,12 +201,12 @@ def init_db():
             ('BELWEST Arena City', 'г. Минск, пр. Победителей, 84', 53.9232, 27.5820),
             ('BELWEST Столица', 'г. Минск, ул. Сурганова, 57Б', 53.9268, 27.5918)
         ]
-        
+
         cursor.executemany('''
             INSERT INTO stores (name, address, latitude, longitude)
             VALUES (?, ?, ?, ?)
         ''', test_stores)
-    
+
     conn.commit()
     conn.close()
 
@@ -221,19 +221,19 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
+
         if not username or not password:
             return render_template('login.html', error='Пожалуйста, заполните все поля')
-        
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         hashed_password = hash_password(password)
         cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', 
                       (username, hashed_password))
         user = cursor.fetchone()
         conn.close()
-        
+
         if user:
             session['user_id'] = user['id']
             session['username'] = user['username']
@@ -241,7 +241,7 @@ def login():
             return redirect(url_for('index'))
         else:
             return render_template('login.html', error='Неверный логин или пароль')
-    
+
     return render_template('login.html')
 
 @app.route('/logout', methods=['POST'])
@@ -297,30 +297,30 @@ def receive_visitor_count():
                 'status': request.form.get('status', 'active'),
                 'location': request.form.get('location', 'unknown')
             }
-        
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Обновляем или создаем датчик
         cursor.execute('''
             INSERT OR REPLACE INTO sensors (name, location, status, last_update, visitor_count)
             VALUES (?, ?, ?, ?, ?)
         ''', (data['device_id'], data['location'], data['status'], 
               datetime.now(), data['visitor_count']))
-        
+
         sensor_id = cursor.lastrowid
-        
+
         # Сохраняем данные посетителей
         cursor.execute('''
             INSERT INTO visitor_data (sensor_id, visitor_count, timestamp)
             VALUES (?, ?, ?)
         ''', (sensor_id, data['visitor_count'], datetime.now()))
-        
+
         conn.commit()
         conn.close()
-        
+
         return jsonify({'status': 'success', 'message': 'Data received'})
-        
+
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
@@ -330,10 +330,10 @@ def get_sensor_data():
     period = request.args.get('period', 'day')
     hierarchy_type = request.args.get('hierarchy_type', '')
     entity_id = request.args.get('entity_id', '')
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     # Базовый запрос для получения данных
     if period == 'day':
         time_condition = "datetime('now', '-1 day')"
@@ -343,7 +343,7 @@ def get_sensor_data():
         time_condition = "datetime('now', '-30 days')"
     else:
         time_condition = "datetime('now', '-1 hour')"
-    
+
     # Получаем общую статистику
     cursor.execute(f'''
         SELECT 
@@ -354,9 +354,9 @@ def get_sensor_data():
         LEFT JOIN visitor_data vd ON s.id = vd.sensor_id 
         WHERE s.status = 'active' AND vd.timestamp > {time_condition}
     ''')
-    
+
     stats = cursor.fetchone()
-    
+
     # Получаем данные по времени для графика
     cursor.execute(f'''
         SELECT 
@@ -368,9 +368,9 @@ def get_sensor_data():
         GROUP BY hour
         ORDER BY hour
     ''')
-    
+
     hourly_data = cursor.fetchall()
-    
+
     # Получаем список датчиков
     cursor.execute('''
         SELECT s.*, vd.visitor_count as current_visitors
@@ -380,11 +380,11 @@ def get_sensor_data():
             SELECT MAX(id) FROM visitor_data WHERE sensor_id = s.id
         ) OR vd.id IS NULL
     ''')
-    
+
     sensors_list = cursor.fetchall()
-    
+
     conn.close()
-    
+
     return jsonify({
         'total_visitors': stats['total_visitors'] or 0,
         'active_sensors': stats['active_sensors'] or 0,
@@ -401,17 +401,17 @@ def get_sensor_data():
 def get_hierarchy_options(hierarchy_type):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     if hierarchy_type == 'store':
         cursor.execute('SELECT id, name FROM stores ORDER BY name')
     elif hierarchy_type in ['manager', 'rd', 'tu']:
         cursor.execute('SELECT id, username as name FROM users WHERE role = ? ORDER BY username', (hierarchy_type,))
     else:
         return jsonify([])
-    
+
     options = cursor.fetchall()
     conn.close()
-    
+
     return jsonify([dict(row) for row in options])
 
 # API для данных карты
@@ -419,7 +419,7 @@ def get_hierarchy_options(hierarchy_type):
 def get_map_data():
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute('''
         SELECT 
             s.id,
@@ -436,15 +436,15 @@ def get_map_data():
             AND DATE(vd.timestamp) = DATE('now')
         GROUP BY s.id, s.name, s.address, s.latitude, s.longitude
     ''')
-    
+
     stores = cursor.fetchall()
     conn.close()
-    
+
     return jsonify([dict(store) for store in stores])
 
 if __name__ == '__main__':
     if not os.path.exists('flask_session'):
         os.makedirs('flask_session')
-    
+
     init_db()
     app.run(host='0.0.0.0', port=1521, debug=True)

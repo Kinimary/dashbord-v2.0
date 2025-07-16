@@ -416,23 +416,31 @@
                                 </div>
 
                                 <div class="form-actions">
-                                    <button type="button" id="create-hierarchy-btn" disabled>Создать связь</button>
+                                    <button type="button" id="create-hierarchy-btn" class="hierarchy-btn" disabled>
+                                        <i class="fas fa-link"></i> Создать иерархическую связь
+                                    </button>
                                 </div>
 
-                                <div class="hierarchy-rules" style="margin-top: 20px; padding: 15px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                                    <h4 style="color: var(--belwest-green-light); margin-bottom: 10px;">Правила иерархии:</h4>
-                                    <ul style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
-                                        <li><strong>Менеджер</strong> → может получить доступ к РД, ТУ, Магазинам</li>
-                                        <li><strong>РД</strong> → может получить доступ к ТУ, Магазинам</li>
-                                        <li><strong>ТУ</strong> → может получить доступ к Магазинам</li>
-                                        <li><strong>Магазин</strong> → имеет доступ только к своим датчикам</li>
+                                <div class="hierarchy-rules">
+                                    <h4>Правила иерархии доступа:</h4>
+                                    <ul>
+                                        <li><strong>Менеджер</strong> может управлять РД, ТУ, Магазинами и получать доступ к их данным</li>
+                                        <li><strong>РД (Региональный директор)</strong> может управлять ТУ, Магазинами в своем регионе</li>
+                                        <li><strong>ТУ (Торговый управляющий)</strong> может управлять Магазинами в своей зоне</li>
+                                        <li><strong>Магазин</strong> имеет доступ только к своим датчикам и отчетам</li>
                                     </ul>
+                                    <div style="margin-top: 15px; padding: 12px; background: rgba(46, 139, 87, 0.1); border-radius: 8px; border-left: 4px solid var(--belwest-green);">
+                                        <strong style="color: var(--belwest-green-light);">Важно:</strong>
+                                        <span style="color: var(--text-secondary); margin-left: 8px;">
+                                            Создание иерархической связи автоматически предоставляет родительскому пользователю доступ к данным подчиненного
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="hierarchy-list" style="margin-top: 30px;">
                                 <h4>Существующие иерархические связи</h4>
-                                <table class="table" id="hierarchy-table">
+                                <table class="table hierarchy-table" id="hierarchy-table">
                                     <thead>
                                         <tr>
                                             <th>Родительский пользователь</th>
