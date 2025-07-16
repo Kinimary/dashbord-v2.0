@@ -159,32 +159,142 @@ function initializeSettings() {
         }
     });
 
-    // Initialize toggle switches
-    const toggles = document.querySelectorAll('.toggle-switch input');
+    // Initialize toggle switches with proper state management
+    const toggles = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
     toggles.forEach(toggle => {
         const settingName = toggle.getAttribute('data-setting');
         const savedValue = localStorage.getItem(settingName);
         
-        if (savedValue === 'true') {
-            toggle.checked = true;
-        } else if (savedValue === 'false') {
-            toggle.checked = false;
+        // Set initial state
+        if (savedValue !== null) {
+            toggle.checked = savedValue === 'true';
+        } else {
+            // Default values
+            if (settingName === 'notifications' || settingName === 'autoUpdate' || settingName === 'autosave') {
+                toggle.checked = true;
+                localStorage.setItem(settingName, 'true');
+            }
         }
+        
+        // Apply initial setting
+        applySettingChange(toggle, settingName, toggle.checked);
         
         toggle.addEventListener('change', function() {
             localStorage.setItem(settingName, this.checked);
-            
-            // Handle specific settings
-            if (settingName === 'darkMode') {
-                handleThemeToggle(this.checked);
-            } else if (settingName === 'notifications') {
-                handleNotificationsToggle(this.checked);
-            } else if (settingName === 'autoRefresh') {
-                handleAutoRefreshToggle(this.checked);
-            } else if (settingName === 'sound') {
-                handleSoundToggle(this.checked);
-            }
+            applySettingChange(this, settingName, this.checked);
         });
+    });
+
+    // Initialize language selector
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        const savedLang = localStorage.getItem('language') || 'ru';
+        languageSelect.value = savedLang;
+        
+        languageSelect.addEventListener('change', function() {
+            localStorage.setItem('language', this.value);
+            applyLanguageChange(this.value);
+            showNotification('Язык изменен', 'success');
+        });
+    }
+}
+
+function applySettingChange(toggle, settingName, isChecked) {
+    switch(settingName) {
+        case 'darkMode':
+            handleThemeToggle(!isChecked); // Инвертируем логику для темной темы
+            break;
+        case 'notifications':
+            handleNotificationsToggle(isChecked);
+            break;
+        case 'autoUpdate':
+        case 'autoRefresh':
+            handleAutoRefreshToggle(isChecked);
+            break;
+        case 'sounds':
+            handleSoundToggle(isChecked);
+            break;
+        case 'autosave':
+            handleAutoSaveToggle(isChecked);
+            break;
+    }
+}
+
+function applyLanguageChange(lang) {
+    document.documentElement.lang = lang;
+    
+    const translations = {
+        'ru': {
+            'dashboard': 'Панель управления',
+            'users': 'Пользователи', 
+            'sensors': 'Датчики',
+            'reports': 'Отчеты',
+            'settings': 'Настройки',
+            'dark_theme': 'Темная тема',
+            'notifications': 'Уведомления',
+            'auto_update': 'Авто-обновление',
+            'language': 'Язык',
+            'sounds': 'Звуки',
+            'auto_save': 'Авто-сохранение'
+        },
+        'en': {
+            'dashboard': 'Dashboard',
+            'users': 'Users',
+            'sensors': 'Sensors', 
+            'reports': 'Reports',
+            'settings': 'Settings',
+            'dark_theme': 'Dark Theme',
+            'notifications': 'Notifications',
+            'auto_update': 'Auto Update',
+            'language': 'Language',
+            'sounds': 'Sounds',
+            'auto_save': 'Auto Save'
+        },
+        'be': {
+            'dashboard': 'Панэль кіравання',
+            'users': 'Карыстальнікі',
+            'sensors': 'Датчыкі',
+            'reports': 'Справаздачы', 
+            'settings': 'Налады',
+            'dark_theme': 'Цёмная тэма',
+            'notifications': 'Паведамленні',
+            'auto_update': 'Аўта-абнаўленне',
+            'language': 'Мова',
+            'sounds': 'Гукі',
+            'auto_save': 'Аўта-захаванне'
+        }
+    };
+
+    if (translations[lang]) {
+        updateInterfaceTexts(translations[lang]);
+    }
+}
+
+function updateInterfaceTexts(texts) {
+    // Обновляем меню
+    const menuLinks = {
+        '/': 'dashboard',
+        '/users': 'users', 
+        '/sensors': 'sensors',
+        '/reports': 'reports',
+        '/settings': 'settings'
+    };
+    
+    Object.entries(menuLinks).forEach(([href, key]) => {
+        const link = document.querySelector(`a[href="${href}"] span`);
+        if (link && texts[key]) {
+            link.textContent = texts[key];
+        }
+    });
+    
+    // Обновляем настройки в боковой панели
+    const settingLabels = document.querySelectorAll('.setting-label span');
+    settingLabels.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        const key = text.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+        if (texts[key]) {
+            label.textContent = texts[key];
+        }
     });
 }
 
@@ -225,6 +335,43 @@ function handleAutoRefreshToggle(enabled) {
 function handleSoundToggle(enabled) {
     console.log('Sound:', enabled ? 'enabled' : 'disabled');
     window.soundEnabled = enabled;
+    showNotification(enabled ? 'Звуки включены' : 'Звуки отключены', 'info');
+}
+
+function handleAutoSaveToggle(enabled) {
+    console.log('Auto-save:', enabled ? 'enabled' : 'disabled');
+    window.autoSaveEnabled = enabled;
+    
+    if (enabled) {
+        startAutoSave();
+        showNotification('Авто-сохранение включено', 'success');
+    } else {
+        stopAutoSave();
+        showNotification('Авто-сохранение отключено', 'info');
+    }
+}
+
+let autoSaveInterval;
+
+function startAutoSave() {
+    if (autoSaveInterval) clearInterval(autoSaveInterval);
+    autoSaveInterval = setInterval(() => {
+        console.log('Auto-saving...');
+        // Здесь можно добавить логику автосохранения
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            localStorage.setItem('autosave_' + form.id, JSON.stringify(data));
+        });
+    }, 60000); // Автосохранение каждую минуту
+}
+
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+    }
 }
 
 function showNotification(message, type) {
