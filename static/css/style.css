@@ -961,7 +961,7 @@ input:checked + .toggle-slider:before {
     font-weight: 500;
 }
 
-/* Enhanced Tables */
+/*/* Enhanced Tables */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -2247,43 +2247,72 @@ button:hover::before {
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-    .charts-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .details-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .metrics-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
+/* Стили для кнопки выхода */
+.logout-btn {
+    color: var(--error-color) !important;
+    transition: all 0.3s ease;
 }
 
+.logout-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--error-color) !important;
+}
+
+.logout-btn i {
+    color: var(--error-color);
+}
+
+/* Стили для динамических селекторов */
+.analytics-controls .modern-select {
+    min-width: 150px;
+    margin-right: 10px;
+}
+
+#entity-selector {
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+#entity-selector:focus {
+    border-color: var(--belwest-green);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* Анимация для скрытия/показа селектора */
+#entity-selector[style*="display: none"] {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+#entity-selector[style*="display: block"] {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .top-bar {
         flex-direction: column;
         gap: 16px;
     }
-    
+
     .top-bar-center {
         order: 2;
     }
-    
+
     .analytics-controls {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .metrics-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .sensors-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
-    
+
     .downtime-stats {
         flex-direction: column;
         gap: 12px;
@@ -2776,6 +2805,10 @@ button:hover::before {
 
 .downtime-item.reconnected .downtime-icon {
     background: #10b981;
+}
+
+.downtime-content-info {
+    flex: 1;
 }
 
 .downtime-content h4 {

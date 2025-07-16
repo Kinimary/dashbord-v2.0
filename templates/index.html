@@ -101,11 +101,15 @@
                 </div>
                 <div class="top-bar-center">
                     <div class="analytics-controls">
-                        <select id="location-filter" class="modern-select">
-                            <option value="all">Все локации</option>
-                            <option value="store">Магазин</option>
-                            <option value="tu">ТУ</option>
-                            <option value="rd">РД</option>
+                        <select id="hierarchy-type" class="modern-select">
+                            <option value="all">Все данные</option>
+                            <option value="manager">По менеджеру</option>
+                            <option value="rd">По РД</option>
+                            <option value="tu">По ТУ</option>
+                            <option value="store">По магазину</option>
+                        </select>
+                        <select id="entity-selector" class="modern-select" style="display: none;">
+                            <option value="">Выберите...</option>
                         </select>
                         <select id="period-select" class="modern-select">
                             <option value="hour">Час</option>
@@ -164,9 +168,9 @@
                                         <span>Настройки</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    <a href="#" class="dropdown-item" onclick="logout()">
+                                    <a href="/logout" class="dropdown-item logout-btn">
                                         <i class="fas fa-sign-out-alt"></i>
-                                        <span>Выйти</span>
+                                        <span>Выйти из системы</span>
                                     </a>
                                 </div>
                             </div>
@@ -440,9 +444,28 @@
             const periodSelect = document.getElementById('period-select');
             const refreshBtn = document.getElementById('refresh-data');
 
-            if (locationFilter) {
-                locationFilter.addEventListener('change', function() {
-                    loadDashboardData();
+            // Обработка иерархических фильтров
+            const hierarchyType = document.getElementById('hierarchy-type');
+            const entitySelector = document.getElementById('entity-selector');
+            
+            if (hierarchyType) {
+                hierarchyType.addEventListener('change', function() {
+                    const selectedType = this.value;
+                    if (selectedType === 'all') {
+                        entitySelector.style.display = 'none';
+                        loadDashboardData();
+                    } else {
+                        entitySelector.style.display = 'block';
+                        loadEntityOptions(selectedType);
+                    }
+                });
+            }
+            
+            if (entitySelector) {
+                entitySelector.addEventListener('change', function() {
+                    if (this.value) {
+                        loadDashboardData();
+                    }
                 });
             }
 
@@ -599,6 +622,26 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // Функция загрузки опций для выбранного типа иерархии
+        function loadEntityOptions(type) {
+            fetch(`/api/hierarchy/${type}`)
+                .then(response => response.json())
+                .then(data => {
+                    const entitySelector = document.getElementById('entity-selector');
+                    entitySelector.innerHTML = '<option value="">Выберите...</option>';
+                    
+                    data.forEach(entity => {
+                        const option = document.createElement('option');
+                        option.value = entity.id;
+                        option.textContent = entity.name;
+                        entitySelector.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки опций:', error);
+                });
         }
 
         // Функция загрузки уведомлений

@@ -1,4 +1,3 @@
-
 // BELWEST - Modern Visitor Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
@@ -17,7 +16,7 @@ function initializeDashboard() {
         card.style.animationDelay = `${index * 0.1}s`;
         card.style.opacity = '0';
         card.style.transform = 'translateY(20px)';
-        
+
         setTimeout(() => {
             card.style.transition = 'all 0.6s ease-out';
             card.style.opacity = '1';
@@ -29,7 +28,7 @@ function initializeDashboard() {
 function loadDashboardData() {
     const location = document.getElementById('location-filter').value;
     const period = document.getElementById('period-select').value;
-    
+
     fetch(`/api/sensor-data?location=${location}&period=${period}`)
         .then(response => response.json())
         .then(data => {
@@ -54,26 +53,26 @@ function updateMetrics(data) {
         'peak-time': data.peak_time || '00:00',
         'hourly-avg': data.hourly_avg || 0
     };
-    
+
     const changes = {
         'visitors-change': data.visitors_change || '+0%',
         'sensors-change': data.sensors_change || '+0',
         'peak-change': data.peak_period || 'Будни',
         'avg-change': data.avg_change || '+0%'
     };
-    
+
     Object.entries(metrics).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
             animateValue(element, parseInt(element.textContent) || 0, value, 1000);
         }
     });
-    
+
     Object.entries(changes).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
-            
+
             // Определение цвета изменения
             if (value.startsWith('+')) {
                 element.className = 'metric-change positive';
@@ -84,7 +83,7 @@ function updateMetrics(data) {
             }
         }
     });
-    
+
     // Обновление мини-графиков
     updateMiniCharts(data);
 }
@@ -92,23 +91,23 @@ function updateMetrics(data) {
 function animateValue(element, start, end, duration) {
     const startTime = performance.now();
     const isNumber = typeof end === 'number';
-    
+
     function updateValue(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         if (isNumber) {
             const current = Math.round(start + (end - start) * progress);
             element.textContent = current.toLocaleString();
         } else {
             element.textContent = end;
         }
-        
+
         if (progress < 1) {
             requestAnimationFrame(updateValue);
         }
     }
-    
+
     requestAnimationFrame(updateValue);
 }
 
@@ -176,7 +175,7 @@ function initializeCharts() {
             }
         });
     }
-    
+
     // Инициализация графика распределения по локациям
     const storesCtx = document.getElementById('stores-distribution-chart');
     if (storesCtx) {
@@ -219,14 +218,14 @@ function initializeCharts() {
             }
         });
     }
-    
+
     // Инициализация мини-графиков
     initializeMiniCharts();
 }
 
 function initializeMiniCharts() {
     const miniChartIds = ['visitors-mini-chart', 'sensors-mini-chart', 'peak-mini-chart', 'avg-mini-chart'];
-    
+
     miniChartIds.forEach(id => {
         const ctx = document.getElementById(id);
         if (ctx) {
@@ -270,7 +269,7 @@ function updateMiniCharts(data) {
     Object.keys(miniCharts).forEach(chartId => {
         const chart = miniCharts[chartId];
         const newData = Array.from({length: 7}, () => Math.floor(Math.random() * 100));
-        
+
         chart.data.datasets[0].data = newData;
         chart.update('none');
     });
@@ -278,10 +277,10 @@ function updateMiniCharts(data) {
 
 function updateMainChart(data) {
     if (!mainChart) return;
-    
+
     const period = document.getElementById('period-select').value;
     const chartData = data.chart_data || generateSampleData(period);
-    
+
     mainChart.data.labels = chartData.labels;
     mainChart.data.datasets[0].data = chartData.data;
     mainChart.update('active');
@@ -289,7 +288,7 @@ function updateMainChart(data) {
 
 function updateStoresChart(data) {
     if (!storesChart) return;
-    
+
     const stores = data.stores || [
         { name: 'Магазин 1', visitors: 150 },
         { name: 'Магазин 2', visitors: 120 },
@@ -297,11 +296,11 @@ function updateStoresChart(data) {
         { name: 'ТУ Центр', visitors: 200 },
         { name: 'РД Восток', visitors: 300 }
     ];
-    
+
     storesChart.data.labels = stores.map(store => store.name);
     storesChart.data.datasets[0].data = stores.map(store => store.visitors);
     storesChart.update('active');
-    
+
     // Обновление легенды
     updateStoresLegend(stores);
 }
@@ -309,9 +308,9 @@ function updateStoresChart(data) {
 function updateStoresLegend(stores) {
     const legendContainer = document.getElementById('stores-legend');
     if (!legendContainer) return;
-    
+
     const colors = ['#2E8B57', '#20B2AA', '#FF6B35', '#8B45FF', '#4FACFE', '#FFD700', '#FF4757', '#32CD32'];
-    
+
     legendContainer.innerHTML = stores.map((store, index) => `
         <div class="legend-item">
             <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
@@ -322,10 +321,10 @@ function updateStoresLegend(stores) {
 
 function updateSensorsOverview(data) {
     const sensors = data.sensors || generateSampleSensors();
-    
+
     // Обновление сетки датчиков
     updateSensorsGrid(sensors);
-    
+
     // Обновление списка датчиков
     updateSensorsList(sensors);
 }
@@ -333,7 +332,7 @@ function updateSensorsOverview(data) {
 function updateSensorsGrid(sensors) {
     const gridContainer = document.getElementById('sensors-grid');
     if (!gridContainer) return;
-    
+
     gridContainer.innerHTML = sensors.map(sensor => `
         <div class="sensor-grid-item">
             <div class="sensor-status-icon ${sensor.status}">
@@ -349,7 +348,7 @@ function updateSensorsGrid(sensors) {
 function updateSensorsList(sensors) {
     const listContainer = document.getElementById('sensors-list');
     if (!listContainer) return;
-    
+
     listContainer.innerHTML = sensors.map(sensor => `
         <div class="sensor-list-item">
             <div class="sensor-status-icon ${sensor.status}">
@@ -367,12 +366,40 @@ function updateSensorsList(sensors) {
     `).join('');
 }
 
+function loadDashboardData() {
+    const period = document.getElementById('period-select')?.value || 'day';
+    const hierarchyType = document.getElementById('hierarchy-type')?.value || 'all';
+    const entityId = document.getElementById('entity-selector')?.value || '';
+
+    let url = `/api/sensor-data?period=${period}`;
+
+    if (hierarchyType !== 'all' && entityId) {
+        url += `&hierarchy_type=${hierarchyType}&entity_id=${entityId}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            updateMetrics(data);
+            updateMainChart(data);
+            updateStoresChart(data);
+            updateSensorsOverview(data);
+            updateActivityStream(data);
+            updateDowntimeList(data);
+            updateHierarchyInfo(data);
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки данных:', error);
+            showNotification('Ошибка загрузки данных', 'error');
+        });
+}
+
 function updateActivityStream(data) {
     const activities = data.activities || generateSampleActivities();
     const streamContainer = document.getElementById('activity-stream');
-    
+
     if (!streamContainer) return;
-    
+
     streamContainer.innerHTML = activities.map(activity => `
         <div class="activity-item" data-type="${activity.type}">
             <div class="activity-icon ${activity.type}">
@@ -390,9 +417,9 @@ function updateActivityStream(data) {
 function updateDowntimeList(data) {
     const downtimes = data.downtimes || generateSampleDowntimes();
     const listContainer = document.getElementById('downtime-list');
-    
+
     if (!listContainer) return;
-    
+
     listContainer.innerHTML = downtimes.map(downtime => `
         <div class="downtime-item ${downtime.status}">
             <div class="downtime-icon">
@@ -426,14 +453,14 @@ function updateRealTimeActivity() {
     // Добавление новых активностей в реальном времени
     const streamContainer = document.getElementById('activity-stream');
     if (!streamContainer) return;
-    
+
     const newActivity = {
         type: 'visitor',
         title: 'Новый посетитель',
         description: 'Зарегистрирован через датчик входа',
         time: new Date().toLocaleTimeString('ru-RU')
     };
-    
+
     const activityHtml = `
         <div class="activity-item" data-type="${newActivity.type}">
             <div class="activity-icon ${newActivity.type}">
@@ -446,9 +473,9 @@ function updateRealTimeActivity() {
             </div>
         </div>
     `;
-    
+
     streamContainer.insertAdjacentHTML('afterbegin', activityHtml);
-    
+
     // Удаление старых записей (оставляем только 10 последних)
     const items = streamContainer.querySelectorAll('.activity-item');
     if (items.length > 10) {
@@ -484,15 +511,15 @@ function showNotification(message, type = 'info') {
         transition: all 0.3s ease;
         font-weight: 600;
     `;
-    
+
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(100%)';
@@ -500,14 +527,28 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+function updateHierarchyInfo(data) {
+    // Обновление информации о выбранной иерархии
+    const hierarchyType = document.getElementById('hierarchy-type')?.value;
+    const entitySelector = document.getElementById('entity-selector');
+
+    if (hierarchyType !== 'all' && entitySelector?.value) {
+        const selectedOption = entitySelector.options[entitySelector.selectedIndex];
+        if (selectedOption) {
+            // Можно добавить отображение информации о выбранной сущности
+            console.log(`Данные для ${selectedOption.text}:`, data);
+        }
+    }
+}
+
 // Генерация демонстрационных данных
 function generateSampleData(period) {
     const labels = [];
     const data = [];
-    
+
     const now = new Date();
     let points = 24;
-    
+
     switch (period) {
         case 'hour':
             points = 60;
@@ -550,7 +591,7 @@ function generateSampleData(period) {
             }
             break;
     }
-    
+
     return { labels, data };
 }
 

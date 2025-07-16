@@ -422,15 +422,70 @@ def get_sensor_data():
         user_role = session.get('role')
         user_id = session.get('user_id')
         period = request.args.get('period', 'day')  # hour, day, week, month, year
+        hierarchy_type = request.args.get('hierarchy_type', '')
+        entity_id = request.args.get('entity_id', '')
         
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()
 
-        # Build store filter based on role
+        # Build store filter based on role and hierarchy selection
         store_filter = ""
         filter_params = []
         
-        if user_role == 'store':
+        # Если выбрана конкретная иерархия
+        if hierarchy_type and entity_id:
+            if hierarchy_type == 'manager':
+                # Показать все магазины, привязанные к менеджеру
+                cursor.execute('''
+                    SELECT DISTINCT s.id FROM stores s
+                    JOIN users tu ON s.tu_id = tu.id
+                    JOIN users rd ON s.rd_id = rd.id
+                    WHERE tu.id = ? OR rd.id = ? OR ? IN (
+                        SELECT user_id FROM user_sensors WHERE sensor_id IN (
+                            SELECT id FROM sensors WHERE id IN (
+                                SELECT sensor_id FROM visitor_data WHERE sensor_id IN (
+                                    SELECT id FROM sensors
+                                )
+                            )
+                        )
+                    )
+                ''', (entity_id, entity_id, entity_id))
+                user_stores = [row[0] for row in cursor.fetchall()]
+                if user_stores:
+                    placeholders = ','.join(['?' for _ in user_stores])
+                    store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                    filter_params = user_stores
+                else:
+                    store_filter = " WHERE 1=0"
+                    
+            elif hierarchy_type == 'rd':
+                # Показать магазины конкретного РД
+                cursor.execute('SELECT id FROM stores WHERE rd_id = ?', (entity_id,))
+                user_stores = [row[0] for row in cursor.fetchall()]
+                if user_stores:
+                    placeholders = ','.join(['?' for _ in user_stores])
+                    store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                    filter_params = user_stores
+                else:
+                    store_filter = " WHERE 1=0"
+                    
+            elif hierarchy_type == 'tu':
+                # Показать магазины конкретного ТУ
+                cursor.execute('SELECT id FROM stores WHERE tu_id = ?', (entity_id,))
+                user_stores = [row[0] for row in cursor.fetchall()]
+                if user_stores:
+                    placeholders = ','.join(['?' for _ in user_stores])
+                    store_filter = f" WHERE hs.store_id IN ({placeholders})"
+                    filter_params = user_stores
+                else:
+                    store_filter = " WHERE 1=0"
+                    
+            elif hierarchy_type == 'store':
+                # Показать данные конкретного магазина
+                store_filter = " WHERE hs.store_id = ?"
+                filter_params = [entity_id]
+        
+        elif user_role == 'store':
             # Store managers see only their store
             cursor.execute('SELECT id FROM stores WHERE tu_id = ? OR rd_id = ?', (user_id, user_id))
             user_stores = [row[0] for row in cursor.fetchall()]
@@ -714,6 +769,65 @@ def mark_notification_read(notification_id):
 def mark_all_notifications_read():
     """Отметить все уведомления как прочитанные"""
     return jsonify({'success': True})
+
+
+@app.route('/api/hierarchy/<hierarchy_type>')
+@login_required
+def get_hierarchy_options(hierarchy_type):
+    """API для получения опций иерархии"""
+    try:
+        user_role = session.get('role')
+        user_id = session.get('user_id')
+        
+        conn = sqlite3.connect('visitor_data.db')
+        cursor = conn.cursor()
+        
+        options = []
+        
+        if hierarchy_type == 'manager':
+            # Получить всех менеджеров
+            cursor.execute('''
+                SELECT id, username FROM users 
+                WHERE role IN ('manager', 'admin')
+                ORDER BY username
+            ''')
+            options = [{'id': row[0], 'name': f"Менеджер: {row[1]}"} for row in cursor.fetchall()]
+            
+        elif hierarchy_type == 'rd':
+            # Получить всех РД
+            cursor.execute('''
+                SELECT id, username FROM users 
+                WHERE role = 'rd'
+                ORDER BY username
+            ''')
+            options = [{'id': row[0], 'name': f"РД: {row[1]}"} for row in cursor.fetchall()]
+            
+        elif hierarchy_type == 'tu':
+            # Получить всех ТУ
+            cursor.execute('''
+                SELECT id, username FROM users 
+                WHERE role = 'tu'
+                ORDER BY username
+            ''')
+            options = [{'id': row[0], 'name': f"ТУ: {row[1]}"} for row in cursor.fetchall()]
+            
+        elif hierarchy_type == 'store':
+            # Получить все магазины
+            cursor.execute('''
+                SELECT s.id, s.name, s.address, tu.username as tu_name, rd.username as rd_name
+                FROM stores s
+                LEFT JOIN users tu ON s.tu_id = tu.id
+                LEFT JOIN users rd ON s.rd_id = rd.id
+                ORDER BY s.name
+            ''')
+            options = [{'id': row[0], 'name': f"{row[1]} ({row[2]})", 'tu': row[3], 'rd': row[4]} for row in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify(options)
+        
+    except Exception as e:
+        print(f"Error in get_hierarchy_options: {e}")
+        return jsonify([])
 
 
 @app.route('/api/sensor-downtimes')
