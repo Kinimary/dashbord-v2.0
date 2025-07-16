@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     initializeCharts();
     setupRealTimeUpdates();
+    loadSensorsData();
+    loadActivityStream();
 });
 
 // Глобальные переменные для графиков
@@ -21,6 +23,296 @@ function initializeDashboard() {
             card.style.transition = 'all 0.6s ease-out';
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
+        }, 100 + (index * 100));
+    });
+}
+
+// Инициализация графиков
+function initializeCharts() {
+    initMainChart();
+    initStoresChart();
+    initMiniCharts();
+}
+
+// Главный график посетителей
+function initMainChart() {
+    const ctx = document.getElementById('main-visitors-chart');
+    if (!ctx) return;
+
+    mainChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+            datasets: [{
+                label: 'Посетители',
+                data: [45, 23, 89, 156, 187, 134, 67],
+                borderColor: '#2E8B57',
+                backgroundColor: 'rgba(46, 139, 87, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#2E8B57',
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#E8F5E8'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#E8F5E8'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// График распределения по магазинам
+function initStoresChart() {
+    const ctx = document.getElementById('stores-distribution-chart');
+    if (!ctx) return;
+
+    storesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Центр', 'Восток', 'Запад', 'Север'],
+            datasets: [{
+                data: [245, 189, 156, 198],
+                backgroundColor: [
+                    '#2E8B57',
+                    '#3CB371', 
+                    '#20B2AA',
+                    '#4FACFE'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#E8F5E8',
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+// Мини-графики для метрик
+function initMiniCharts() {
+    // График посетителей
+    const visitorsCtx = document.getElementById('visitors-mini-chart');
+    if (visitorsCtx) {
+        miniCharts.visitors = new Chart(visitorsCtx, {
+            type: 'line',
+            data: {
+                labels: ['', '', '', '', '', '', ''],
+                datasets: [{
+                    data: [45, 67, 89, 76, 98, 87, 112],
+                    borderColor: '#2E8B57',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false }, 
+                    y: { display: false } 
+                }
+            }
+        });
+    }
+
+    // График датчиков
+    const sensorsCtx = document.getElementById('sensors-mini-chart');
+    if (sensorsCtx) {
+        miniCharts.sensors = new Chart(sensorsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['', '', '', '', '', '', ''],
+                datasets: [{
+                    data: [95, 97, 98, 96, 99, 98, 98],
+                    backgroundColor: '#20B2AA',
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false }, 
+                    y: { display: false } 
+                }
+            }
+        });
+    }
+}
+
+// Загрузка данных дашборда
+function loadDashboardData() {
+    // Обновление метрик
+    updateMetrics();
+    
+    // Обновление графиков с реальными данными
+    if (mainChart) {
+        const newData = generateVisitorData();
+        mainChart.data.datasets[0].data = newData;
+        mainChart.update();
+    }
+}
+
+// Генерация данных посетителей
+function generateVisitorData() {
+    const hours = [];
+    const visitors = [];
+    
+    for (let i = 0; i < 24; i += 4) {
+        hours.push(i.toString().padStart(2, '0') + ':00');
+        // Симуляция реальных данных
+        let count;
+        if (i >= 8 && i <= 20) {
+            count = Math.floor(Math.random() * 100) + 50; // Дневные часы
+        } else {
+            count = Math.floor(Math.random() * 30) + 10; // Ночные часы
+        }
+        visitors.push(count);
+    }
+    
+    return visitors;
+}
+
+// Обновление метрик
+function updateMetrics() {
+    // Посетители сегодня
+    document.getElementById('today-visitors').textContent = (Math.floor(Math.random() * 500) + 1000).toLocaleString();
+    
+    // Активные датчики
+    document.getElementById('active-sensors').textContent = Math.floor(Math.random() * 5) + 95;
+    
+    // Пиковое время
+    const peakHour = Math.floor(Math.random() * 4) + 13;
+    document.getElementById('peak-time').textContent = `${peakHour}:${Math.floor(Math.random() * 6) * 10}`;
+    
+    // Средний поток
+    document.getElementById('hourly-avg').textContent = Math.floor(Math.random() * 20) + 45;
+}
+
+// Загрузка данных датчиков
+function loadSensorsData() {
+    const sensorsGrid = document.getElementById('sensors-grid');
+    const sensorsList = document.getElementById('sensors-list');
+    
+    const sensors = [
+        { id: 1, name: 'Датчик-001', location: 'Центр - Главный вход', status: 'online', visitors: 245 },
+        { id: 2, name: 'Датчик-002', location: 'Восток - Торговый зал', status: 'online', visitors: 189 },
+        { id: 3, name: 'Датчик-003', location: 'Запад - Касса №1', status: 'offline', visitors: 0 },
+        { id: 4, name: 'Датчик-004', location: 'Север - Примерочная', status: 'online', visitors: 156 }
+    ];
+    
+    // Сетка датчиков
+    if (sensorsGrid) {
+        sensorsGrid.innerHTML = sensors.map(sensor => `
+            <div class="sensor-grid-item">
+                <div class="sensor-status-icon ${sensor.status}">
+                    <i class="fas ${sensor.status === 'online' ? 'fa-wifi' : 'fa-exclamation-triangle'}"></i>
+                </div>
+                <div class="sensor-name">${sensor.name}</div>
+                <div class="sensor-location">${sensor.location}</div>
+                <div class="sensor-visitors">${sensor.visitors}</div>
+            </div>
+        `).join('');
+    }
+    
+    // Список датчиков
+    if (sensorsList) {
+        sensorsList.innerHTML = sensors.map(sensor => `
+            <div class="sensor-list-item">
+                <div class="sensor-status-icon ${sensor.status}">
+                    <i class="fas ${sensor.status === 'online' ? 'fa-wifi' : 'fa-exclamation-triangle'}"></i>
+                </div>
+                <div class="sensor-list-info">
+                    <div class="sensor-list-name">${sensor.name}</div>
+                    <div class="sensor-list-details">${sensor.location}</div>
+                </div>
+                <div class="sensor-list-stats">
+                    <div class="sensor-list-visitors">${sensor.visitors}</div>
+                    <div class="sensor-list-label">посетителей</div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// Загрузка потока активности
+function loadActivityStream() {
+    const activityStream = document.getElementById('activity-stream');
+    if (!activityStream) return;
+    
+    const activities = [
+        { type: 'visitor', icon: 'fa-user-plus', title: 'Новый посетитель', description: 'Вход в магазин Центр', time: '2 мин назад' },
+        { type: 'sensor', icon: 'fa-wifi', title: 'Датчик восстановлен', description: 'Датчик-003 снова онлайн', time: '5 мин назад' },
+        { type: 'alert', icon: 'fa-exclamation-triangle', title: 'Высокая нагрузка', description: 'Превышен лимит в магазине Восток', time: '8 мин назад' },
+        { type: 'system', icon: 'fa-cog', title: 'Обновление системы', description: 'Установлена новая версия ПО', time: '15 мин назад' }
+    ];
+    
+    activityStream.innerHTML = activities.map(activity => `
+        <div class="activity-item" data-type="${activity.type}">
+            <div class="activity-icon ${activity.type}">
+                <i class="fas ${activity.icon}"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-description">${activity.description}</div>
+                <div class="activity-time">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Настройка обновлений в реальном времени
+function setupRealTimeUpdates() {
+    setInterval(() => {
+        updateMetrics();
+        if (Math.random() > 0.7) {
+            loadDashboardData();
+        }
+    }, 10000); // Каждые 10 секунд
+}form = 'translateY(0)';
         }, index * 100);
     });
 }
