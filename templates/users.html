@@ -397,6 +397,10 @@
     <script>
         // Additional page-specific functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация табов
+            initializeTabs();
+            
+            // Инициализация данных
             loadUsers();
             loadSensors();
 
@@ -624,6 +628,51 @@
                     store: "Магазин",
                 };
                 return roles[role] || role;
+            }
+            
+            function initializeTabs() {
+                const tabs = document.querySelectorAll('.tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const targetTab = this.getAttribute('data-tab');
+                        
+                        // Убираем активный класс со всех табов
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Добавляем активный класс к выбранному табу и контенту
+                        this.classList.add('active');
+                        const targetContent = document.getElementById(targetTab);
+                        if (targetContent) {
+                            targetContent.classList.add('active');
+                        }
+                        
+                        // Загружаем данные для соответствующего таба
+                        switch(targetTab) {
+                            case 'user-list':
+                                loadUsers();
+                                break;
+                            case 'store-management':
+                                loadStores();
+                                break;
+                            case 'sensor-assignment':
+                                loadSensorAssignment();
+                                break;
+                        }
+                    });
+                });
+            }
+            
+            function loadStores() {
+                // Заглушка для загрузки магазинов
+                console.log('Загрузка магазинов...');
+            }
+            
+            function loadSensorAssignment() {
+                // Заглушка для загрузки привязки датчиков
+                console.log('Загрузка привязки датчиков...');
             }
         });
     </script>

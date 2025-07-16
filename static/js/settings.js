@@ -1,306 +1,306 @@
 
-document.addEventListener("DOMContentLoaded", function () {
-    const userId = 1; // пока «жёсткий» пользователь
-
-    // Инициализация переключателей из localStorage
-    initializeToggles();
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация настроек
+    initializeSettings();
     
-    // Инициализация языка
-    initializeLanguage();
-
-    // --- GET ---
-    fetch("/api/settings")
-        .then((r) => r.json())
-        .then((data) => {
-            document.getElementById("theme-select").value =
-                data.theme || "dark";
-            document.getElementById("lang-select").value = data.lang || "ru";
-            document.getElementById("email-notify").checked = data.email_notify;
-            document.getElementById("push-notify").checked = data.push_notify;
-            // Заполняем историю входов (заглушка)
-            document.getElementById("login-history").innerHTML =
-                "<ul><li>2024-07-14 (127.0.0.1)</li></ul>";
-        })
-        .catch(() => {
-            // Если API недоступен, используем localStorage
-            loadSettingsFromStorage();
+    // Обработчики событий для переключателей
+    const toggles = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const setting = this.getAttribute('data-setting');
+            const isEnabled = this.checked;
+            
+            // Сохранение настройки
+            saveSetting(setting, isEnabled);
+            
+            // Применение настройки
+            applySetting(setting, isEnabled);
+            
+            // Визуальная обратная связь
+            showSettingFeedback(setting, isEnabled);
         });
-
-    // --- PUT ---
-    function sendSettings() {
-        const theme = document.getElementById("theme-select").value;
-        const lang = document.getElementById("lang-select").value;
-        const email = document.getElementById("email-notify").checked;
-        const push = document.getElementById("push-notify").checked;
-
-        fetch("/api/settings", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                theme,
-                lang,
-                email_notify: email,
-                push_notify: push,
-            }),
-        })
-            .then((r) => r.json())
-            .then((d) => alert(d.message || "Настройки сохранены"))
-            .catch(() => {
-                // Сохраняем в localStorage если API недоступен
-                saveSettingsToStorage();
-                alert("Настройки сохранены локально");
-            });
-    }
-
-    // Обработчики для элементов страницы настроек
-    const themeSelect = document.getElementById("theme-select");
-    const langSelect = document.getElementById("lang-select");
-    const emailNotify = document.getElementById("email-notify");
-    const pushNotify = document.getElementById("push-notify");
-
-    if (themeSelect) themeSelect.onchange = sendSettings;
-    if (langSelect) langSelect.onchange = sendSettings;
-    if (emailNotify) emailNotify.onchange = sendSettings;
-    if (pushNotify) pushNotify.onchange = sendSettings;
-
-    // --- RESET ---
-    const resetButton = document.getElementById("reset-settings");
-    if (resetButton) {
-        resetButton.onclick = () => {
-            fetch("/api/settings/reset", { method: "POST" })
-                .then((r) => r.json())
-                .then((d) => {
-                    alert(d.message || "Настройки сброшены");
-                    localStorage.clear();
-                    window.location.reload();
-                })
-                .catch(() => {
-                    localStorage.clear();
-                    alert("Настройки сброшены");
-                    window.location.reload();
-                });
-        };
-    }
-
-    function initializeToggles() {
-        // Инициализация всех переключателей
-        const toggles = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
-        
-        toggles.forEach(toggle => {
-            const setting = toggle.getAttribute('data-setting');
-            const savedValue = localStorage.getItem(setting);
-            
-            // Устанавливаем сохраненное значение
-            if (savedValue !== null) {
-                toggle.checked = savedValue === 'true';
-            }
-            
-            // Применяем начальное состояние
-            applyToggleSetting(toggle);
-            
-            // Добавляем обработчик изменения
-            toggle.addEventListener('change', function() {
-                localStorage.setItem(setting, this.checked);
-                applyToggleSetting(this);
-            });
+    });
+    
+    // Обработчик для выбора языка
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        languageSelect.addEventListener('change', function() {
+            saveSetting('language', this.value);
+            showSettingFeedback('language', this.value);
         });
     }
-
-    function applyToggleSetting(toggle) {
-        const setting = toggle.getAttribute('data-setting');
-        const isChecked = toggle.checked;
-        
-        switch(setting) {
-            case 'darkMode':
-                handleThemeToggle(!isChecked); // Инвертируем для темной темы
-                break;
-            case 'notifications':
-                handleNotificationsToggle(isChecked);
-                break;
-            case 'autoUpdate':
-            case 'autoRefresh':
-                handleAutoRefreshToggle(isChecked);
-                break;
-            case 'sounds':
-                handleSoundToggle(isChecked);
-                break;
-            case 'autosave':
-                handleAutoSaveToggle(isChecked);
-                break;
-        }
-    }
-
-    function handleThemeToggle(isDark) {
-        const body = document.body;
-        const themeIcon = document.getElementById('theme-icon');
-        
-        if (isDark) {
-            body.classList.remove('light-mode');
-            body.classList.add('dark-mode');
-            if (themeIcon) themeIcon.className = 'fas fa-moon';
-            localStorage.setItem('theme', 'dark');
-        } else {
-            body.classList.remove('dark-mode');
-            body.classList.add('light-mode');
-            if (themeIcon) themeIcon.className = 'fas fa-sun';
-            localStorage.setItem('theme', 'light');
-        }
-        
-        showNotification(isDark ? 'Темная тема включена' : 'Светлая тема включена', 'success');
-    }
-
-    function handleNotificationsToggle(enabled) {
-        window.notificationsEnabled = enabled;
-        showNotification(enabled ? 'Уведомления включены' : 'Уведомления отключены', 'info');
-    }
-
-    function handleAutoRefreshToggle(enabled) {
-        if (enabled) {
-            startAutoRefresh();
-            showNotification('Авто-обновление включено', 'success');
-        } else {
-            stopAutoRefresh();
-            showNotification('Авто-обновление отключено', 'info');
-        }
-    }
-
-    function handleSoundToggle(enabled) {
-        window.soundEnabled = enabled;
-        showNotification(enabled ? 'Звуки включены' : 'Звуки отключены', 'info');
-    }
-
-    function handleAutoSaveToggle(enabled) {
-        window.autoSaveEnabled = enabled;
-        showNotification(enabled ? 'Авто-сохранение включено' : 'Авто-сохранение отключено', 'info');
-    }
-
-    function initializeLanguage() {
-        const languageSelect = document.getElementById('language-select');
-        if (languageSelect) {
-            const savedLang = localStorage.getItem('language') || 'ru';
-            languageSelect.value = savedLang;
-            applyLanguage(savedLang);
+    
+    // Обработчик для dropdown настроек в сайдбаре
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsMenu = document.querySelector('.settings-menu');
+    
+    if (settingsBtn && settingsMenu) {
+        settingsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            languageSelect.addEventListener('change', function() {
-                const selectedLang = this.value;
-                localStorage.setItem('language', selectedLang);
-                applyLanguage(selectedLang);
-                showNotification('Язык изменен', 'success');
+            const isOpen = settingsMenu.classList.contains('show');
+            
+            // Закрываем все открытые меню
+            document.querySelectorAll('.settings-menu.show').forEach(menu => {
+                menu.classList.remove('show');
             });
-        }
-    }
-
-    function applyLanguage(lang) {
-        // Здесь можно добавить логику для смены языка интерфейса
-        document.documentElement.lang = lang;
-        
-        // Пример базовой локализации
-        const translations = {
-            'ru': {
-                'dashboard': 'Панель управления',
-                'users': 'Пользователи',
-                'sensors': 'Датчики',
-                'reports': 'Отчеты',
-                'settings': 'Настройки'
-            },
-            'en': {
-                'dashboard': 'Dashboard',
-                'users': 'Users',
-                'sensors': 'Sensors',
-                'reports': 'Reports',
-                'settings': 'Settings'
-            },
-            'be': {
-                'dashboard': 'Панэль кіравання',
-                'users': 'Карыстальнікі',
-                'sensors': 'Датчыкі',
-                'reports': 'Справаздачы',
-                'settings': 'Налады'
-            }
-        };
-
-        if (translations[lang]) {
-            updatePageTexts(translations[lang]);
-        }
-    }
-
-    function updatePageTexts(texts) {
-        // Обновляем тексты в меню
-        const menuItems = document.querySelectorAll('.menu a span');
-        menuItems.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (texts[text]) {
-                item.textContent = texts[text];
+            
+            // Переключаем текущее меню
+            if (!isOpen) {
+                settingsMenu.classList.add('show');
+                settingsBtn.classList.add('active');
+            } else {
+                settingsBtn.classList.remove('active');
             }
         });
-    }
-
-    function loadSettingsFromStorage() {
-        const theme = localStorage.getItem('theme') || 'dark';
-        const lang = localStorage.getItem('language') || 'ru';
         
-        const themeSelect = document.getElementById("theme-select");
-        const langSelect = document.getElementById("lang-select");
-        
-        if (themeSelect) themeSelect.value = theme;
-        if (langSelect) langSelect.value = lang;
-    }
-
-    function saveSettingsToStorage() {
-        const themeSelect = document.getElementById("theme-select");
-        const langSelect = document.getElementById("lang-select");
-        
-        if (themeSelect) localStorage.setItem('theme', themeSelect.value);
-        if (langSelect) localStorage.setItem('language', langSelect.value);
-    }
-
-    function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            background: var(--belwest-green);
-            color: white;
-            border-radius: 8px;
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-        `;
-        
-        if (type === 'error') {
-            notification.style.background = '#e74c3c';
-        } else if (type === 'info') {
-            notification.style.background = '#3498db';
-        }
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.style.opacity = '1', 100);
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
-    let autoRefreshInterval;
-
-    function startAutoRefresh() {
-        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        autoRefreshInterval = setInterval(() => {
-            console.log('Auto-refreshing data...');
-            // Здесь можно добавить логику обновления данных
-        }, 30000);
-    }
-
-    function stopAutoRefresh() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-            autoRefreshInterval = null;
-        }
+        // Закрытие при клике вне меню
+        document.addEventListener('click', function(e) {
+            if (!settingsBtn.contains(e.target) && !settingsMenu.contains(e.target)) {
+                settingsMenu.classList.remove('show');
+                settingsBtn.classList.remove('active');
+            }
+        });
     }
 });
+
+function initializeSettings() {
+    // Загружаем сохраненные настройки
+    const settings = getSettings();
+    
+    // Применяем настройки к интерфейсу
+    Object.keys(settings).forEach(setting => {
+        const element = document.querySelector(`[data-setting="${setting}"]`);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = settings[setting] === true || settings[setting] === 'true';
+            } else {
+                element.value = settings[setting];
+            }
+            
+            // Применяем настройку
+            applySetting(setting, settings[setting]);
+        }
+    });
+}
+
+function getSettings() {
+    // Получаем настройки из localStorage
+    const savedSettings = localStorage.getItem('belwest_settings');
+    const defaultSettings = {
+        darkMode: false,
+        notifications: true,
+        autoRefresh: true,
+        sound: false,
+        language: 'ru'
+    };
+    
+    if (savedSettings) {
+        return { ...defaultSettings, ...JSON.parse(savedSettings) };
+    }
+    
+    return defaultSettings;
+}
+
+function saveSetting(setting, value) {
+    const settings = getSettings();
+    settings[setting] = value;
+    localStorage.setItem('belwest_settings', JSON.stringify(settings));
+    
+    console.log(`Настройка ${setting} сохранена:`, value);
+}
+
+function applySetting(setting, value) {
+    switch (setting) {
+        case 'darkMode':
+            applyDarkMode(value);
+            break;
+        case 'notifications':
+            applyNotifications(value);
+            break;
+        case 'autoRefresh':
+            applyAutoRefresh(value);
+            break;
+        case 'sound':
+            applySound(value);
+            break;
+        case 'language':
+            applyLanguage(value);
+            break;
+    }
+}
+
+function applyDarkMode(enabled) {
+    const body = document.body;
+    const root = document.documentElement;
+    
+    if (enabled) {
+        body.classList.add('dark-theme');
+        root.style.setProperty('--bg-primary', '#1a1d29');
+        root.style.setProperty('--bg-secondary', '#25293a');
+        root.style.setProperty('--text-primary', '#ffffff');
+        root.style.setProperty('--text-secondary', '#b8bcc8');
+        root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.03)');
+        root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.1)');
+    } else {
+        body.classList.remove('dark-theme');
+        root.style.setProperty('--bg-primary', '#f8fafc');
+        root.style.setProperty('--bg-secondary', '#ffffff');
+        root.style.setProperty('--text-primary', '#1a202c');
+        root.style.setProperty('--text-secondary', '#718096');
+        root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.25)');
+        root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.3)');
+    }
+    
+    console.log('Темная тема:', enabled ? 'включена' : 'выключена');
+}
+
+function applyNotifications(enabled) {
+    if (enabled) {
+        // Включаем уведомления
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            Notification.requestPermission();
+        }
+        console.log('Уведомления включены');
+    } else {
+        console.log('Уведомления выключены');
+    }
+    
+    // Сохраняем настройку в глобальную переменную
+    window.notificationsEnabled = enabled;
+}
+
+function applyAutoRefresh(enabled) {
+    if (enabled) {
+        // Запускаем автообновление каждые 30 секунд
+        if (window.autoRefreshInterval) {
+            clearInterval(window.autoRefreshInterval);
+        }
+        
+        window.autoRefreshInterval = setInterval(() => {
+            // Обновляем данные на странице
+            if (typeof refreshDashboardData === 'function') {
+                refreshDashboardData();
+            }
+            console.log('Автообновление данных');
+        }, 30000);
+        
+        console.log('Автообновление включено');
+    } else {
+        if (window.autoRefreshInterval) {
+            clearInterval(window.autoRefreshInterval);
+            window.autoRefreshInterval = null;
+        }
+        console.log('Автообновление выключено');
+    }
+}
+
+function applySound(enabled) {
+    window.soundEnabled = enabled;
+    console.log('Звук:', enabled ? 'включен' : 'выключен');
+    
+    if (enabled) {
+        // Проигрываем тестовый звук
+        playNotificationSound();
+    }
+}
+
+function applyLanguage(language) {
+    // Здесь можно добавить логику смены языка
+    console.log('Язык изменен на:', language);
+}
+
+function showSettingFeedback(setting, value) {
+    // Создаем уведомление об изменении настройки
+    const settingNames = {
+        darkMode: 'Темная тема',
+        notifications: 'Уведомления',
+        autoRefresh: 'Автообновление',
+        sound: 'Звук',
+        language: 'Язык'
+    };
+    
+    const settingName = settingNames[setting] || setting;
+    let message;
+    
+    if (typeof value === 'boolean') {
+        message = `${settingName} ${value ? 'включена' : 'выключена'}`;
+    } else {
+        message = `${settingName} изменен на: ${value}`;
+    }
+    
+    // Показываем уведомление
+    showNotification(message, 'success');
+}
+
+function showNotification(message, type = 'info') {
+    // Создаем временное уведомление
+    const notification = document.createElement('div');
+    notification.className = `setting-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--belwest-green);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 10000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Анимация появления
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Удаление через 3 секунды
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function playNotificationSound() {
+    // Простой звук с помощью Web Audio API
+    if (window.soundEnabled && 'AudioContext' in window) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    }
+}
+
+// Экспорт функций для использования в других скриптах
+window.settingsManager = {
+    getSetting: function(setting) {
+        const settings = getSettings();
+        return settings[setting];
+    },
+    setSetting: function(setting, value) {
+        saveSetting(setting, value);
+        applySetting(setting, value);
+        showSettingFeedback(setting, value);
+    }
+};
