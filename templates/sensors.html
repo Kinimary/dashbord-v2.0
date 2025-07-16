@@ -98,48 +98,7 @@
                         <i class="fas fa-search"></i>
                         <input type="text" placeholder="Поиск...">
                     </div>
-                    <div class="notifications" id="notifications-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge" id="notification-count">3</span>
-                        <div class="notification-dropdown" id="notification-dropdown">
-                            <div class="notification-header">
-                                <h4>Уведомления</h4>
-                                <button class="mark-all-read">Прочитать все</button>
-                            </div>
-                            <div class="notification-list">
-                                <div class="notification-item unread">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Датчик офлайн</div>
-                                        <div class="notification-text">Датчик "Вход основной" не отвечает</div>
-                                        <div class="notification-time">5 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="notification-item unread">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-users text-success"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Пиковая нагрузка</div>
-                                        <div class="notification-text">Превышен порог посетителей (200+)</div>
-                                        <div class="notification-time">15 минут назад</div>
-                                    </div>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="notification-icon">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <div class="notification-title">Система обновлена</div>
-                                        <div class="notification-text">Версия 2.1.4 успешно установлена</div>
-                                        <div class="notification-time">1 час назад</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="user-info" id="user-menu-btn">
                         <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
                         <span>Админ</span>
@@ -199,7 +158,7 @@
                             </div>
                             <button id="check-sensor-btn" class="btn btn-primary">Проверить статус</button>
                         </div>
-                        
+
                         <div id="sensor-info" class="sensor-info" style="display: none;">
                             <div class="sensor-card">
                                 <div class="sensor-header">
@@ -230,7 +189,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div id="sensor-error" class="error-message" style="display: none;">
                             <i class="fas fa-exclamation-triangle"></i>
                             <span id="error-text">Датчик не найден</span>
@@ -345,34 +304,34 @@
         function initializeSensorCheck() {
             // Загружаем список датчиков для выпадающего списка
             loadSensorsList();
-            
+
             // Обработчики событий
             const sensorInput = document.getElementById('sensor-input');
             const sensorSelect = document.getElementById('sensor-select');
             const checkBtn = document.getElementById('check-sensor-btn');
-            
+
             // Синхронизация ввода и выбора
             sensorInput.addEventListener('input', function() {
                 if (this.value) {
                     sensorSelect.value = '';
                 }
             });
-            
+
             sensorSelect.addEventListener('change', function() {
                 if (this.value) {
                     sensorInput.value = this.value;
                 }
             });
-            
+
             // Проверка статуса датчика
             checkBtn.addEventListener('click', checkSensorStatus);
-            
+
             // Обработчики для кнопок в карточке датчика
             document.getElementById('edit-current-sensor').addEventListener('click', function() {
                 const sensorId = document.getElementById('sensor-id-display').textContent;
                 editSensor(sensorId);
             });
-            
+
             document.getElementById('delete-current-sensor').addEventListener('click', function() {
                 const sensorId = document.getElementById('sensor-id-display').textContent;
                 deleteSensor(sensorId);
@@ -385,7 +344,7 @@
                 .then(sensors => {
                     const sensorSelect = document.getElementById('sensor-select');
                     sensorSelect.innerHTML = '<option value="">Выберите датчик...</option>';
-                    
+
                     sensors.forEach(sensor => {
                         const option = document.createElement('option');
                         option.value = sensor.id;
@@ -402,15 +361,15 @@
             const sensorInput = document.getElementById('sensor-input');
             const sensorSelect = document.getElementById('sensor-select');
             const sensorId = sensorInput.value || sensorSelect.value;
-            
+
             if (!sensorId) {
                 showError('Введите номер датчика или выберите из списка');
                 return;
             }
-            
+
             hideError();
             hideSensorInfo();
-            
+
             fetch(`/api/sensors/${sensorId}`)
                 .then(response => {
                     if (!response.ok) {
@@ -432,11 +391,11 @@
             document.getElementById('sensor-name-display').textContent = sensor.name;
             document.getElementById('sensor-location-display').textContent = sensor.location;
             document.getElementById('sensor-update-display').textContent = sensor.last_updated;
-            
+
             const statusBadge = document.getElementById('sensor-status-badge');
             statusBadge.textContent = sensor.status === 'active' ? 'Активен' : 'Неактивен';
             statusBadge.className = `status-badge ${sensor.status === 'active' ? 'online' : 'offline'}`;
-            
+
             document.getElementById('sensor-info').style.display = 'block';
         }
 
@@ -456,7 +415,7 @@
         function editSensor(sensorId) {
             // Переключаемся на вкладку добавления/редактирования
             document.querySelector('.tab[data-tab="add-sensor"]').click();
-            
+
             // Загружаем данные датчика в форму
             fetch(`/api/sensors/${sensorId}`)
                 .then(response => response.json())
