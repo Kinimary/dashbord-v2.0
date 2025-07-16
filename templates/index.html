@@ -14,7 +14,7 @@
         <div class="sidebar" id="sidebar">
             <div class="logo">
                 <div class="logo-icon">
-                    <i class="fas fa-chart-line"></i>
+                    <div class="bw-logo">BW</div>
                 </div>
                 <span class="logo-text">BELWEST</span>
                 <div class="logo-subtitle">ANALYTICS</div>
@@ -280,127 +280,49 @@
                 </div>
             </div>
 
-            <!-- Аналитика эффективности -->
-            <div class="efficiency-analytics">
+            <!-- Компактная аналитика производительности -->
+            <div class="performance-analytics">
                 <div class="section-header">
-                    <h3>Аналитика эффективности</h3>
+                    <h3>Производительность системы</h3>
                     <div class="analytics-controls">
                         <select id="analytics-period" class="modern-select">
-                            <option value="today">За сегодня</option>
-                            <option value="week">За неделю</option>
-                            <option value="month">За месяц</option>
-                            <option value="quarter">За квартал</option>
+                            <option value="today">Сегодня</option>
+                            <option value="week">Неделя</option>
+                            <option value="month">Месяц</option>
                         </select>
-                        <select id="analytics-type" class="modern-select">
-                            <option value="summary">Общая сводка</option>
-                            <option value="detailed">Детальный анализ</option>
-                            <option value="comparative">Сравнительный</option>
-                        </select>
-                        <button class="refresh-btn" id="refresh-analytics">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
                     </div>
                 </div>
                 
-                <div class="analytics-grid">
-                    <div class="analytics-card efficiency">
-                        <div class="analytics-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div class="analytics-info">
-                            <div class="analytics-title">87.4%</div>
-                            <div class="analytics-subtitle">Эффективность системы</div>
-                            <div class="analytics-detail">+5.2% к прошлому периоду</div>
-                        </div>
-                        <div class="analytics-progress">
-                            <div class="progress-bar" style="--progress: 87.4%"></div>
+                <div class="compact-analytics-grid">
+                    <div class="compact-metric">
+                        <div class="compact-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="compact-info">
+                            <div class="compact-value" id="system-efficiency">94.2%</div>
+                            <div class="compact-label">Работоспособность</div>
                         </div>
                     </div>
                     
-                    <div class="analytics-card conversion">
-                        <div class="analytics-icon">
-                            <i class="fas fa-bullseye"></i>
-                        </div>
-                        <div class="analytics-info">
-                            <div class="analytics-title">12.8%</div>
-                            <div class="analytics-subtitle">Коэффициент конверсии</div>
-                            <div class="analytics-detail">Повышение на 2.1%</div>
-                        </div>
-                        <div class="analytics-progress">
-                            <div class="progress-bar" style="--progress: 12.8%"></div>
+                    <div class="compact-metric">
+                        <div class="compact-icon"><i class="fas fa-clock"></i></div>
+                        <div class="compact-info">
+                            <div class="compact-value" id="avg-response">0.8с</div>
+                            <div class="compact-label">Время отклика</div>
                         </div>
                     </div>
                     
-                    <div class="analytics-card engagement">
-                        <div class="analytics-icon">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                        <div class="analytics-info">
-                            <div class="analytics-title">64.3%</div>
-                            <div class="analytics-subtitle">Уровень вовлечённости</div>
-                            <div class="analytics-detail">Стабильный рост</div>
-                        </div>
-                        <div class="analytics-progress">
-                            <div class="progress-bar" style="--progress: 64.3%"></div>
+                    <div class="compact-metric">
+                        <div class="compact-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="compact-info">
+                            <div class="compact-value" id="error-rate">0.3%</div>
+                            <div class="compact-label">Ошибки</div>
                         </div>
                     </div>
                     
-                    <div class="analytics-card retention">
-                        <div class="analytics-icon">
-                            <i class="fas fa-users-line"></i>
-                        </div>
-                        <div class="analytics-info">
-                            <div class="analytics-title">76.9%</div>
-                            <div class="analytics-subtitle">Удержание посетителей</div>
-                            <div class="analytics-detail">+3.7% рост</div>
-                        </div>
-                        <div class="analytics-progress">
-                            <div class="progress-bar" style="--progress: 76.9%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Детальная статистика -->
-                <div class="detailed-stats">
-                    <div class="stats-row">
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">4.2 мин</div>
-                                <div class="stat-label">Среднее время посещения</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-route"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">3.7</div>
-                                <div class="stat-label">Средние переходы</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">4.8/5</div>
-                                <div class="stat-label">Оценка опыта</div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">99.97%</div>
-                                <div class="stat-label">Надёжность</div>
-                            </div>
+                    <div class="compact-metric">
+                        <div class="compact-icon"><i class="fas fa-database"></i></div>
+                        <div class="compact-info">
+                            <div class="compact-value" id="data-quality">98.1%</div>
+                            <div class="compact-label">Качество данных</div>
                         </div>
                     </div>
                 </div>
