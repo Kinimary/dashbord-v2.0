@@ -149,6 +149,22 @@ document.addEventListener("DOMContentLoaded", function () {
                     alert('Датчик успешно сохранен');
                     // Очищаем форму
                     sensorForm.reset();
+                    document.getElementById('form-title').textContent = 'Добавить датчик';
+                    document.getElementById('sensor-id').value = '';
+                    
+                    // Перезагружаем список датчиков
+                    loadSensors();
+                } else {
+                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при сохранении датчика');
+            });
+        });
+    }
+}
                     // Возвращаемся к списку
                     document.querySelector('.tab[data-tab="sensors-list"]').click();
                     // Обновляем список

@@ -11,3 +11,15 @@ run = ["sh", "-c", "python3 server.py"]
 [[ports]]
 localPort = 1521
 externalPort = 80
+
+[workflows]
+runButton = "Run Server"
+
+[[workflows.workflow]]
+name = "Run Server"
+author = 45104925
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 server.py"

@@ -209,6 +209,16 @@ function getStoreSize(store, metric) {
             return [12, 12];
     }
 }
+            return [12, 12];
+        case 'revenue':
+            value = store.revenue;
+            if (value > 40000) return [16, 16];
+            if (value > 25000) return [14, 14];
+            return [12, 12];
+        default:
+            return [12, 12];
+    }
+}
 
 function showStoreDetails(storeId) {
     const store = storesData.find(s => s.id === storeId);
