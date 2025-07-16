@@ -1853,6 +1853,49 @@ button:hover::before {
     flex-shrink: 0;
 }
 
+/* Main Chart Container */
+.main-chart-container {
+    margin-bottom: 32px;
+}
+
+.main-chart-container .chart-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 32px var(--shadow-light);
+    transition: var(--transition);
+}
+
+.main-chart-container .chart-content {
+    position: relative;
+    height: 300px;
+}
+
+/* Bottom Section */
+.bottom-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* Sensor Downtime Section */
+.sensor-downtime-section {
+    margin-bottom: 32px;
+}
+
+.sensor-downtime-section .downtime-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 32px var(--shadow-light);
+    transition: var(--transition);
+}
+
 /* Charts Container */
 .charts-container {
     display: grid;

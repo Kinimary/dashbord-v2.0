@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setupRealTimeUpdates();
     loadSensorsData();
     loadActivityStream();
+
+        // Загрузка уведомлений при загрузке страницы
+        loadNotifications();
+
+        // Обновление текущих посетителей в реальном времени
+        setInterval(updateRealTimeMetrics, 5000);
 });
 
 // Глобальные переменные для графиков
@@ -187,7 +193,7 @@ function initMiniCharts() {
 function loadDashboardData() {
     // Обновление метрик
     updateMetrics();
-    
+
     // Обновление графиков с реальными данными
     if (mainChart) {
         const newData = generateVisitorData();
@@ -200,7 +206,7 @@ function loadDashboardData() {
 function generateVisitorData() {
     const hours = [];
     const visitors = [];
-    
+
     for (let i = 0; i < 24; i += 4) {
         hours.push(i.toString().padStart(2, '0') + ':00');
         // Симуляция реальных данных
@@ -212,7 +218,7 @@ function generateVisitorData() {
         }
         visitors.push(count);
     }
-    
+
     return visitors;
 }
 
@@ -220,14 +226,14 @@ function generateVisitorData() {
 function updateMetrics() {
     // Посетители сегодня
     document.getElementById('today-visitors').textContent = (Math.floor(Math.random() * 500) + 1000).toLocaleString();
-    
+
     // Активные датчики
     document.getElementById('active-sensors').textContent = Math.floor(Math.random() * 5) + 95;
-    
+
     // Пиковое время
     const peakHour = Math.floor(Math.random() * 4) + 13;
     document.getElementById('peak-time').textContent = `${peakHour}:${Math.floor(Math.random() * 6) * 10}`;
-    
+
     // Средний поток
     document.getElementById('hourly-avg').textContent = Math.floor(Math.random() * 20) + 45;
 }
@@ -236,14 +242,14 @@ function updateMetrics() {
 function loadSensorsData() {
     const sensorsGrid = document.getElementById('sensors-grid');
     const sensorsList = document.getElementById('sensors-list');
-    
+
     const sensors = [
         { id: 1, name: 'Датчик-001', location: 'Центр - Главный вход', status: 'online', visitors: 245 },
         { id: 2, name: 'Датчик-002', location: 'Восток - Торговый зал', status: 'online', visitors: 189 },
         { id: 3, name: 'Датчик-003', location: 'Запад - Касса №1', status: 'offline', visitors: 0 },
         { id: 4, name: 'Датчик-004', location: 'Север - Примерочная', status: 'online', visitors: 156 }
     ];
-    
+
     // Сетка датчиков
     if (sensorsGrid) {
         sensorsGrid.innerHTML = sensors.map(sensor => `
@@ -257,7 +263,7 @@ function loadSensorsData() {
             </div>
         `).join('');
     }
-    
+
     // Список датчиков
     if (sensorsList) {
         sensorsList.innerHTML = sensors.map(sensor => `
@@ -282,14 +288,14 @@ function loadSensorsData() {
 function loadActivityStream() {
     const activityStream = document.getElementById('activity-stream');
     if (!activityStream) return;
-    
+
     const activities = [
         { type: 'visitor', icon: 'fa-user-plus', title: 'Новый посетитель', description: 'Вход в магазин Центр', time: '2 мин назад' },
         { type: 'sensor', icon: 'fa-wifi', title: 'Датчик восстановлен', description: 'Датчик-003 снова онлайн', time: '5 мин назад' },
         { type: 'alert', icon: 'fa-exclamation-triangle', title: 'Высокая нагрузка', description: 'Превышен лимит в магазине Восток', time: '8 мин назад' },
         { type: 'system', icon: 'fa-cog', title: 'Обновление системы', description: 'Установлена новая версия ПО', time: '15 мин назад' }
     ];
-    
+
     activityStream.innerHTML = activities.map(activity => `
         <div class="activity-item" data-type="${activity.type}">
             <div class="activity-icon ${activity.type}">
@@ -1128,3 +1134,154 @@ function updateDashboard(data) {
 // Экспорт функций для глобального использования
 window.loadDashboardData = loadDashboardData;
 window.updateDashboard = updateDashboard;
+
+function loadDowntimeData() {
+    const filter = document.getElementById('downtime-filter')?.value || 'all';
+    const period = document.getElementById('downtime-period')?.value || 'today';
+
+    // Симуляция данных для отключенных датчиков
+    const mockDowntimes = [
+        {
+            id: 1,
+            sensor_name: 'Датчик входа А',
+            store_name: 'Магазин Центр',
+            store_address: 'ул. Ленина, 15',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+            duration_minutes: 45
+        },
+        {
+            id: 2,
+            sensor_name: 'Датчик зала 2',
+            store_name: 'ТУ Восток',
+            store_address: 'пр. Независимости, 89',
+            status: 'error',
+            disconnected_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+            duration_minutes: 120
+        },
+        {
+            id: 3,
+            sensor_name: 'Датчик кассы',
+            store_name: 'РД Запад',
+            store_address: 'ул. Якуба Коласа, 34',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+            duration_minutes: 30
+        }
+    ];
+
+    setTimeout(() => {
+        updateDowntimeDisplay(mockDowntimes);
+    }, 100);
+}
+
+// Контролы графиков
+            const chartBtns = document.querySelectorAll('.chart-btn');
+            chartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    chartBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const period = this.dataset.period || this.dataset.chart;
+                    switchMainChart(period);
+                });
+            });
+function loadDowntimeData() {
+    const filter = document.getElementById('downtime-filter')?.value || 'all';
+    const period = document.getElementById('downtime-period')?.value || 'today';
+
+    // Симуляция данных для отключенных датчиков
+    const mockDowntimes = [
+        {
+            id: 1,
+            sensor_name: 'Датчик входа А',
+            store_name: 'Магазин Центр',
+            store_address: 'ул. Ленина, 15',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+            duration_minutes: 45
+        },
+        {
+            id: 2,
+            sensor_name: 'Датчик зала 2',
+            store_name: 'ТУ Восток',
+            store_address: 'пр. Независимости, 89',
+            status: 'error',
+            disconnected_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+            duration_minutes: 120
+        },
+        {
+            id: 3,
+            sensor_name: 'Датчик кассы',
+            store_name: 'РД Запад',
+            store_address: 'ул. Якуба Коласа, 34',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+            duration_minutes: 30
+        }
+    ];
+
+    setTimeout(() => {
+        updateDowntimeDisplay(mockDowntimes);
+    }, 100);
+}
+
+// Контролы графиков
+            const chartBtns = document.querySelectorAll('.chart-btn');
+            chartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    chartBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const period = this.dataset.period || this.dataset.chart;
+                    switchMainChart(period);
+                });
+            });
+function loadDowntimeData() {
+    const filter = document.getElementById('downtime-filter')?.value || 'all';
+    const period = document.getElementById('downtime-period')?.value || 'today';
+
+    // Симуляция данных для отключенных датчиков
+    const mockDowntimes = [
+        {
+            id: 1,
+            sensor_name: 'Датчик входа А',
+            store_name: 'Магазин Центр',
+            store_address: 'ул. Ленина, 15',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+            duration_minutes: 45
+        },
+        {
+            id: 2,
+            sensor_name: 'Датчик зала 2',
+            store_name: 'ТУ Восток',
+            store_address: 'пр. Независимости, 89',
+            status: 'error',
+            disconnected_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+            duration_minutes: 120
+        },
+        {
+            id: 3,
+            sensor_name: 'Датчик кассы',
+            store_name: 'РД Запад',
+            store_address: 'ул. Якуба Коласа, 34',
+            status: 'offline',
+            disconnected_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+            duration_minutes: 30
+        }
+    ];
+
+    setTimeout(() => {
+        updateDowntimeDisplay(mockDowntimes);
+    }, 100);
+}
+
+// Контролы графиков
+            const chartBtns = document.querySelectorAll('.chart-btn');
+            chartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    chartBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const period = this.dataset.period || this.dataset.chart;
+                    switchMainChart(period);
+                });
+            });
