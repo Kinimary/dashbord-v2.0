@@ -318,6 +318,10 @@ function confirmDeleteUser(userId) {
 function getRoleText(role) {
     const roles = {
         'admin': 'Администратор',
+        'manager': 'Менеджер',
+        'rd': 'РД',
+        'tu': 'ТУ',
+        'store': 'Магазин',
         'user': 'Пользователь',
         'viewer': 'Наблюдатель'
     };
@@ -347,18 +351,45 @@ function updateNotificationBadge() {
             .then(response => response.json())
             .then(users => {
                 const userSelect = document.getElementById('user-select');
-                userSelect.innerHTML = '<option value="">Создать нового пользователя</option>';
+                if (userSelect) {
+                    userSelect.innerHTML = '<option value="">-- Создать нового --</option>';
+                    
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.username} (${user.email})`;
+                        userSelect.appendChild(option);
+                    });
+                }
                 
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = `${user.username} (${user.email})`;
-                    userSelect.appendChild(option);
-                });
+                // Обновляем таблицу пользователей
+                updateUsersTable(users);
             })
             .catch(error => {
                 console.error('Ошибка загрузки пользователей:', error);
             });
+    }
+    
+    function updateUsersTable(users) {
+        const tableBody = document.querySelector('#users-table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${getRoleText(user.role)}</td>
+                    <td>${user.sensors ? user.sensors.join(', ') : '-'}</td>
+                    <td>
+                        <button class="edit-sensor" onclick="editUserFromTable(${user.id})">Редактировать</button>
+                        <button class="delete-sensor" onclick="confirmDeleteUserFromTable(${user.id})">Удалить</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
     }
 
     // Load sensors for assignment
@@ -426,8 +457,26 @@ function updateNotificationBadge() {
         checkboxes.forEach(checkbox => checkbox.checked = false);
     }
 
+    // User select change handler
+    const userSelect = document.getElementById('user-select');
+    if (userSelect) {
+        userSelect.addEventListener('change', function() {
+            const userId = this.value;
+            const deleteBtn = document.getElementById('delete-user-btn');
+            if (userId) {
+                loadUserData(userId);
+                if (deleteBtn) deleteBtn.style.display = 'inline-block';
+            } else {
+                clearUserForm();
+                if (deleteBtn) deleteBtn.style.display = 'none';
+            }
+        });
+    }
+
     // Save user handler
-    document.getElementById('save-user-btn').addEventListener('click', function() {
+    const saveUserBtn = document.getElementById('save-user-btn');
+    if (saveUserBtn) {
+        saveUserBtn.addEventListener('click', function() {
         const userId = document.getElementById('user-select').value;
         const username = document.getElementById('new-username').value;
         const email = document.getElementById('new-email').value;
@@ -497,8 +546,13 @@ function updateNotificationBadge() {
         });
     });
 
+    });
+    }
+
     // Delete user handler
-    document.getElementById('delete-user-btn').addEventListener('click', function() {
+    const deleteUserBtn = document.getElementById('delete-user-btn');
+    if (deleteUserBtn) {
+        deleteUserBtn.addEventListener('click', function() {
         const userId = document.getElementById('user-select').value;
         if (!userId) return;
         
@@ -525,8 +579,13 @@ function updateNotificationBadge() {
         }
     });
 
+    });
+    }
+
     // Clear form handler
-    document.getElementById('clear-form-btn').addEventListener('click', function() {
+    const clearFormBtn = document.getElementById('clear-form-btn');
+    if (clearFormBtn) {
+        clearFormBtn.addEventListener('click', function() {
         clearUserForm();
         document.getElementById('user-select').value = '';
         document.getElementById('delete-user-btn').style.display = 'none';
@@ -1032,6 +1091,45 @@ function updateNotificationBadge() {
             .catch(error => {
                 console.error('Ошибка удаления магазина:', error);
                 alert('Ошибка удаления магазина');
+            });
+        }
+    };
+
+    // Глобальные функции для таблицы пользователей
+    window.editUserFromTable = function(userId) {
+        // Переключаемся на вкладку управления пользователями
+        const userFormTab = document.querySelector('[data-tab="user-form"]');
+        if (userFormTab) {
+            userFormTab.click();
+            
+            // Выбираем пользователя в выпадающем списке
+            setTimeout(() => {
+                const userSelect = document.getElementById('user-select');
+                if (userSelect) {
+                    userSelect.value = userId;
+                    userSelect.dispatchEvent(new Event('change'));
+                }
+            }, 100);
+        }
+    };
+
+    window.confirmDeleteUserFromTable = function(userId) {
+        if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+            fetch(`/api/users/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    alert('Пользователь удален!');
+                    loadUsers();
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления пользователя:', error);
+                alert('Ошибка удаления пользователя');
             });
         }
     };
