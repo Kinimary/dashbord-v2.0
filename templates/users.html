@@ -121,6 +121,7 @@
                     <button class="tab" data-tab="store-management">Управление магазинами</button>
                     <button class="tab" data-tab="sensor-management">Управление датчиками</button>
                     <button class="tab" data-tab="sensor-assignment">Привязка датчиков</button>
+                    <button class="tab" data-tab="hierarchy-management">Управление правами</button>
                 </div>
 
                 <!-- Форма управления пользователями -->
@@ -383,6 +384,81 @@
                                             <!-- Привязанные датчики -->
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Управление правами доступа -->
+                <div id="hierarchy-management" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Управление иерархическими правами доступа</h3>
+                            <p style="color: var(--text-secondary); margin-top: 10px; font-size: 14px;">
+                                Настройте доступ пользователей к информации других пользователей по иерархии ролей
+                            </p>
+                        </div>
+                        <div class="card-body">
+                            <div class="hierarchy-form">
+                                <div class="form-group">
+                                    <label>Родительский пользователь (кому предоставляется доступ)</label>
+                                    <select id="hierarchy-parent-select">
+                                        <option value="">-- Выберите пользователя --</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Подчиненный пользователь (к чьей информации предоставляется доступ)</label>
+                                    <select id="hierarchy-child-select" disabled>
+                                        <option value="">-- Сначала выберите родительского пользователя --</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" id="create-hierarchy-btn" disabled>Создать связь</button>
+                                </div>
+
+                                <div class="hierarchy-rules" style="margin-top: 20px; padding: 15px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                                    <h4 style="color: var(--belwest-green-light); margin-bottom: 10px;">Правила иерархии:</h4>
+                                    <ul style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                                        <li><strong>Менеджер</strong> → может получить доступ к РД, ТУ, Магазинам</li>
+                                        <li><strong>РД</strong> → может получить доступ к ТУ, Магазинам</li>
+                                        <li><strong>ТУ</strong> → может получить доступ к Магазинам</li>
+                                        <li><strong>Магазин</strong> → имеет доступ только к своим датчикам</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="hierarchy-list" style="margin-top: 30px;">
+                                <h4>Существующие иерархические связи</h4>
+                                <table class="table" id="hierarchy-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Родительский пользователь</th>
+                                            <th>Роль</th>
+                                            <th>Подчиненный пользователь</th>
+                                            <th>Роль</th>
+                                            <th>Тип связи</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Иерархические связи будут загружены динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="user-access-preview" style="margin-top: 30px;">
+                                <h4>Предварительный просмотр доступа</h4>
+                                <div class="form-group">
+                                    <label>Выберите пользователя для просмотра его доступов</label>
+                                    <select id="access-preview-user">
+                                        <option value="">-- Выберите пользователя --</option>
+                                    </select>
+                                </div>
+                                <div id="access-preview-content" style="margin-top: 15px;">
+                                    <!-- Содержимое предварительного просмотра -->
                                 </div>
                             </div>
                         </div>

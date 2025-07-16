@@ -1357,6 +1357,84 @@ input:checked+.toggle-slider:before {
     box-shadow: inset 0 0 20px var(--belwest-green-glow);
 }
 
+/* Role badges */
+.role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.role-admin {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+}
+
+.role-badge.role-manager {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+.role-badge.role-rd {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    color: white;
+}
+
+.role-badge.role-tu {
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    color: white;
+}
+
+.role-badge.role-store {
+    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+    color: white;
+}
+
+/* Hierarchy management styles */
+.hierarchy-form {
+    background: var(--glass-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    margin-bottom: 30px;
+}
+
+.access-preview-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--background-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.access-item {
+    transition: var(--transition);
+}
+
+.access-item:hover {
+    background: var(--glass-border) !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    transform: translateY(-1px);
+}
+
 /* Enhanced Forms */
 .form-group {
     margin-bottom: 24px;

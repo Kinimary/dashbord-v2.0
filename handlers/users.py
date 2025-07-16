@@ -736,3 +736,246 @@ def unassign_sensor_from_user(user_id, sensor_id):
     finally:
         conn.close()
 
+@users.route('/api/user-hierarchy', methods=['GET'])
+def get_user_hierarchy():
+    """Get all hierarchy relationships"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT 
+                uh.id,
+                uh.parent_id,
+                uh.child_id,
+                uh.hierarchy_type,
+                parent.username as parent_name,
+                parent.role as parent_role,
+                child.username as child_name,
+                child.role as child_role
+            FROM user_hierarchy uh
+            JOIN users parent ON uh.parent_id = parent.id
+            JOIN users child ON uh.child_id = child.id
+            ORDER BY parent.username, child.username
+        ''')
+        
+        hierarchies = []
+        for row in cursor.fetchall():
+            hierarchies.append({
+                'id': row[0],
+                'parent_id': row[1],
+                'child_id': row[2],
+                'hierarchy_type': row[3],
+                'parent_name': row[4],
+                'parent_role': row[5],
+                'child_name': row[6],
+                'child_role': row[7]
+            })
+        
+        return jsonify(hierarchies)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/user-hierarchy', methods=['POST'])
+def create_user_hierarchy():
+    """Create hierarchy relationship between users"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    data = request.get_json()
+    
+    if not data.get('parent_id') or not data.get('child_id'):
+        return jsonify({'error': 'Parent ID и Child ID обязательны'}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Проверяем роли пользователей для валидации иерархии
+        cursor.execute('SELECT role FROM users WHERE id = ?', (data['parent_id'],))
+        parent_role = cursor.fetchone()
+        
+        cursor.execute('SELECT role FROM users WHERE id = ?', (data['child_id'],))
+        child_role = cursor.fetchone()
+        
+        if not parent_role or not child_role:
+            return jsonify({'error': 'Пользователь не найден'}), 404
+        
+        parent_role = parent_role[0]
+        child_role = child_role[0]
+        
+        # Валидация иерархии ролей
+        valid_hierarchies = {
+            'manager': ['rd', 'tu', 'store'],
+            'rd': ['tu', 'store'],
+            'tu': ['store']
+        }
+        
+        if parent_role not in valid_hierarchies or child_role not in valid_hierarchies[parent_role]:
+            return jsonify({'error': 'Недопустимая иерархия ролей'}), 400
+        
+        # Проверяем, не существует ли уже такая связь
+        cursor.execute('''
+            SELECT id FROM user_hierarchy 
+            WHERE parent_id = ? AND child_id = ?
+        ''', (data['parent_id'], data['child_id']))
+        
+        if cursor.fetchone():
+            return jsonify({'error': 'Иерархическая связь уже существует'}), 400
+        
+        hierarchy_type = f"{parent_role}-{child_role}"
+        
+        cursor.execute('''
+            INSERT INTO user_hierarchy (parent_id, child_id, hierarchy_type, created_at)
+            VALUES (?, ?, ?, ?)
+        ''', (data['parent_id'], data['child_id'], hierarchy_type, datetime.now().isoformat()))
+        
+        hierarchy_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({'message': 'Иерархическая связь создана', 'id': hierarchy_id}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/user-hierarchy/<int:hierarchy_id>', methods=['DELETE'])
+def delete_user_hierarchy(hierarchy_id):
+    """Delete hierarchy relationship"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('DELETE FROM user_hierarchy WHERE id = ?', (hierarchy_id,))
+        conn.commit()
+        return jsonify({'message': 'Иерархическая связь удалена'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/accessible-users/<int:user_id>', methods=['GET'])
+def get_accessible_users(user_id):
+    """Get users accessible to a specific user based on hierarchy"""
+    from flask import session
+    
+    user_role = session.get('role')
+    current_user_id = session.get('user_id')
+    
+    if user_role not in ['admin', 'manager', 'rd', 'tu'] and current_user_id != user_id:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Получаем пользователей, доступных данному пользователю через иерархию
+        cursor.execute('''
+            SELECT 
+                u.id,
+                u.username,
+                u.email,
+                u.role,
+                u.created_at
+            FROM users u
+            JOIN user_hierarchy uh ON u.id = uh.child_id
+            WHERE uh.parent_id = ?
+            ORDER BY u.username
+        ''', (user_id,))
+        
+        accessible_users = []
+        for row in cursor.fetchall():
+            accessible_users.append({
+                'id': row[0],
+                'username': row[1],
+                'email': row[2],
+                'role': row[3],
+                'created_at': row[4]
+            })
+        
+        return jsonify(accessible_users)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/hierarchy-candidates/<int:parent_id>', methods=['GET'])
+def get_hierarchy_candidates(parent_id):
+    """Get potential child users for hierarchy based on parent role"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Получаем роль родительского пользователя
+        cursor.execute('SELECT role FROM users WHERE id = ?', (parent_id,))
+        parent_user = cursor.fetchone()
+        
+        if not parent_user:
+            return jsonify({'error': 'Родительский пользователь не найден'}), 404
+        
+        parent_role = parent_user[0]
+        
+        # Определяем допустимые роли для подчиненных
+        valid_child_roles = {
+            'manager': ['rd', 'tu', 'store'],
+            'rd': ['tu', 'store'],
+            'tu': ['store']
+        }
+        
+        if parent_role not in valid_child_roles:
+            return jsonify([])
+        
+        roles_filter = "', '".join(valid_child_roles[parent_role])
+        
+        # Получаем пользователей, которые могут быть подчиненными и еще не связаны
+        cursor.execute(f'''
+            SELECT u.id, u.username, u.email, u.role
+            FROM users u
+            WHERE u.role IN ('{roles_filter}')
+            AND u.id != ?
+            AND u.id NOT IN (
+                SELECT child_id FROM user_hierarchy WHERE parent_id = ?
+            )
+            ORDER BY u.username
+        ''', (parent_id, parent_id))
+        
+        candidates = []
+        for row in cursor.fetchall():
+            candidates.append({
+                'id': row[0],
+                'username': row[1],
+                'email': row[2],
+                'role': row[3]
+            })
+        
+        return jsonify(candidates)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+

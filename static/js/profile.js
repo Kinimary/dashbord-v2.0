@@ -1000,3 +1000,315 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.getElementById('clear-sensor-form-btn')?.addEventListener('click', clearSensorForm);
+
+// Функция выхода
+function logout() {
+    fetch('/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при выходе:', error);
+    });
+}
+
+// Управление иерархическими правами
+class HierarchyManager {
+    constructor() {
+        this.initEventListeners();
+        this.loadHierarchy();
+        this.loadUsersForHierarchy();
+    }
+
+    initEventListeners() {
+        // Обработчик выбора родительского пользователя
+        const parentSelect = document.getElementById('hierarchy-parent-select');
+        if (parentSelect) {
+            parentSelect.addEventListener('change', (e) => {
+                this.loadChildCandidates(e.target.value);
+            });
+        }
+
+        // Обработчик создания иерархической связи
+        const createBtn = document.getElementById('create-hierarchy-btn');
+        if (createBtn) {
+            createBtn.addEventListener('click', () => {
+                this.createHierarchy();
+            });
+        }
+
+        // Обработчик предварительного просмотра доступа
+        const previewSelect = document.getElementById('access-preview-user');
+        if (previewSelect) {
+            previewSelect.addEventListener('change', (e) => {
+                this.loadAccessPreview(e.target.value);
+            });
+        }
+
+        // Обработчик выбора подчиненного пользователя
+        const childSelect = document.getElementById('hierarchy-child-select');
+        if (childSelect) {
+            childSelect.addEventListener('change', () => {
+                this.updateCreateButton();
+            });
+        }
+    }
+
+    async loadUsersForHierarchy() {
+        try {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+
+            const parentSelect = document.getElementById('hierarchy-parent-select');
+            const previewSelect = document.getElementById('access-preview-user');
+
+            if (parentSelect) {
+                parentSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
+                users.filter(user => ['manager', 'rd', 'tu'].includes(user.role))
+                     .forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.username} (${this.getRoleDisplayName(user.role)})`;
+                    parentSelect.appendChild(option);
+                });
+            }
+
+            if (previewSelect) {
+                previewSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.username} (${this.getRoleDisplayName(user.role)})`;
+                    previewSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки пользователей:', error);
+        }
+    }
+
+    async loadChildCandidates(parentId) {
+        const childSelect = document.getElementById('hierarchy-child-select');
+
+        if (!parentId) {
+            childSelect.innerHTML = '<option value="">-- Сначала выберите родительского пользователя --</option>';
+            childSelect.disabled = true;
+            this.updateCreateButton();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/hierarchy-candidates/${parentId}`);
+            const candidates = await response.json();
+
+            childSelect.innerHTML = '<option value="">-- Выберите подчиненного пользователя --</option>';
+
+            candidates.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.username} (${this.getRoleDisplayName(user.role)})`;
+                childSelect.appendChild(option);
+            });
+
+            childSelect.disabled = false;
+            this.updateCreateButton();
+        } catch (error) {
+            console.error('Ошибка загрузки кандидатов:', error);
+            childSelect.innerHTML = '<option value="">-- Ошибка загрузки --</option>';
+            childSelect.disabled = true;
+        }
+    }
+
+    updateCreateButton() {
+        const parentId = document.getElementById('hierarchy-parent-select').value;
+        const childId = document.getElementById('hierarchy-child-select').value;
+        const createBtn = document.getElementById('create-hierarchy-btn');
+
+        if (createBtn) {
+            createBtn.disabled = !parentId || !childId;
+        }
+    }
+
+    async createHierarchy() {
+        const parentId = document.getElementById('hierarchy-parent-select').value;
+        const childId = document.getElementById('hierarchy-child-select').value;
+
+        if (!parentId || !childId) {
+            this.showMessage('Выберите родительского и подчиненного пользователя', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/user-hierarchy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    parent_id: parseInt(parentId),
+                    child_id: parseInt(childId)
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showMessage('Иерархическая связь успешно создана', 'success');
+                this.loadHierarchy();
+                this.loadChildCandidates(parentId); // Обновляем список кандидатов
+                document.getElementById('hierarchy-child-select').value = '';
+                this.updateCreateButton();
+            } else {
+                this.showMessage(result.error || 'Ошибка создания связи', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка создания иерархии:', error);
+            this.showMessage('Ошибка создания иерархической связи', 'error');
+        }
+    }
+
+    async loadHierarchy() {
+        try {
+            const response = await fetch('/api/user-hierarchy');
+            const hierarchies = await response.json();
+
+            const tableBody = document.querySelector('#hierarchy-table tbody');
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '';
+
+            hierarchies.forEach(hierarchy => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${hierarchy.parent_name}</td>
+                    <td><span class="role-badge role-${hierarchy.parent_role}">${this.getRoleDisplayName(hierarchy.parent_role)}</span></td>
+                    <td>${hierarchy.child_name}</td>
+                    <td><span class="role-badge role-${hierarchy.child_role}">${this.getRoleDisplayName(hierarchy.child_role)}</span></td>
+                    <td>${hierarchy.hierarchy_type}</td>
+                    <td>
+                        <button onclick="hierarchyManager.deleteHierarchy(${hierarchy.id})" class="btn-danger">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки иерархии:', error);
+        }
+    }
+
+    async deleteHierarchy(hierarchyId) {
+        if (!confirm('Вы уверены, что хотите удалить эту иерархическую связь?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/user-hierarchy/${hierarchyId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showMessage('Иерархическая связь удалена', 'success');
+                this.loadHierarchy();
+            } else {
+                this.showMessage(result.error || 'Ошибка удаления связи', 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка удаления иерархии:', error);
+            this.showMessage('Ошибка удаления иерархической связи', 'error');
+        }
+    }
+
+    async loadAccessPreview(userId) {
+        const previewContent = document.getElementById('access-preview-content');
+
+        if (!userId) {
+            previewContent.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/accessible-users/${userId}`);
+            const accessibleUsers = await response.json();
+
+            if (accessibleUsers.length === 0) {
+                previewContent.innerHTML = '<p style="color: var(--text-secondary);">Этот пользователь не имеет доступа к информации других пользователей</p>';
+                return;
+            }
+
+            let html = '<div class="access-preview-list">';
+            html += '<h5 style="color: var(--belwest-green-light); margin-bottom: 10px;">Пользователи, к которым есть доступ:</h5>';
+
+            accessibleUsers.forEach(user => {
+                html += `
+                    <div class="access-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--glass-bg); border-radius: 6px; margin-bottom: 8px;">
+                        <span class="role-badge role-${user.role}">${this.getRoleDisplayName(user.role)}</span>
+                        <span style="color: var(--text-primary);">${user.username}</span>
+                        <span style="color: var(--text-secondary); font-size: 12px;">(${user.email})</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            previewContent.innerHTML = html;
+        } catch (error) {
+            console.error('Ошибка загрузки предварительного просмотра:', error);
+            previewContent.innerHTML = '<p style="color: var(--danger);">Ошибка загрузки информации о доступе</p>';
+        }
+    }
+
+    getRoleDisplayName(role) {
+        const roleNames = {
+            'admin': 'Администратор',
+            'manager': 'Менеджер',
+            'rd': 'РД',
+            'tu': 'ТУ',
+            'store': 'Магазин'
+        };
+        return roleNames[role] || role;
+    }
+
+    showMessage(message, type) {
+        // Создаем временное уведомление
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 10000;
+            background: ${type === 'success' ? 'var(--belwest-green)' : 'var(--danger)'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+}
+
+// Инициализация менеджера иерархии при загрузке страницы
+let hierarchyManager;
+document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем, находимся ли мы на странице пользователей
+    if (document.getElementById('hierarchy-management')) {
+        hierarchyManager = new HierarchyManager();
+    }
+});
