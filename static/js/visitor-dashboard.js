@@ -624,6 +624,177 @@ function generateSampleDowntimes() {
     ];
 }
 
+function switchMainChart(chartType) {
+            if (!mainChart) return;
+
+            const period = document.getElementById('period-select')?.value || 'day';
+
+            let chartData;
+            switch(chartType) {
+                case 'visitors':
+                    chartData = generateSampleData(period);
+                    mainChart.data.labels = chartData.labels;
+                    mainChart.data.datasets = [{
+                        label: 'Посетители',
+                        data: chartData.data,
+                        borderColor: '#2E8B57',
+                        backgroundColor: 'rgba(46, 139, 87, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }];
+                    break;
+
+                case 'comparison':
+                    chartData = generateSampleData(period);
+                    const comparisonData = generateSampleData(period);
+                    mainChart.data.labels = chartData.labels;
+                    mainChart.data.datasets = [
+                        {
+                            label: 'Текущий период',
+                            data: chartData.data,
+                            borderColor: '#2E8B57',
+                            backgroundColor: 'rgba(46, 139, 87, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Предыдущий период',
+                            data: comparisonData.data.map(val => val * 0.8),
+                            borderColor: '#20B2AA',
+                            backgroundColor: 'rgba(32, 178, 170, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ];
+                    break;
+
+                case 'trend':
+                    chartData = generateTrendData(period);
+                    mainChart.data.labels = chartData.labels;
+                    mainChart.data.datasets = [{
+                        label: 'Тренд',
+                        data: chartData.data,
+                        borderColor: '#FF6B35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 4
+                    }];
+                    break;
+            }
+
+            mainChart.update('active');
+        }
+
+        function generateTrendData(period) {
+            const labels = [];
+            const data = [];
+            const now = new Date();
+            let points = 24;
+            let baseValue = 50;
+
+            switch (period) {
+                case 'hour':
+                    points = 60;
+                    for (let i = points - 1; i >= 0; i--) {
+                        const time = new Date(now.getTime() - i * 60 * 1000);
+                        labels.push(time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+                        baseValue += (Math.random() - 0.5) * 5;
+                        data.push(Math.max(0, Math.floor(baseValue)));
+                    }
+                    break;
+                default:
+                    for (let i = points - 1; i >= 0; i--) {
+                        labels.push(i.toString());
+                        baseValue += (Math.random() - 0.5) * 20;
+                        data.push(Math.max(0, Math.floor(baseValue)));
+                    }
+            }
+
+            return { labels, data };
+        }
+
+function filterActivityStream(filter) {
+            const items = document.querySelectorAll('.activity-item');
+            items.forEach(item => {
+                const itemType = item.dataset.type;
+                if (filter === 'all' || itemType === filter) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Обновляем видимый счетчик активных элементов
+            const visibleItems = document.querySelectorAll('.activity-item[style*="flex"], .activity-item:not([style*="none"])');
+            console.log(`Показано ${visibleItems.length} элементов для фильтра: ${filter}`);
+        }
+
+function switchSensorsView(view) {
+            const buttons = document.querySelectorAll('.detail-btn');
+            const views = document.querySelectorAll('.sensors-view');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            views.forEach(view => view.classList.remove('active'));
+
+            document.getElementById(`sensors-${view}-btn`).classList.add('active');
+            document.getElementById(`sensors-${view}-view`).classList.add('active');
+
+            if (view === 'map' && typeof ymaps !== 'undefined') {
+                initializeMap();
+            }
+        }
+
+        let sensorsMap = null;
+
+        function initializeMap() {
+            if (sensorsMap) return;
+
+            ymaps.ready(function () {
+                const mapContainer = document.getElementById('sensors-map');
+                const placeholder = document.getElementById('map-placeholder');
+
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+
+                sensorsMap = new ymaps.Map('sensors-map', {
+                    center: [53.9006, 27.5590], // Минск
+                    zoom: 11,
+                    controls: ['zoomControl', 'fullscreenControl']
+                }, {
+                    searchControlProvider: 'yandex#search'
+                });
+
+                // Добавляем метки магазинов
+                const stores = [
+                    { coords: [53.9045, 27.5615], name: 'BELWEST Магазин 1', visitors: 150 },
+                    { coords: [53.8978, 27.5665], name: 'BELWEST Магазин 2', visitors: 120 },
+                    { coords: [53.9123, 27.5543], name: 'BELWEST ТУ Центр', visitors: 200 },
+                    { coords: [53.8876, 27.5432], name: 'BELWEST РД Восток', visitors: 300 }
+                ];
+
+                stores.forEach(store => {
+                    const placemark = new ymaps.Placemark(store.coords, {
+                        balloonContent: `
+                            <div style="padding: 10px;">
+                                <h4 style="margin: 0 0 8px 0; color: #2E8B57;">${store.name}</h4>
+                                <p style="margin: 0; font-size: 14px;">Посетители сегодня: <strong>${store.visitors}</strong></p>
+                            </div>
+                        `
+                    }, {
+                        preset: 'islands#greenDotIcon'
+                    });
+
+                    sensorsMap.geoObjects.add(placemark);
+                });
+            });
+        }
+
 // Экспорт функций для глобального использования
 window.loadDashboardData = loadDashboardData;
 window.updateDashboard = updateDashboard;

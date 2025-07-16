@@ -15,7 +15,7 @@
     --error-color: #FF4757;
     --text-primary: #FFFFFF;
     --text-secondary: #E8F5E8;
-    --text-tertiary: #A8D8A8;
+    --text-tertiary: #C8E8C8;
     --background-primary: #0A0A0A;
     --background-secondary: #1A1A1A;
     --background-tertiary: #2A2A2A;
@@ -38,9 +38,9 @@
     --success-color: #228B22;
     --warning-color: #DAA520;
     --error-color: #DC143C;
-    --text-primary: #2C3E50;
-    --text-secondary: #34495E;
-    --text-tertiary: #7F8C8D;
+    --text-primary: #1A1A1A;
+    --text-secondary: #2C3E50;
+    --text-tertiary: #5A6C7D;
     --background-primary: #F8FFF8;
     --background-secondary: #E8F5E8;
     --background-tertiary: #FFFFFF;
@@ -2290,23 +2290,66 @@ button:hover::before {
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .details-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .top-bar {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .top-bar h1 {
+        font-size: 28px;
+    }
+}
+
 @media (max-width: 768px) {
     .top-bar {
         flex-direction: column;
         gap: 16px;
+        padding: 16px 20px;
+    }
+
+    .top-bar h1 {
+        font-size: 24px;
     }
 
     .top-bar-center {
         order: 2;
+        max-width: 100%;
     }
 
     .analytics-controls {
         flex-wrap: wrap;
         justify-content: center;
+        gap: 8px;
     }
 
     .metrics-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .metric-card {
+        padding: 16px;
+    }
+
+    .charts-container {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .details-container {
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .sensors-grid {
@@ -2316,6 +2359,10 @@ button:hover::before {
     .downtime-stats {
         flex-direction: column;
         gap: 12px;
+    }
+
+    .main-content {
+        padding: 16px;
     }
 }
 

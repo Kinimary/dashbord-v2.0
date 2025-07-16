@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU" type="text/javascript"></script>
 </head>
 <body>
     <div class="container">
@@ -87,6 +88,37 @@
                                 <span class="toggle-slider"></span>
                             </div>
                         </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-globe"></i>
+                                <span>Язык</span>
+                            </div>
+                            <select id="language-select" class="modern-select" style="margin-left: auto;">
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                                <option value="be">Беларуская</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Звуки</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="sound-toggle" data-setting="sounds">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-save"></i>
+                                <span>Авто-сохранение</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="autosave-toggle" data-setting="autosave" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,22 +161,7 @@
                             <i class="fas fa-search"></i>
                             <input type="text" id="dashboard-search" placeholder="Поиск по дашборду...">
                         </div>
-                        <div class="notifications" id="notifications-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge" id="notification-count">0</span>
-                            <div class="notification-dropdown" id="notification-dropdown">
-                                <div class="notification-header">
-                                    <h4>Уведомления</h4>
-                                    <button class="mark-all-read" id="mark-all-read">Прочитать все</button>
-                                </div>
-                                <div class="notification-list" id="notification-list">
-                                    <div class="no-notifications">
-                                        <i class="fas fa-bell-slash"></i>
-                                        <p>Нет новых уведомлений</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <div class="user-info" id="user-menu-btn">
                             <i class="fas fa-user-circle" style="font-size: 40px; color: var(--belwest-green);"></i>
                             <span>Админ</span>
@@ -168,7 +185,7 @@
                                         <span>Настройки</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    <a href="/logout" class="dropdown-item logout-btn">
+                                    <a href="#" class="dropdown-item logout-btn" onclick="logout()">
                                         <i class="fas fa-sign-out-alt"></i>
                                         <span>Выйти из системы</span>
                                     </a>
@@ -290,10 +307,10 @@
                             <div class="sensors-list" id="sensors-list"></div>
                         </div>
                         <div class="sensors-view" id="sensors-map-view">
-                            <div class="sensors-map">
-                                <div class="map-placeholder">
+                            <div class="sensors-map" id="sensors-map">
+                                <div class="map-placeholder" id="map-placeholder">
                                     <i class="fas fa-map-marked-alt"></i>
-                                    <p>Интерактивная карта датчиков</p>
+                                    <p>Загрузка интерактивной карты...</p>
                                 </div>
                             </div>
                         </div>
@@ -372,7 +389,7 @@
         function initializeDashboard() {
             // Инициализация уведомлений
             const notificationsBell = document.querySelector('.notifications');
-            const userInfo = document.querySelector('.user-info');
+            const userInfo = document.querySelector('#user-menu-btn');
 
             if (notificationsBell) {
                 notificationsBell.addEventListener('click', function(e) {
@@ -385,6 +402,7 @@
             if (userInfo) {
                 userInfo.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    console.log('User menu clicked');
                     this.classList.toggle('active');
                     if (notificationsBell) notificationsBell.classList.remove('active');
                 });
@@ -767,6 +785,25 @@
 
         // Загрузка уведомлений при загрузке страницы
         loadNotifications();
+        
+        // Функция выхода из системы
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти из системы?')) {
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(() => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Ошибка при выходе:', error);
+                    window.location.href = '/login';
+                });
+            }
+        }
     </script>
 </body>
 </html>
