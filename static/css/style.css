@@ -69,19 +69,19 @@
     --success-color: #228B22;
     --warning-color: #DAA520;
     --error-color: #DC143C;
-    --text-primary: #1A1A1A;
-    --text-secondary: #2C3E50;
-    --text-tertiary: #5A6C7D;
-    --background-primary: #F8FFF8;
-    --background-secondary: #E8F5E8;
-    --background-tertiary: #FFFFFF;
-    --separator: #BDC3C7;
-    --overlay: rgba(255, 255, 255, 0.9);
-    --glass-bg: rgba(248, 255, 248, 0.8);
-    --glass-border: rgba(46, 139, 87, 0.2);
-    --shadow-light: rgba(46, 139, 87, 0.15);
-    --shadow-medium: rgba(46, 139, 87, 0.25);
-    --shadow-heavy: rgba(0, 0, 0, 0.3);
+    --text-primary: #FFFFFF;
+    --text-secondary: #E8F5E8;
+    --text-tertiary: #C8E8C8;
+    --background-primary: #1a1f3a;
+    --background-secondary: #2d3561;
+    --background-tertiary: #3b4678;
+    --separator: #4a5f8f;
+    --overlay: rgba(26, 31, 58, 0.9);
+    --glass-bg: rgba(26, 31, 58, 0.8);
+    --glass-border: rgba(46, 139, 87, 0.3);
+    --shadow-light: rgba(46, 139, 87, 0.2);
+    --shadow-medium: rgba(46, 139, 87, 0.4);
+    --shadow-heavy: rgba(0, 0, 0, 0.8);
 }
 
 * {
@@ -239,13 +239,15 @@ body::before {
     color: #FFFFFF;
     letter-spacing: 4px;
     text-shadow:
-        0 0 20px rgba(255, 255, 255, 0.5),
-        0 4px 8px rgba(0, 0, 0, 0.3);
+        3px 3px 6px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(255, 255, 255, 0.6),
+        0 0 40px rgba(46, 139, 87, 0.5);
     position: relative;
     z-index: 1;
     display: block;
     transform: perspective(500px) rotateX(15deg);
     animation: logoGlow 3s ease-in-out infinite alternate;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 @keyframes logoGlow {
@@ -674,17 +676,21 @@ input:checked+.toggle-slider:before {
 .top-bar h1 {
     font-size: 36px;
     font-weight: 800;
-    color: var(--text-primary);
+    color: #FFFFFF;
     letter-spacing: -1px;
-    text-shadow: 0 2px 8px var(--shadow-light);
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(46, 139, 87, 0.6),
+        0 0 40px rgba(46, 139, 87, 0.4);
     background: linear-gradient(135deg,
-        var(--text-primary) 0%,
+        #FFFFFF 0%,
         var(--belwest-green-light) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
     flex-shrink: 0;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .top-bar-center {
@@ -1240,23 +1246,30 @@ input:checked+.toggle-slider:before {
 .card h3 {
     font-size: 18px;
     font-weight: 700;
-    color: var(--text-secondary);
+    color: #FFFFFF;
     margin-bottom: 20px;
     position: relative;
     z-index: 1;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(46, 139, 87, 0.5);
 }
 
 .stat-value {
     font-size: 48px;
     font-weight: 900;
-    color: var(--belwest-green);
+    color: var(--belwest-green-light);
     margin-bottom: 12px;
     position: relative;
     z-index: 1;
     letter-spacing: -2px;
-    text-shadow: 0 0 20px var(--belwest-green-glow);
+    text-shadow: 
+        3px 3px 6px rgba(0, 0, 0, 0.9),
+        0 0 20px var(--belwest-green-glow),
+        0 0 40px rgba(46, 139, 87, 0.6);
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .metric-value {
@@ -1322,14 +1335,17 @@ input:checked+.toggle-slider:before {
 }
 
 .table th {
-    color: var(--belwest-green);
+    color: var(--belwest-green-light);
     font-weight: 700;
     background: linear-gradient(135deg,
         var(--background-tertiary) 0%,
-        rgba(46, 139, 87, 0.1) 100%);
+        rgba(46, 139, 87, 0.2) 100%);
     text-transform: uppercase;
     letter-spacing: 1px;
     font-size: 14px;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(46, 139, 87, 0.5);
 }
 
 .table tr {
@@ -1556,11 +1572,11 @@ button:hover::before {
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg,
-        #1a1d3b 0%,
-        #2d3561 25%,
-        #3b4d7a 50%,
-        #4a5f8f 75%,
-        #5a729e 100%);
+        #0a0a0a 0%,
+        #1a1f3a 25%,
+        #2d3561 50%,
+        #3b4678 75%,
+        #1a1f3a 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -1707,10 +1723,10 @@ button:hover::before {
 .form-group input:focus {
     outline: none;
     border-color: #2E8B57;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(46, 139, 87, 0.15);
     box-shadow:
-        0 0 0 4px rgba(46, 139, 87, 0.2),
-        0 8px 25px rgba(46, 139, 87, 0.15);
+        0 0 0 4px rgba(46, 139, 87, 0.3),
+        0 8px 25px rgba(46, 139, 87, 0.2);
     transform: translateY(-2px);
 }
 
@@ -2573,7 +2589,11 @@ button:hover::before {
     margin-bottom: 4px;
     letter-spacing: -2px;
     line-height: 1;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    text-shadow: 
+        3px 3px 6px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(46, 139, 87, 0.6),
+        0 0 40px rgba(46, 139, 87, 0.4);
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .metric-subtitle {
@@ -3995,28 +4015,33 @@ body:not(.light-mode) .sensor-list-details {
 
 .period-selector select {
     padding: 8px 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--glass-border);
     border-radius: 6px;
-    background: white;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
     font-size: 14px;
-    color: #374151;
+    color: var(--text-primary);
 }
 
 /* Stores Stats */
 .stores-stats {
-    background: white;
-    border-radius: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px var(--shadow-light);
     flex: 1;
     margin-left: 20px;
 }
 
 .stores-list {
-    background: white;
-    border-radius: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px var(--shadow-light);
     flex: 1;
     margin-right: 20px;
 }
@@ -4028,7 +4053,8 @@ body:not(.light-mode) .sensor-list-details {
     margin-bottom: 15px;
     padding: 10px;
     border-radius: 8px;
-    background: #f8f9fa;
+    background: var(--background-tertiary);
+    border: 1px solid var(--glass-border);
 }
 
 .store-info h4 {
@@ -4061,10 +4087,12 @@ body:not(.light-mode) .sensor-list-details {
 
 /* Sensor Downtimes */
 .sensor-downtimes {
-    background: white;
-    border-radius: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px var(--shadow-light);
     flex: 1;
 }
 
@@ -4074,16 +4102,19 @@ body:not(.light-mode) .sensor-list-details {
     margin-bottom: 15px;
     padding: 10px;
     border-radius: 8px;
-    background: #f8f9fa;
+    background: var(--background-tertiary);
+    border: 1px solid var(--glass-border);
 }
 
 .downtime-item.offline {
-    background: #fef2f2;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
     border-left: 4px solid #ef4444;
 }
 
 .downtime-item.reconnected {
-    background: #f0fdf4;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
     border-left: 4px solid #10b981;
 }
 
