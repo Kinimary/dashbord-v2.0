@@ -1,3 +1,7 @@
+Modified profile.js to include sensor management functionality and update tab switching logic.
+```
+
+```javascript
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize notifications
     initializeNotifications();
@@ -850,3 +854,149 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 });
+    }
+
+    // Sensor management functions
+    function loadSensorsForManagement() {
+        fetch('/api/sensors')
+            .then(response => response.json())
+            .then(sensors => {
+                updateSensorsTable(sensors);
+                updateSensorSelect(sensors);
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки датчиков:', error);
+            });
+    }
+
+    function updateSensorsTable(sensors) {
+        const tableBody = document.querySelector('#sensors-table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+            sensors.forEach(sensor => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sensor.id}</td>
+                    <td>${sensor.name}</td>
+                    <td>${sensor.location}</td>
+                    <td><span class="status-badge ${sensor.status}">${getStatusText(sensor.status)}</span></td>
+                    <td>${formatDateTime(sensor.last_update)}</td>
+                    <td>
+                        <button class="edit-sensor" onclick="editSensor(${sensor.id})">Редактировать</button>
+                        <button class="delete-sensor" onclick="deleteSensor(${sensor.id})">Удалить</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    }
+
+    function updateSensorSelect(sensors) {
+        const sensorSelect = document.getElementById('sensor-select');
+        if (sensorSelect) {
+            sensorSelect.innerHTML = '<option value="">-- Создать новый --</option>';
+            sensors.forEach(sensor => {
+                const option = document.createElement('option');
+                option.value = sensor.id;
+                option.textContent = `${sensor.name} (${sensor.location})`;
+                sensorSelect.appendChild(option);
+            });
+        }
+    }
+
+    function getStatusText(status) {
+        const statusMap = {
+            'active': 'Активен',
+            'inactive': 'Неактивен',
+            'maintenance': 'Обслуживание'
+        };
+        return statusMap[status] || status;
+    }
+
+    function formatDateTime(dateTime) {
+        if (!dateTime) return '-';
+        const date = new Date(dateTime);
+        return date.toLocaleString('ru-RU');
+    }
+
+    // Global functions for sensor management
+    window.editSensor = function(sensorId) {
+        fetch(`/api/sensors/${sensorId}`)
+            .then(response => response.json())
+            .then(sensor => {
+                document.getElementById('sensor-select').value = sensorId;
+                document.getElementById('sensor-name').value = sensor.name;
+                document.getElementById('sensor-location').value = sensor.location;
+                document.getElementById('sensor-status').value = sensor.status;
+                document.getElementById('delete-sensor-btn').style.display = 'inline-block';
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки датчика:', error);
+            });
+    };
+
+    window.deleteSensor = function(sensorId) {
+        if (confirm('Вы уверены, что хотите удалить этот датчик?')) {
+            fetch(`/api/sensors/${sensorId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        loadSensorsForManagement();
+                        clearSensorForm();
+                    } else {
+                        alert('Ошибка: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка удаления датчика:', error);
+                });
+        }
+    };
+
+    function clearSensorForm() {
+        document.getElementById('sensor-select').value = '';
+        document.getElementById('sensor-name').value = '';
+        document.getElementById('sensor-location').value = '';
+        document.getElementById('sensor-status').value = 'active';
+        document.getElementById('delete-sensor-btn').style.display = 'none';
+    }
+
+    // Event listeners for sensor management
+    document.getElementById('save-sensor-btn')?.addEventListener('click', function() {
+        const sensorId = document.getElementById('sensor-select').value;
+        const sensorData = {
+            name: document.getElementById('sensor-name').value,
+            location: document.getElementById('sensor-location').value,
+            status: document.getElementById('sensor-status').value
+        };
+
+        if (!sensorData.name || !sensorData.location) {
+            alert('Пожалуйста, заполните все обязательные поля');
+            return;
+        }
+
+        const method = sensorId ? 'PUT' : 'POST';
+        const url = sensorId ? `/api/sensors/${sensorId}` : '/api/sensors';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sensorData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                loadSensorsForManagement();
+                clearSensorForm();
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка сохранения датчика:', error);
+        });
+    });
+
+    document.getElementById('clear-sensor-form-btn')?.addEventListener('click', clearSensorForm);

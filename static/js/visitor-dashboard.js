@@ -539,3 +539,153 @@ window.addEventListener('online', function() {
 window.addEventListener('offline', function() {
     console.log('Соединение потеряно');
 });
+
+// Функция для обновления данных
+    function updateDashboard() {
+        loadSensorData();
+        loadRecentAlerts();
+        updateDateTime();
+        loadAIInsights();
+    }
+
+    // AI функциональность
+    function loadAIInsights() {
+        fetch('/api/ai/insights')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('ai-insights');
+                if (data.status === 'success' && data.insights) {
+                    container.innerHTML = '';
+                    data.insights.forEach(insight => {
+                        const insightDiv = document.createElement('div');
+                        insightDiv.className = 'ai-insight-item';
+                        insightDiv.innerHTML = `
+                            <i class="fas fa-lightbulb"></i>
+                            <span>${insight}</span>
+                        `;
+                        container.appendChild(insightDiv);
+                    });
+                } else {
+                    container.innerHTML = '<div class="ai-error">Не удалось загрузить AI аналитику</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки AI аналитики:', error);
+                document.getElementById('ai-insights').innerHTML = '<div class="ai-error">Ошибка загрузки</div>';
+            });
+    }
+
+    function refreshAIInsights() {
+        const container = document.getElementById('ai-insights');
+        container.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Обновление...</div>';
+        loadAIInsights();
+    }
+
+    function showAIRecommendations() {
+        fetch('/api/ai/recommendations')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAIModal('Рекомендации AI', formatRecommendations(data.recommendations));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки рекомендаций:', error);
+            });
+    }
+
+    function showAIPredictions() {
+        fetch('/api/ai/predictions?hours=12')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAIModal('Прогнозы AI', formatPredictions(data.predictions));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки прогнозов:', error);
+            });
+    }
+
+    function formatRecommendations(recommendations) {
+        if (!recommendations || recommendations.length === 0) {
+            return '<p>Нет рекомендаций на данный момент</p>';
+        }
+
+        let html = '<div class="recommendations-list">';
+        recommendations.forEach(rec => {
+            const priorityClass = rec.priority === 'high' ? 'high-priority' : 
+                                 rec.priority === 'medium' ? 'medium-priority' : 'low-priority';
+            html += `
+                <div class="recommendation-item ${priorityClass}">
+                    <div class="rec-header">
+                        <h4>${rec.title}</h4>
+                        <span class="priority-badge ${priorityClass}">${rec.priority}</span>
+                    </div>
+                    <p>${rec.description}</p>
+                    <div class="rec-impact">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>${rec.impact}</span>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function formatPredictions(predictions) {
+        if (!predictions || predictions.predictions.length === 0) {
+            return '<p>Нет данных для прогноза</p>';
+        }
+
+        let html = '<div class="predictions-list">';
+        predictions.predictions.slice(0, 6).forEach(pred => {
+            const date = new Date(pred.datetime);
+            const confidence = Math.round(pred.confidence * 100);
+            html += `
+                <div class="prediction-item">
+                    <div class="pred-time">${date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</div>
+                    <div class="pred-visitors">${pred.predicted_visitors} посетителей</div>
+                    <div class="pred-confidence">Уверенность: ${confidence}%</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function showAIModal(title, content) {
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'ai-modal';
+        modal.innerHTML = `
+            <div class="ai-modal-content">
+                <div class="ai-modal-header">
+                    <h3>${title}</h3>
+                    <button class="ai-modal-close" onclick="closeAIModal()">&times;</button>
+                </div>
+                <div class="ai-modal-body">
+                    ${content}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Показываем модальное окно
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    function closeAIModal() {
+        const modal = document.querySelector('.ai-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    }
+
+    // Глобальные функции
+    window.refreshAIInsights = refreshAIInsights;
+    window.showAIRecommendations = showAIRecommendations;
+    window.showAIPredictions = showAIPredictions;
+    window.closeAIModal = closeAIModal;

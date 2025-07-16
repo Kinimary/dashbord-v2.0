@@ -22,33 +22,56 @@ def get_users():
 
     # Check if user has permission to view users
     user_role = session.get('role')
-    if user_role not in ['admin', 'manager']:
+    user_id = session.get('user_id')
+    
+    if user_role not in ['admin', 'manager', 'rd', 'tu']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Admin can see all users, manager can see non-admin users
+    # Hierarchical access control
     if user_role == 'admin':
         cursor.execute('''
             SELECT id, username, email, role, created_at 
             FROM users
         ''')
-    else:  # manager
+    elif user_role == 'manager':
         cursor.execute('''
             SELECT id, username, email, role, created_at 
             FROM users
-            WHERE role != 'admin'
+            WHERE role IN ('rd', 'tu', 'store')
+        ''')
+    elif user_role == 'rd':
+        cursor.execute('''
+            SELECT id, username, email, role, created_at 
+            FROM users
+            WHERE role IN ('tu', 'store')
+        ''')
+    elif user_role == 'tu':
+        cursor.execute('''
+            SELECT id, username, email, role, created_at 
+            FROM users
+            WHERE role = 'store'
         ''')
 
     users = []
     for row in cursor.fetchall():
+        # Get sensors for each user
+        cursor.execute('''
+            SELECT s.id, s.name FROM sensors s
+            JOIN user_sensors us ON s.id = us.sensor_id
+            WHERE us.user_id = ?
+        ''', (row[0],))
+        sensors = [{'id': s[0], 'name': s[1]} for s in cursor.fetchall()]
+        
         users.append({
             'id': row[0],
             'username': row[1],
             'email': row[2],
             'role': row[3],
-            'created_at': row[4]
+            'created_at': row[4],
+            'sensors': sensors
         })
 
     conn.close()
@@ -515,6 +538,198 @@ def delete_user(user_id):
 
         conn.commit()
         return jsonify({'message': 'User deleted'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/sensors', methods=['GET'])
+def get_sensors():
+    """Get all sensors for assignment"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT id, name, location, status, last_update
+            FROM sensors
+            ORDER BY name
+        ''')
+        
+        sensors = []
+        for row in cursor.fetchall():
+            sensors.append({
+                'id': row[0],
+                'name': row[1],
+                'location': row[2],
+                'status': row[3],
+                'last_update': row[4]
+            })
+        
+        return jsonify(sensors)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/sensors', methods=['POST'])
+def create_sensor():
+    """Create a new sensor"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    data = request.get_json()
+    
+    if not data.get('name') or not data.get('location'):
+        return jsonify({'error': 'Название и местоположение обязательны'}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            INSERT INTO sensors (name, location, status, last_update)
+            VALUES (?, ?, ?, ?)
+        ''', (data['name'], data['location'], data.get('status', 'active'), datetime.now().isoformat()))
+        
+        sensor_id = cursor.lastrowid
+        conn.commit()
+        return jsonify({'message': 'Sensor created', 'id': sensor_id}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/sensors/<int:sensor_id>', methods=['PUT'])
+def update_sensor(sensor_id):
+    """Update sensor information"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    data = request.get_json()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        update_fields = []
+        update_values = []
+        
+        if 'name' in data:
+            update_fields.append('name = ?')
+            update_values.append(data['name'])
+        
+        if 'location' in data:
+            update_fields.append('location = ?')
+            update_values.append(data['location'])
+        
+        if 'status' in data:
+            update_fields.append('status = ?')
+            update_values.append(data['status'])
+        
+        update_fields.append('last_update = ?')
+        update_values.append(datetime.now().isoformat())
+        
+        update_values.append(sensor_id)
+        
+        if update_fields:
+            cursor.execute(f'''
+                UPDATE sensors
+                SET {', '.join(update_fields)}
+                WHERE id = ?
+            ''', update_values)
+        
+        conn.commit()
+        return jsonify({'message': 'Sensor updated'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/user-sensors/<int:user_id>', methods=['GET'])
+def get_user_sensors(user_id):
+    """Get sensors assigned to a specific user"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT s.id, s.name, s.location, s.status
+            FROM sensors s
+            JOIN user_sensors us ON s.id = us.sensor_id
+            WHERE us.user_id = ?
+        ''', (user_id,))
+        
+        sensors = []
+        for row in cursor.fetchall():
+            sensors.append({
+                'id': row[0],
+                'name': row[1],
+                'location': row[2],
+                'status': row[3]
+            })
+        
+        return jsonify(sensors)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/user-sensors/<int:user_id>/<int:sensor_id>', methods=['POST'])
+def assign_sensor_to_user(user_id, sensor_id):
+    """Assign sensor to user"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager', 'rd', 'tu']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            INSERT OR IGNORE INTO user_sensors (user_id, sensor_id)
+            VALUES (?, ?)
+        ''', (user_id, sensor_id))
+        
+        conn.commit()
+        return jsonify({'message': 'Sensor assigned to user'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/user-sensors/<int:user_id>/<int:sensor_id>', methods=['DELETE'])
+def unassign_sensor_from_user(user_id, sensor_id):
+    """Unassign sensor from user"""
+    from flask import session
+    
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager', 'rd', 'tu']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            DELETE FROM user_sensors 
+            WHERE user_id = ? AND sensor_id = ?
+        ''', (user_id, sensor_id))
+        
+        conn.commit()
+        return jsonify({'message': 'Sensor unassigned from user'}), 200
     except Exception as e:
         conn.rollback()
         return jsonify({'error': 'Database error'}), 500

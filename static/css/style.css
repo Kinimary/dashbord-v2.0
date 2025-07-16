@@ -594,31 +594,72 @@ input:checked+.toggle-slider:before {
 
 /* Верхняя панель */
 .top-bar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
-    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-.top-bar {
+.top-bar-controls {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 40px;
+    gap: 16px;
+}
+
+.global-settings {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
     background: var(--glass-bg);
-    backdrop-filter: var(--blur);
-    border-radius: var(--border-radius);
     border: 1px solid var(--glass-border);
-    box-shadow:
-        0 8px 32px var(--shadow-light),
-        inset 0 1px 4px rgba(255, 255, 255, 0.1);
-    padding: 20px 32px;
-    position: relative;
-    z-index: 10;
-    min-height: 80px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.global-settings:hover {
+    background: var(--glass-hover);
+    border-color: var(--belwest-green);
+    transform: translateY(-2px);
+}
+
+.global-settings i {
+    font-size: 16px;
+    color: var(--belwest-green);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #27ae60;
+    color: white;
+}
+
+.status-badge.inactive {
+    background: #e74c3c;
+    color: white;
+}
+
+.status-badge.maintenance {
+    background: #f39c12;
+    color: white;
 }
 
 .top-bar h1 {
@@ -952,6 +993,7 @@ input:checked+.toggle-slider:before {
     margin-right: 12px;
     border: 2px solid var(--belwest-green);
     box-shadow: 0 0 16px var(--belwest-green-glow);
+```python
     background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
     display: flex;
     align-items: center;
@@ -3001,8 +3043,7 @@ body:not(.light-mode) .sensor-list-details {
     font-size: 14px;
     color: white;
     flex-shrink: 0;
-}
-
+}```python
 .activity-icon.visitor {
     background: var(--belwest-green);
 }

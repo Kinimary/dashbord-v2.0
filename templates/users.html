@@ -103,6 +103,12 @@
         <div class="main-content">
             <div class="top-bar">
                 <h1>Управление пользователями</h1>
+                <div class="top-bar-controls">
+                    <button class="settings-btn global-settings" id="global-settings-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>НАСТРОЙКИ</span>
+                    </button>
+                </div>
                 <div class="user-profile">
                                         <div class="notification-time">5 минут назад</div>
                                     </div>
@@ -166,6 +172,7 @@
                     <button class="tab active" data-tab="user-form">Управление пользователями</button>
                     <button class="tab" data-tab="user-list">Список пользователей</button>
                     <button class="tab" data-tab="store-management">Управление магазинами</button>
+                    <button class="tab" data-tab="sensor-management">Управление датчиками</button>
                     <button class="tab" data-tab="sensor-assignment">Привязка датчиков</button>
                 </div>
 
@@ -332,18 +339,81 @@
                     </div>
                 </div>
 
+                <!-- Управление датчиками -->
+                <div id="sensor-management" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Управление датчиками</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="sensor-form">
+                                <div class="form-group">
+                                    <label>Выберите датчик для редактирования</label>
+                                    <select id="sensor-select">
+                                        <option value="">-- Создать новый --</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Название датчика *</label>
+                                    <input type="text" id="sensor-name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Местоположение *</label>
+                                    <input type="text" id="sensor-location" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Статус</label>
+                                    <select id="sensor-status">
+                                        <option value="active">Активен</option>
+                                        <option value="inactive">Неактивен</option>
+                                        <option value="maintenance">Обслуживание</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" id="save-sensor-btn">Сохранить датчик</button>
+                                    <button type="button" id="delete-sensor-btn" style="display: none;">Удалить датчик</button>
+                                    <button type="button" id="clear-sensor-form-btn">Очистить форму</button>
+                                </div>
+                            </form>
+
+                            <div class="sensors-list" style="margin-top: 30px;">
+                                <h4>Список датчиков</h4>
+                                <table class="table" id="sensors-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Название</th>
+                                            <th>Местоположение</th>
+                                            <th>Статус</th>
+                                            <th>Последнее обновление</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Датчики будут загружены динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Привязка датчиков -->
                 <div id="sensor-assignment" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h3>Привязка датчиков к магазинам</h3>
+                            <h3>Привязка датчиков к пользователям</h3>
                         </div>
                         <div class="card-body">
                             <div class="assignment-section">
                                 <div class="form-group">
-                                    <label>Выберите магазин</label>
-                                    <select id="assignment-store-select">
-                                        <option value="">-- Выберите магазин --</option>
+                                    <label>Выберите пользователя</label>
+                                    <select id="assignment-user-select">
+                                        <option value="">-- Выберите пользователя --</option>
                                     </select>
                                 </div>
 
@@ -358,7 +428,6 @@
                                     <div class="assignment-controls">
                                         <button type="button" id="assign-sensor-btn" disabled>→ Привязать</button>
                                         <button type="button" id="unassign-sensor-btn" disabled>← Отвязать</button>
-                                        <button type="button" id="delete-sensor-btn" disabled style="background-color: #e74c3c;">🗑 Удалить датчик</button>
                                     </div>
 
                                     <div class="assigned-sensors">

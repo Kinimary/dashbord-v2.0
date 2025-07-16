@@ -11,6 +11,7 @@ import io
 from handlers.users import users
 from handlers.sensors import sensors as sensors_bp
 from handlers.reports import reports
+from ai_agent import create_ai_endpoints
 
 app = Flask(__name__)
 
@@ -29,6 +30,9 @@ Session(app)
 app.register_blueprint(users, url_prefix='/')
 app.register_blueprint(sensors_bp, url_prefix='/')
 app.register_blueprint(reports, url_prefix='/')
+
+# Регистрация AI endpoints
+create_ai_endpoints(app)
 
 # Путь к базе данных
 DB_PATH = 'visitor_data.db'
@@ -90,9 +94,23 @@ def init_db():
             address TEXT NOT NULL,
             latitude REAL,
             longitude REAL,
-            manager_id INTEGER,
+            tu_id INTEGER,
+            rd_id INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (manager_id) REFERENCES users (id)
+            FOREIGN KEY (tu_id) REFERENCES users (id),
+            FOREIGN KEY (rd_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Создание таблицы привязки датчиков к пользователям
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_sensors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            sensor_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
     
@@ -118,6 +136,33 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (parent_id) REFERENCES users (id),
             FOREIGN KEY (child_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Создание таблицы для статистики по часам
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS hourly_statistics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_id INTEGER,
+            store_id INTEGER,
+            hour INTEGER,
+            day_of_week INTEGER,
+            visitor_count INTEGER DEFAULT 0,
+            date DATE,
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id),
+            FOREIGN KEY (store_id) REFERENCES stores (id)
+        )
+    ''')
+    
+    # Создание таблицы для простоев датчиков
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sensor_downtime (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_id INTEGER,
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            reason TEXT,
+            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
         )
     ''')
     
