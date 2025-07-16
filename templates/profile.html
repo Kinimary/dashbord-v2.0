@@ -182,6 +182,8 @@
                 <div class="dashboard-tabs">
                     <button class="tab active" data-tab="user-form">Управление пользователями</button>
                     <button class="tab" data-tab="user-list">Список пользователей</button>
+                    <button class="tab" data-tab="store-management">Управление магазинами</button>
+                    <button class="tab" data-tab="sensor-assignment">Привязка датчиков</button>
                 </div>
 
                 <!-- Форма управления пользователями -->
@@ -284,6 +286,115 @@
                                     <!-- Пользователи будут загружены динамически -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Управление магазинами -->
+                <div id="store-management" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Управление магазинами</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="store-form">
+                                <div class="form-group">
+                                    <label>Выберите магазин для редактирования</label>
+                                    <select id="store-select">
+                                        <option value="">-- Создать новый --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Название магазина *</label>
+                                    <input type="text" id="store-name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Адрес *</label>
+                                    <input type="text" id="store-address" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>ТУ (Торговый управляющий)</label>
+                                    <select id="store-tu">
+                                        <option value="">-- Не назначен --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>РД (Региональный директор)</label>
+                                    <select id="store-rd">
+                                        <option value="">-- Не назначен --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="button" id="save-store-btn">Сохранить магазин</button>
+                                    <button type="button" id="delete-store-btn" style="display: none;">Удалить магазин</button>
+                                    <button type="button" id="clear-store-form-btn">Очистить форму</button>
+                                </div>
+                            </form>
+                            
+                            <div class="stores-list" style="margin-top: 30px;">
+                                <h4>Список магазинов</h4>
+                                <table class="table" id="stores-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Название</th>
+                                            <th>Адрес</th>
+                                            <th>ТУ</th>
+                                            <th>РД</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Магазины будут загружены динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Привязка датчиков -->
+                <div id="sensor-assignment" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Привязка датчиков к магазинам</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="assignment-section">
+                                <div class="form-group">
+                                    <label>Выберите магазин</label>
+                                    <select id="assignment-store-select">
+                                        <option value="">-- Выберите магазин --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="sensors-assignment-grid" style="margin-top: 20px;">
+                                    <div class="available-sensors">
+                                        <h4>Доступные датчики</h4>
+                                        <div class="sensors-list" id="available-sensors-list">
+                                            <!-- Доступные датчики -->
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="assignment-controls">
+                                        <button type="button" id="assign-sensor-btn" disabled>→ Привязать</button>
+                                        <button type="button" id="unassign-sensor-btn" disabled>← Отвязать</button>
+                                        <button type="button" id="delete-sensor-btn" disabled style="background-color: #e74c3c;">🗑 Удалить датчик</button>
+                                    </div>
+                                    
+                                    <div class="assigned-sensors">
+                                        <h4>Привязанные датчики</h4>
+                                        <div class="sensors-list" id="assigned-sensors-list">
+                                            <!-- Привязанные датчики -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

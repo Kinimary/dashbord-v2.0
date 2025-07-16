@@ -15,6 +15,16 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Initialize search
     initializeSearch();
+    
+    // Load stores and managers
+    loadStores();
+    loadManagers();
+    
+    // Initialize store management
+    initializeStoreManagement();
+    
+    // Initialize sensor assignment
+    initializeSensorAssignment();
 
     function initializeNotifications() {
     const notificationsBtn = document.getElementById('notifications-btn');
@@ -556,4 +566,473 @@ function updateNotificationBadge() {
             document.getElementById('confirm-password').value = '';
         }
     });
+
+    // Функции для управления магазинами
+    function loadStores() {
+        fetch('/api/stores')
+            .then(response => response.json())
+            .then(stores => {
+                const storeSelect = document.getElementById('store-select');
+                const assignmentStoreSelect = document.getElementById('assignment-store-select');
+                
+                if (storeSelect) {
+                    storeSelect.innerHTML = '<option value="">-- Создать новый --</option>';
+                    stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.id;
+                        option.textContent = `${store.name} (${store.address})`;
+                        storeSelect.appendChild(option);
+                    });
+                }
+                
+                if (assignmentStoreSelect) {
+                    assignmentStoreSelect.innerHTML = '<option value="">-- Выберите магазин --</option>';
+                    stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.id;
+                        option.textContent = store.name;
+                        assignmentStoreSelect.appendChild(option);
+                    });
+                }
+                
+                updateStoresTable(stores);
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки магазинов:', error);
+            });
+    }
+
+    function loadManagers() {
+        fetch('/api/users')
+            .then(response => response.json())
+            .then(users => {
+                const tuSelect = document.getElementById('store-tu');
+                const rdSelect = document.getElementById('store-rd');
+                
+                if (tuSelect) {
+                    tuSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+                    users.filter(user => user.role === 'tu').forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.username;
+                        tuSelect.appendChild(option);
+                    });
+                }
+                
+                if (rdSelect) {
+                    rdSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+                    users.filter(user => user.role === 'rd').forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.username;
+                        rdSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки менеджеров:', error);
+            });
+    }
+
+    function updateStoresTable(stores) {
+        const tableBody = document.querySelector('#stores-table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+            stores.forEach(store => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${store.id}</td>
+                    <td>${store.name}</td>
+                    <td>${store.address}</td>
+                    <td>${store.tu_name || '-'}</td>
+                    <td>${store.rd_name || '-'}</td>
+                    <td>
+                        <button class="edit-sensor" onclick="editStore(${store.id})">Редактировать</button>
+                        <button class="delete-sensor" onclick="confirmDeleteStore(${store.id})">Удалить</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    }
+
+    function initializeStoreManagement() {
+        const storeSelect = document.getElementById('store-select');
+        const saveStoreBtn = document.getElementById('save-store-btn');
+        const deleteStoreBtn = document.getElementById('delete-store-btn');
+        const clearStoreFormBtn = document.getElementById('clear-store-form-btn');
+        
+        if (storeSelect) {
+            storeSelect.addEventListener('change', function() {
+                const storeId = this.value;
+                if (storeId) {
+                    loadStoreData(storeId);
+                    deleteStoreBtn.style.display = 'inline-block';
+                } else {
+                    clearStoreForm();
+                    deleteStoreBtn.style.display = 'none';
+                }
+            });
+        }
+        
+        if (saveStoreBtn) {
+            saveStoreBtn.addEventListener('click', saveStore);
+        }
+        
+        if (deleteStoreBtn) {
+            deleteStoreBtn.addEventListener('click', deleteStore);
+        }
+        
+        if (clearStoreFormBtn) {
+            clearStoreFormBtn.addEventListener('click', clearStoreForm);
+        }
+    }
+
+    function loadStoreData(storeId) {
+        fetch(`/api/stores`)
+            .then(response => response.json())
+            .then(stores => {
+                const store = stores.find(s => s.id == storeId);
+                if (store) {
+                    document.getElementById('store-name').value = store.name;
+                    document.getElementById('store-address').value = store.address;
+                    document.getElementById('store-tu').value = store.tu_id || '';
+                    document.getElementById('store-rd').value = store.rd_id || '';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки данных магазина:', error);
+            });
+    }
+
+    function clearStoreForm() {
+        document.getElementById('store-name').value = '';
+        document.getElementById('store-address').value = '';
+        document.getElementById('store-tu').value = '';
+        document.getElementById('store-rd').value = '';
+        document.getElementById('store-select').value = '';
+    }
+
+    function saveStore() {
+        const storeId = document.getElementById('store-select').value;
+        const name = document.getElementById('store-name').value;
+        const address = document.getElementById('store-address').value;
+        const tuId = document.getElementById('store-tu').value || null;
+        const rdId = document.getElementById('store-rd').value || null;
+        
+        if (!name || !address) {
+            alert('Заполните все обязательные поля!');
+            return;
+        }
+        
+        const storeData = {
+            name: name,
+            address: address,
+            tu_id: tuId,
+            rd_id: rdId
+        };
+        
+        const url = storeId ? `/api/stores/${storeId}` : '/api/stores';
+        const method = storeId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(storeData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Ошибка: ' + data.error);
+            } else {
+                alert(storeId ? 'Магазин обновлен!' : 'Магазин создан!');
+                loadStores();
+                if (!storeId) {
+                    clearStoreForm();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка сохранения магазина:', error);
+            alert('Ошибка сохранения магазина');
+        });
+    }
+
+    function deleteStore() {
+        const storeId = document.getElementById('store-select').value;
+        if (!storeId) return;
+        
+        if (confirm('Вы уверены, что хотите удалить магазин?')) {
+            fetch(`/api/stores/${storeId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    alert('Магазин удален!');
+                    loadStores();
+                    clearStoreForm();
+                    document.getElementById('delete-store-btn').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления магазина:', error);
+                alert('Ошибка удаления магазина');
+            });
+        }
+    }
+
+    // Функции для привязки датчиков
+    function initializeSensorAssignment() {
+        const assignmentStoreSelect = document.getElementById('assignment-store-select');
+        const assignBtn = document.getElementById('assign-sensor-btn');
+        const unassignBtn = document.getElementById('unassign-sensor-btn');
+        const deleteSensorBtn = document.getElementById('delete-sensor-btn');
+        
+        if (assignmentStoreSelect) {
+            assignmentStoreSelect.addEventListener('change', function() {
+                const storeId = this.value;
+                if (storeId) {
+                    loadSensorAssignment(storeId);
+                } else {
+                    clearSensorAssignment();
+                }
+            });
+        }
+        
+        if (assignBtn) {
+            assignBtn.addEventListener('click', assignSelectedSensor);
+        }
+        
+        if (unassignBtn) {
+            unassignBtn.addEventListener('click', unassignSelectedSensor);
+        }
+        
+        if (deleteSensorBtn) {
+            deleteSensorBtn.addEventListener('click', deleteSelectedSensor);
+        }
+        
+        loadAllSensors();
+    }
+
+    function loadAllSensors() {
+        fetch('/api/sensors')
+            .then(response => response.json())
+            .then(sensors => {
+                const availableList = document.getElementById('available-sensors-list');
+                if (availableList) {
+                    availableList.innerHTML = '';
+                    sensors.forEach(sensor => {
+                        const sensorItem = createSensorItem(sensor, 'available');
+                        availableList.appendChild(sensorItem);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки датчиков:', error);
+            });
+    }
+
+    function loadSensorAssignment(storeId) {
+        Promise.all([
+            fetch('/api/sensors'),
+            fetch(`/api/store-sensors/${storeId}`)
+        ])
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(([allSensors, storeSensors]) => {
+            const availableList = document.getElementById('available-sensors-list');
+            const assignedList = document.getElementById('assigned-sensors-list');
+            
+            if (availableList && assignedList) {
+                availableList.innerHTML = '';
+                assignedList.innerHTML = '';
+                
+                const assignedIds = storeSensors.map(s => s.id);
+                
+                allSensors.forEach(sensor => {
+                    const sensorItem = createSensorItem(sensor, 
+                        assignedIds.includes(sensor.id) ? 'assigned' : 'available');
+                    
+                    if (assignedIds.includes(sensor.id)) {
+                        assignedList.appendChild(sensorItem);
+                    } else {
+                        availableList.appendChild(sensorItem);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки привязок датчиков:', error);
+        });
+    }
+
+    function createSensorItem(sensor, type) {
+        const div = document.createElement('div');
+        div.className = 'sensor-item';
+        div.dataset.sensorId = sensor.id;
+        div.dataset.type = type;
+        
+        div.innerHTML = `
+            <div class="sensor-item-info">
+                <div class="sensor-item-name">${sensor.name || sensor.id}</div>
+                <div class="sensor-item-location">${sensor.location || 'Не указано'}</div>
+            </div>
+            <div class="sensor-status ${sensor.status || 'unknown'}">${sensor.status || 'unknown'}</div>
+        `;
+        
+        div.addEventListener('click', function() {
+            // Убираем выделение с других элементов в той же группе
+            const container = this.closest('.sensors-list');
+            container.querySelectorAll('.sensor-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем текущий элемент
+            this.classList.add('selected');
+            
+            // Обновляем состояние кнопок
+            updateAssignmentButtons();
+        });
+        
+        return div;
+    }
+
+    function updateAssignmentButtons() {
+        const assignBtn = document.getElementById('assign-sensor-btn');
+        const unassignBtn = document.getElementById('unassign-sensor-btn');
+        const deleteSensorBtn = document.getElementById('delete-sensor-btn');
+        const storeId = document.getElementById('assignment-store-select').value;
+        
+        const selectedAvailable = document.querySelector('#available-sensors-list .sensor-item.selected');
+        const selectedAssigned = document.querySelector('#assigned-sensors-list .sensor-item.selected');
+        const anySelected = selectedAvailable || selectedAssigned;
+        
+        if (assignBtn) assignBtn.disabled = !selectedAvailable || !storeId;
+        if (unassignBtn) unassignBtn.disabled = !selectedAssigned || !storeId;
+        if (deleteSensorBtn) deleteSensorBtn.disabled = !anySelected;
+    }
+
+    function assignSelectedSensor() {
+        const storeId = document.getElementById('assignment-store-select').value;
+        const selectedSensor = document.querySelector('#available-sensors-list .sensor-item.selected');
+        
+        if (!storeId || !selectedSensor) return;
+        
+        const sensorId = selectedSensor.dataset.sensorId;
+        
+        fetch(`/api/store-sensors/${storeId}/${sensorId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Ошибка: ' + data.error);
+            } else {
+                loadSensorAssignment(storeId);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка привязки датчика:', error);
+            alert('Ошибка привязки датчика');
+        });
+    }
+
+    function unassignSelectedSensor() {
+        const storeId = document.getElementById('assignment-store-select').value;
+        const selectedSensor = document.querySelector('#assigned-sensors-list .sensor-item.selected');
+        
+        if (!storeId || !selectedSensor) return;
+        
+        const sensorId = selectedSensor.dataset.sensorId;
+        
+        fetch(`/api/store-sensors/${storeId}/${sensorId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Ошибка: ' + data.error);
+            } else {
+                loadSensorAssignment(storeId);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка отвязки датчика:', error);
+            alert('Ошибка отвязки датчика');
+        });
+    }
+
+    function deleteSelectedSensor() {
+        const selectedSensor = document.querySelector('.sensor-item.selected');
+        
+        if (!selectedSensor) return;
+        
+        const sensorId = selectedSensor.dataset.sensorId;
+        const sensorName = selectedSensor.querySelector('.sensor-item-name').textContent;
+        
+        if (confirm(`Вы уверены, что хотите удалить датчик "${sensorName}"?`)) {
+            fetch(`/api/sensors/${sensorId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    alert('Датчик удален!');
+                    const storeId = document.getElementById('assignment-store-select').value;
+                    if (storeId) {
+                        loadSensorAssignment(storeId);
+                    } else {
+                        loadAllSensors();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления датчика:', error);
+                alert('Ошибка удаления датчика');
+            });
+        }
+    }
+
+    function clearSensorAssignment() {
+        const availableList = document.getElementById('available-sensors-list');
+        const assignedList = document.getElementById('assigned-sensors-list');
+        
+        if (assignedList) assignedList.innerHTML = '';
+        loadAllSensors();
+        updateAssignmentButtons();
+    }
+
+    // Глобальные функции для таблицы магазинов
+    window.editStore = function(storeId) {
+        document.querySelector('[data-tab="store-management"]').click();
+        document.getElementById('store-select').value = storeId;
+        document.getElementById('store-select').dispatchEvent(new Event('change'));
+    };
+
+    window.confirmDeleteStore = function(storeId) {
+        if (confirm('Вы уверены, что хотите удалить этот магазин?')) {
+            fetch(`/api/stores/${storeId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    alert('Магазин удален!');
+                    loadStores();
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления магазина:', error);
+                alert('Ошибка удаления магазина');
+            });
+        }
+    };
 });
