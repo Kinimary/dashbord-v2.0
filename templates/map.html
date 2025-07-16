@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BELWEST - Карта магазинов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU" type="text/javascript"></script>
+    <style>
+        .map-container {
+            height: 80vh;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .map-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .map-filter {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+        }
+        
+        .store-info-panel {
+            position: fixed;
+            right: -350px;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .store-info-panel.active {
+            right: 0;
+        }
+        
+        .store-info-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--belwest-green);
+            color: white;
+        }
+        
+        .store-info-content {
+            padding: 20px;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--belwest-green);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .close-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .legend {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Боковая панель -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <span class="logo-text">BELWEST</span>
+                <div class="logo-subtitle">ANALYTICS</div>
+            </div>
+            <ul class="menu">
+                <li>
+                    <a href="/">
+                        <i class="fas fa-th-large"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/users">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/sensors">
+                        <i class="fas fa-robot"></i>
+                        <span>Датчики</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="/map">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Карта магазинов</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/reports">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="main-content">
+            <!-- Верхняя панель -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <h1>Карта магазинов</h1>
+                </div>
+                <div class="top-bar-right">
+                    <div class="user-profile">
+                        <div class="notifications" id="notifications-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-count">3</span>
+                        </div>
+                        <div class="user-info" id="user-menu-btn">
+                            <div class="user-avatar">А</div>
+                            <span>Админ</span>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-details">
+                                        <div class="user-name">Администратор</div>
+                                        <div class="user-role">Полный доступ</div>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-menu">
+                                    <a href="/profile" class="dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Профиль</span>
+                                    </a>
+                                    <a href="/settings" class="dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Настройки</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" class="dropdown-item logout-btn" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Выйти</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Контролы карты -->
+            <div class="map-controls">
+                <select id="period-filter" class="map-filter">
+                    <option value="day">За день</option>
+                    <option value="week">За неделю</option>
+                    <option value="month">За месяц</option>
+                    <option value="year">За год</option>
+                </select>
+                
+                <select id="metric-filter" class="map-filter">
+                    <option value="visitors">Посетители</option>
+                    <option value="conversion">Конверсия</option>
+                    <option value="revenue">Выручка</option>
+                </select>
+                
+                <button class="refresh-btn" id="refresh-map">
+                    <i class="fas fa-sync-alt"></i>
+                    Обновить
+                </button>
+                
+                <button class="chart-btn" id="toggle-heatmap">
+                    <i class="fas fa-fire"></i>
+                    Тепловая карта
+                </button>
+            </div>
+
+            <!-- Карта -->
+            <div class="map-container">
+                <div id="yandex-map"></div>
+            </div>
+
+            <!-- Легенда -->
+            <div class="legend">
+                <h4>Легенда</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #22c55e;"></div>
+                    <span>Высокая активность (>100 посетителей/день)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f59e0b;"></div>
+                    <span>Средняя активность (50-100 посетителей/день)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Низкая активность (<50 посетителей/день)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #6b7280;"></div>
+                    <span>Неактивный магазин</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Панель информации о магазине -->
+    <div class="store-info-panel" id="store-info-panel">
+        <div class="store-info-header">
+            <button class="close-panel" onclick="closeStorePanel()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 id="store-title">Информация о магазине</h3>
+            <p id="store-address"></p>
+        </div>
+        <div class="store-info-content">
+            <div class="stat-card">
+                <div class="stat-value" id="store-visitors">0</div>
+                <div class="stat-label">Посетители сегодня</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="store-conversion">0%</div>
+                <div class="stat-label">Конверсия</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="store-revenue">₽0</div>
+                <div class="stat-label">Выручка</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="store-sensors">0</div>
+                <div class="stat-label">Активных датчиков</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="store-peak">--:--</div>
+                <div class="stat-label">Пиковое время</div>
+            </div>
+            
+            <button class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="viewStoreDetails()">
+                <i class="fas fa-chart-line"></i>
+                Подробная статистика
+            </button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/visitor-dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/yandex-map.js') }}"></script>
+</body>
+</html>
