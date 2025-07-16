@@ -334,9 +334,11 @@ def api_login():
         }), 401
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
+    if request.method == 'POST':
+        return jsonify({'success': True, 'redirect': '/login'})
     return redirect(url_for('login'))
 
 
@@ -837,6 +839,8 @@ def get_sensor_downtimes():
     try:
         user_role = session.get('role')
         user_id = session.get('user_id')
+        filter_type = request.args.get('filter', 'all')
+        period = request.args.get('period', 'today')
         
         conn = sqlite3.connect('visitor_data.db')
         cursor = conn.cursor()

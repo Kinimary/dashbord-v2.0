@@ -795,6 +795,44 @@ function switchSensorsView(view) {
             });
         }
 
+// Загрузка данных дашборда
+function loadDashboardData() {
+    const hierarchyType = document.getElementById('hierarchy-type').value;
+    const entityId = document.getElementById('entity-selector').value;
+    const period = document.getElementById('period-select').value;
+
+    let url = `/api/sensor-data?period=${period}`;
+    if (hierarchyType !== 'all' && entityId) {
+        url += `&hierarchy_type=${hierarchyType}&entity_id=${entityId}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            updateDashboard(data);
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки данных:', error);
+        });
+}
+
+// Обновление дашборда с новыми данными
+function updateDashboard(data) {
+    // Обновляем метрики
+    document.getElementById('today-visitors').textContent = data.total_visitors || 0;
+    document.getElementById('active-sensors').textContent = data.active_sensors || 0;
+    document.getElementById('peak-time').textContent = data.peak_weekday || '--:--';
+    document.getElementById('hourly-avg').textContent = data.avg_hourly || 0;
+
+    // Обновляем изменения
+    document.getElementById('visitors-change').textContent = '+12.5%';
+    document.getElementById('sensors-change').textContent = '+2';
+    document.getElementById('peak-change').textContent = 'Будни';
+    document.getElementById('avg-change').textContent = '+8.3%';
+
+    console.log('Дашборд обновлен с новыми данными');
+}
+
 // Экспорт функций для глобального использования
 window.loadDashboardData = loadDashboardData;
 window.updateDashboard = updateDashboard;

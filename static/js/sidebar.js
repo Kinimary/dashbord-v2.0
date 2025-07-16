@@ -274,14 +274,17 @@ function stopAutoRefresh() {
 
 // Global logout function
 function logout() {
-    if (confirm('Вы уверены, что хотите выйти?')) {
+    if (confirm('Вы уверены, что хотите выйти из системы?')) {
         // Clear local storage
         localStorage.clear();
         sessionStorage.clear();
         
         // Redirect to logout route which will clear session and redirect to login
         fetch('/logout', {
-            method: 'GET',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
             credentials: 'same-origin'
         }).then(() => {
             window.location.href = '/login';
