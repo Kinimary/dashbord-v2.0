@@ -445,6 +445,56 @@ def get_map_data():
 
     return jsonify([dict(store) for store in stores])
 
+@app.route('/api/sensor-assignment', methods=['DELETE'])
+def unassign_sensor():
+    try:
+        data = request.get_json()
+        sensor_id = data.get('sensor_id')
+
+        if not sensor_id:
+            return jsonify({'success': False, 'error': 'Sensor ID is required'})
+
+        cursor.execute('UPDATE sensors SET store_id = NULL WHERE id = ?', (sensor_id,))
+        conn.commit()
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        print(f"Error unassigning sensor: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    try:
+        # Возвращаем настройки по умолчанию или из базы данных
+        default_settings = {
+            'visitor_management': True,
+            'notifications': False,
+            'auto_reports': False,
+            'data_analytics': True,
+            'timezone': 'UTC+3 (Москва)',
+            'language': 'Русский',
+            'theme': 'Темная'
+        }
+        return jsonify(default_settings)
+    except Exception as e:
+        print(f"Error getting settings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def save_settings():
+    try:
+        settings = request.get_json()
+
+        # Здесь можно сохранить настройки в базу данных
+        # Пока что просто возвращаем успех
+        print(f"Saving settings: {settings}")
+
+        return jsonify({'success': True, 'message': 'Settings saved successfully'})
+    except Exception as e:
+        print(f"Error saving settings: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     if not os.path.exists('flask_session'):
         os.makedirs('flask_session')

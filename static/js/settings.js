@@ -304,3 +304,225 @@ window.settingsManager = {
         showSettingFeedback(setting, value);
     }
 };
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    loadSettings();
+});
+
+function setupEventListeners() {
+    // Обработчик кнопки сохранения
+    const saveBtn = document.getElementById('save-settings-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveSettings);
+    }
+
+    // Обработчики переключателей
+    const toggles = document.querySelectorAll('.setting-toggle input[type="checkbox"]');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            updateToggleVisual(this);
+        });
+    });
+
+    // Обработчики выпадающих списков
+    const selects = document.querySelectorAll('.setting-select select');
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            markSettingsChanged();
+        });
+    });
+
+    // Настройка пользовательского меню
+    setupUserMenu();
+}
+
+function setupUserMenu() {
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function() {
+            userDropdown.classList.remove('active');
+        });
+    }
+}
+
+function updateToggleVisual(toggle) {
+    const settingItem = toggle.closest('.setting-item');
+    if (toggle.checked) {
+        settingItem.classList.add('enabled');
+    } else {
+        settingItem.classList.remove('enabled');
+    }
+    markSettingsChanged();
+}
+
+function markSettingsChanged() {
+    const saveBtn = document.getElementById('save-settings-btn');
+    if (saveBtn) {
+        saveBtn.textContent = 'Сохранить изменения';
+        saveBtn.style.background = 'var(--belwest-green)';
+        saveBtn.disabled = false;
+    }
+}
+
+function loadSettings() {
+    fetch('/api/settings')
+        .then(response => response.json())
+        .then(settings => {
+            updateSettingsUI(settings);
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки настроек:', error);
+            // Используем настройки по умолчанию
+            const defaultSettings = {
+                visitor_management: true,
+                notifications: true,
+                auto_reports: false,
+                data_analytics: true,
+                timezone: 'UTC+3 (Москва)',
+                language: 'Русский',
+                theme: 'Темная'
+            };
+            updateSettingsUI(defaultSettings);
+        });
+}
+
+function updateSettingsUI(settings) {
+    // Обновление переключателей
+    const visitorToggle = document.getElementById('visitor-management-toggle');
+    const notificationsToggle = document.getElementById('notifications-toggle');
+    const autoReportsToggle = document.getElementById('auto-reports-toggle');
+    const analyticsToggle = document.getElementById('data-analytics-toggle');
+
+    if (visitorToggle) {
+        visitorToggle.checked = settings.visitor_management || false;
+        updateToggleVisual(visitorToggle);
+    }
+
+    if (notificationsToggle) {
+        notificationsToggle.checked = settings.notifications || false;
+        updateToggleVisual(notificationsToggle);
+    }
+
+    if (autoReportsToggle) {
+        autoReportsToggle.checked = settings.auto_reports || false;
+        updateToggleVisual(autoReportsToggle);
+    }
+
+    if (analyticsToggle) {
+        analyticsToggle.checked = settings.data_analytics || false;
+        updateToggleVisual(analyticsToggle);
+    }
+
+    // Обновление выпадающих списков
+    const timezoneSelect = document.getElementById('timezone-select');
+    const languageSelect = document.getElementById('language-select');
+    const themeSelect = document.getElementById('theme-select');
+
+    if (timezoneSelect && settings.timezone) {
+        timezoneSelect.value = settings.timezone;
+    }
+
+    if (languageSelect && settings.language) {
+        languageSelect.value = settings.language;
+    }
+
+    if (themeSelect && settings.theme) {
+        themeSelect.value = settings.theme;
+    }
+}
+
+function saveSettings() {
+    const saveBtn = document.getElementById('save-settings-btn');
+    
+    // Показываем состояние загрузки
+    saveBtn.textContent = 'Сохранение...';
+    saveBtn.disabled = true;
+
+    const settings = {
+        visitor_management: document.getElementById('visitor-management-toggle')?.checked || false,
+        notifications: document.getElementById('notifications-toggle')?.checked || false,
+        auto_reports: document.getElementById('auto-reports-toggle')?.checked || false,
+        data_analytics: document.getElementById('data-analytics-toggle')?.checked || false,
+        timezone: document.getElementById('timezone-select')?.value || 'UTC+3 (Москва)',
+        language: document.getElementById('language-select')?.value || 'Русский',
+        theme: document.getElementById('theme-select')?.value || 'Темная'
+    };
+
+    fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            saveBtn.textContent = 'Настройки сохранены!';
+            saveBtn.style.background = '#27ae60';
+            
+            // Применяем тему если она изменилась
+            if (settings.theme) {
+                applyTheme(settings.theme);
+            }
+
+            setTimeout(() => {
+                saveBtn.textContent = 'Сохранить настройки';
+                saveBtn.style.background = 'var(--glass-border)';
+                saveBtn.disabled = false;
+            }, 2000);
+        } else {
+            throw new Error(data.error || 'Ошибка сохранения');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка сохранения настроек:', error);
+        saveBtn.textContent = 'Ошибка сохранения';
+        saveBtn.style.background = '#e74c3c';
+        
+        setTimeout(() => {
+            saveBtn.textContent = 'Сохранить настройки';
+            saveBtn.style.background = 'var(--belwest-green)';
+            saveBtn.disabled = false;
+        }, 2000);
+    });
+}
+
+function applyTheme(theme) {
+    const body = document.body;
+    
+    if (theme === 'Светлая') {
+        body.classList.add('light-mode');
+    } else {
+        body.classList.remove('light-mode');
+    }
+}
+
+function logout() {
+    if (confirm('Вы уверены, что хотите выйти из системы?')) {
+        fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect || '/login';
+            }
+        })
+        .catch(error => {
+            console.error('Logout error:', error);
+            window.location.href = '/login';
+        });
+    }
+}
