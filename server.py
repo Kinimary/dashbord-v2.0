@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import json
 import csv
 import io
+import functools
 from handlers.users import users
 from handlers.sensors import sensors as sensors_bp
 from handlers.reports import reports
@@ -211,6 +212,8 @@ def init_db():
     conn.close()
 
 def login_required(f):
+    from functools import wraps
+    @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
@@ -464,8 +467,12 @@ def unassign_sensor():
         if not sensor_id:
             return jsonify({'success': False, 'error': 'Sensor ID is required'})
 
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
         cursor.execute('UPDATE sensors SET store_id = NULL WHERE id = ?', (sensor_id,))
         conn.commit()
+        conn.close()
 
         return jsonify({'success': True})
 
