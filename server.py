@@ -256,39 +256,33 @@ def logout():
     return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/users')
-def users_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def users_page():
     return render_template('users.html')
 
 @app.route('/sensors')
-def sensors_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def sensors_page():
     return render_template('sensors.html')
 
 @app.route('/reports')
-def reports_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def reports_page():
     return render_template('reports.html')
 
 @app.route('/settings')
-def settings_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def settings_page():
     return render_template('settings.html')
 
 @app.route('/profile')
-def profile_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def profile_page():
     return render_template('profile.html')
 
 @app.route('/map')
-def map_route():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@login_required
+def map_page():
     return render_template('map.html')
 
 # API для данных от Arduino
