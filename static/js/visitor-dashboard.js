@@ -180,14 +180,14 @@ function updateMetrics(data) {
     Object.entries(metrics).forEach(([id, metricData]) => {
         const element = document.getElementById(id);
         const trendElement = document.getElementById(id.replace('-', '-') + '-trend');
-        
+
         if (element) {
             // Удаляем placeholder
             const placeholder = element.querySelector('.loading-placeholder');
             if (placeholder) {
                 placeholder.remove();
             }
-            
+
             element.classList.add('updating');
             setTimeout(() => {
                 element.textContent = metricData.value;
@@ -206,9 +206,9 @@ function updateMetrics(data) {
 // Расчет тренда
 function calculateTrend(current, previous) {
     if (!previous || previous === 0) return 'neutral';
-    
+
     const change = ((current - previous) / previous) * 100;
-    
+
     if (change > 5) return 'up';
     if (change < -5) return 'down';
     return 'neutral';
@@ -332,7 +332,7 @@ function updateSensorsList(sensors) {
 
     // Обновляем активность датчиков
     updateSensorsActivity(sensors);
-    
+
     // Сохраняем данные для других функций
     localStorage.setItem('lastSensorsData', JSON.stringify(sensors));
 }
@@ -354,7 +354,7 @@ function updateSensorsActivity(sensors) {
 function createSensorActivityItem(sensor) {
     const activityDiv = document.createElement('div');
     activityDiv.className = 'sensor-activity-item';
-    
+
     const statusClass = sensor.status === 'active' ? 'online' : 'offline';
     const visitors = sensor.visitors || sensor.visitor_count || sensor.current_visitors || 0;
     const lastUpdate = sensor.last_update ? new Date(sensor.last_update).toLocaleTimeString() : 'Неизвестно';
@@ -528,25 +528,25 @@ function setupEventListeners() {
 // Обработчик поиска по дашборду
 function handleDashboardSearch(event) {
     const searchTerm = event.target.value.toLowerCase();
-    
+
     // Фильтруем датчики
     const sensorItems = document.querySelectorAll('.sensor-item');
     sensorItems.forEach(item => {
         const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
         const sensorLocation = item.querySelector('.sensor-location')?.textContent.toLowerCase() || '';
-        
+
         if (sensorName.includes(searchTerm) || sensorLocation.includes(searchTerm)) {
             item.style.display = 'flex';
         } else {
             item.style.display = 'none';
         }
     });
-    
+
     // Фильтруем активность
     const activityItems = document.querySelectorAll('.sensor-activity-item');
     activityItems.forEach(item => {
         const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
-        
+
         if (sensorName.includes(searchTerm)) {
             item.style.display = 'flex';
         } else {
@@ -558,11 +558,11 @@ function handleDashboardSearch(event) {
 // Фильтрация активности датчиков
 function filterSensorsActivity(filter) {
     const activityItems = document.querySelectorAll('.sensor-activity-item');
-    
+
     activityItems.forEach(item => {
         const statusElement = item.querySelector('.activity-status');
         const isOnline = statusElement?.classList.contains('online');
-        
+
         if (filter === 'all') {
             item.style.display = 'flex';
         } else if (filter === 'online' && isOnline) {
@@ -732,4 +732,369 @@ function setupActivityFilters() {
             loadDashboardData();
         });
     });
+}
+
+// Инициализация дашборда
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Дашборд загружается...');
+
+    // Инициализация основных компонентов
+    initializeCharts();
+    loadDashboardData();
+    setupEventListeners();
+    initializeSensorsData();
+    startRealTimeUpdates();
+
+    console.log('Дашборд инициализирован');
+});
+
+// Инициализация данных датчиков
+function initializeSensorsData() {
+    // Загрузка списка датчиков
+    loadSensorsList();
+    loadSensorsActivity();
+    loadRealtimeActivity();
+}
+
+// Загрузка списка датчиков
+function loadSensorsList() {
+    const sensorsList = document.getElementById('sensors-list');
+    if (!sensorsList) return;
+
+    // Симуляция данных датчиков
+    const sensors = [
+        { id: 1, name: 'Датчик-001', location: 'Главный вход', status: 'online', visitors: 142 },
+        { id: 2, name: 'Датчик-002', location: 'Касса №1', status: 'online', visitors: 89 },
+        { id: 3, name: 'Датчик-003', location: 'Касса №2', status: 'offline', visitors: 0 },
+        { id: 4, name: 'Датчик-004', location: 'Выход', status: 'online', visitors: 134 },
+        { id: 5, name: 'Датчик-005', location: 'Примерочная', status: 'online', visitors: 67 },
+        { id: 6, name: 'Датчик-006', location: 'Склад', status: 'offline', visitors: 0 }
+    ];
+
+    let html = '';
+    sensors.forEach(sensor => {
+        html += `
+            <div class="sensor-list-item">
+                <div class="sensor-status-icon ${sensor.status}">
+                    <i class="fas ${sensor.status === 'online' ? 'fa-wifi' : 'fa-exclamation-triangle'}"></i>
+                </div>
+                <div class="sensor-list-info">
+                    <div class="sensor-list-name">${sensor.name}</div>
+                    <div class="sensor-list-details">${sensor.location}</div>
+                </div>
+                <div class="sensor-list-stats">
+                    <div class="sensor-list-visitors">${sensor.visitors}</div>
+                    <div class="sensor-list-label">посетителей</div>
+                </div>
+            </div>
+        `;
+    });
+
+    sensorsList.innerHTML = html;
+}
+
+// Загрузка активности датчиков
+function loadSensorsActivity() {
+    const activityList = document.getElementById('sensors-activity-list');
+    if (!activityList) return;
+
+    const activities = [
+        { sensor: 'Датчик-001', status: 'active', message: 'Высокая активность', time: '2 мин назад', type: 'visitor' },
+        { sensor: 'Датчик-002', status: 'active', message: 'Нормальная работа', time: '5 мин назад', type: 'system' },
+        { sensor: 'Датчик-003', status: 'inactive', message: 'Соединение потеряно', time: '1 час назад', type: 'alert' },
+        { sensor: 'Датчик-004', status: 'active', message: 'Пиковое время', time: '10 мин назад', type: 'visitor' },
+        { sensor: 'Датчик-005', status: 'warning', message: 'Низкий заряд', time: '30 мин назад', type: 'sensor' }
+    ];
+
+    let html = '';
+    activities.forEach(activity => {
+        html += `
+            <div class="sensor-activity-item">
+                <div class="sensor-activity-info">
+                    <div class="sensor-activity-icon ${activity.status}">
+                        <i class="fas ${getActivityIcon(activity.type)}"></i>
+                    </div>
+                    <div class="sensor-activity-details">
+                        <h4>${activity.sensor}</h4>
+                        <p>${activity.message}</p>
+                    </div>
+                </div>
+                <div class="sensor-activity-status">
+                    <span class="sensor-activity-badge ${activity.status}">${getStatusText(activity.status)}</span>
+                    <div class="sensor-activity-time">${activity.time}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    activityList.innerHTML = html;
+}
+
+// Загрузка активности в реальном времени
+function loadRealtimeActivity() {
+    const activityStream = document.getElementById('activity-stream');
+    if (!activityStream) return;
+
+    const realtimeActivities = [
+        { type: 'visitor', title: 'Новый посетитель', description: 'Датчик-001: обнаружен вход', time: '30 сек назад' },
+        { type: 'sensor', title: 'Статус датчика', description: 'Датчик-002: соединение восстановлено', time: '2 мин назад' },
+        { type: 'alert', title: 'Предупреждение', description: 'Датчик-003: нет сигнала', time: '5 мин назад' },
+        { type: 'system', title: 'Системное событие', description: 'Обновление конфигурации', time: '10 мин назад' }
+    ];
+
+    let html = '';
+    realtimeActivities.forEach(activity => {
+        html += `
+            <div class="activity-item">
+                <div class="activity-icon ${activity.type}">
+                    <i class="fas ${getActivityIcon(activity.type)}"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">${activity.title}</div>
+                    <div class="activity-description">${activity.description}</div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    activityStream.innerHTML = html;
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        visitor: 'fa-user',
+        sensor: 'fa-wifi',
+        alert: 'fa-exclamation-triangle',
+        system: 'fa-cog'
+    };
+    return icons[type] || 'fa-info-circle';
+}
+
+function getStatusText(status) {
+    const texts = {
+        active: 'Активен',
+        inactive: 'Офлайн',
+        warning: 'Предупреждение'
+    };
+    return texts[status] || 'Неизвестно';
+}
+
+// Загрузка данных дашборда
+async function loadDashboardData() {
+    try {
+        showLoadingState();
+
+        const params = new URLSearchParams();
+
+        const hierarchyType = document.getElementById('hierarchy-type')?.value;
+        const entityId = document.getElementById('entity-selector')?.value;
+        const period = document.getElementById('period-select')?.value || 'day';
+
+        if (hierarchyType) params.append('hierarchy_type', hierarchyType);
+        if (entityId) params.append('entity_id', entityId);
+        params.append('period', period);
+
+        const response = await fetch(`/api/sensor-data?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        updateMetrics(data);
+        updateChart(data.hourly_data || []);
+        updateSensorsList(data.sensors || []);
+        updateActivityStream(data.sensors || []);
+
+        hideLoadingState();
+
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showErrorState('Ошибка загрузки данных: ' + error.message);
+    }
+}
+
+// Загрузка демо данных
+function loadDemoData() {
+    console.log('Загрузка демо данных...');
+
+    // Обновляем метрики демо данными
+    const demoMetrics = {
+        totalVisitors: 2847,
+        activeSensors: 94,
+        peakTime: '14:30',
+        visitorsPerMinute: 8.7,
+        activeStores: 12,
+        systemHealth: 99.2
+    };
+
+    updateMetrics(demoMetrics);
+
+    // Обновляем график демо данными
+    updateChart({
+        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+        data: [45, 23, 187, 342, 489, 267]
+    });
+}
+
+// Обновление метрик
+function updateMetrics(metrics) {
+    if (!metrics) return;
+
+    // Обновляем значения метрик с анимацией
+    const elements = {
+        'total-visitors': metrics.totalVisitors || 2847,
+        'active-sensors': metrics.activeSensors || 94,
+        'peak-time': metrics.peakTime || '14:30',
+        'visitors-per-minute': metrics.visitorsPerMinute || 8.7,
+        'active-stores': metrics.activeStores || 12,
+        'system-health': metrics.systemHealth || '99.2%'
+    };
+
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            // Удаляем класс loading-placeholder если есть
+            const placeholder = element.querySelector('.loading-placeholder');
+            if (placeholder) {
+                element.innerHTML = value;
+            } else {
+                animateCounter(element, value);
+            }
+        }
+    });
+
+    // Обновляем подписи периодов
+    updatePeriodLabels();
+}
+
+// Анимация счетчика
+function animateCounter(element, targetValue) {
+    const currentValue = parseInt(element.textContent) || 0;
+    const target = typeof targetValue === 'string' ? parseInt(targetValue) : targetValue;
+
+    if (isNaN(target)) {
+        element.textContent = targetValue;
+        return;
+    }
+
+    const duration = 1000;
+    const startTime = performance.now();
+```python
+// The code updates the dashboard initialization, data loading, metrics updating, and chart functionalities.
+    const startValue = currentValue;
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        const current = startValue + (target - startValue) * easeOutQuart(progress);
+        element.textContent = Math.round(current);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            element.textContent = targetValue;
+        }
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Функция плавности анимации
+function easeOutQuart(t) {
+    return 1 - (--t) * t * t * t;
+}
+
+// Обновление подписей периодов
+function updatePeriodLabels() {
+    const periodSelect = document.getElementById('period-select');
+    if (!periodSelect) return;
+
+    const period = periodSelect.value;
+    const periodLabels = {
+        'hour': 'За последний час',
+        'day': 'За последние 24 часа',
+        'week': 'За последнюю неделю',
+        'month': 'За последний месяц'
+    };
+
+    const visitorsLabel = document.getElementById('visitors-period');
+    if (visitorsLabel) {
+        visitorsLabel.textContent = periodLabels[period] || 'За последние 24 часа';
+    }
+}
+
+// Инициализация графиков
+function initializeChart() {
+    const ctx = document.getElementById('visitorsChart');
+    if (!ctx) return;
+
+    visitorsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Посетители',
+                data: [],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    hoverBackgroundColor: '#4f46e5'
+                }
+            }
+        }
+    });
+}
+
+// Обновление графика
+function updateChart(hourlyData) {
+    if (!visitorsChart || !hourlyData) return;
+
+    const labels = hourlyData.map(item => `${item.hour}:00`);
+    const data = hourlyData.map(item => item.visitors || 0);
+
+    visitorsChart.data.labels = labels;
+    visitorsChart.data.datasets[0].data = data;
+    visitorsChart.update('active');
 }
