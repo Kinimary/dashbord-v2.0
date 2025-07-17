@@ -3388,6 +3388,106 @@ body:not(.light-mode) .sensor-list-details {
     gap: 8px;
 }
 
+/* Sensors Activity List */
+.sensors-activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.sensor-activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    transition: var(--transition);
+}
+
+.sensor-activity-item:hover {
+    background: var(--glass-hover);
+    transform: translateY(-1px);
+}
+
+.sensor-activity-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sensor-activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.sensor-activity-icon.active {
+    background: var(--belwest-green);
+}
+
+.sensor-activity-icon.inactive {
+    background: var(--error-color);
+}
+
+.sensor-activity-icon.warning {
+    background: #FFB020;
+}
+
+.sensor-activity-details h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sensor-activity-details p {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.sensor-activity-status {
+    text-align: right;
+}
+
+.sensor-activity-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: inline-block;
+}
+
+.sensor-activity-badge.online {
+    background: rgba(46, 139, 87, 0.2);
+    color: var(--belwest-green);
+}
+
+.sensor-activity-badge.offline {
+    background: rgba(220, 53, 69, 0.2);
+    color: var(--error-color);
+}
+
+.sensor-activity-badge.warning {
+    background: rgba(255, 176, 32, 0.2);
+    color: #FFB020;
+}
+
+.sensor-activity-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
 .activity-filter {
     padding: 6px 12px;
     border: 1px solid var(--glass-border);

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupRefreshHandlers();
     setupHierarchySelectors();
     setupUserMenu();
+    setupActivityFilters();
 });
 
 function setupHierarchySelectors() {
@@ -392,70 +393,104 @@ function updateSensorsList(sensors) {
 }
 
 function loadActivityStream() {
-    if (activityPaused) return;
-
-    const activities = [
-        {
-            type: 'visitor',
-            icon: 'fa-user-plus',
-            title: 'Новый посетитель',
-            description: 'Вход через главный вход',
-            time: 'Только что',
-            color: '#4ade80'
-        },
-        {
-            type: 'sensor',
-            icon: 'fa-wifi',
-            title: 'Датчик восстановлен',
-            description: 'Sensor Zone C снова онлайн',
-            time: '2 мин назад',
-            color: '#3b82f6'
-        },
-        {
-            type: 'alert',
-            icon: 'fa-exclamation-triangle',
-            title: 'Высокая нагрузка',
-            description: 'Превышен лимит в Zone A',
-            time: '5 мин назад',
-            color: '#f59e0b'
-        },
-        {
-            type: 'visitor',
-            icon: 'fa-user-minus',
-            title: 'Посетитель покинул',
-            description: 'Выход через боковой вход',
-            time: '7 мин назад',
-            color: '#ef4444'
-        },
-        {
-            type: 'system',
-            icon: 'fa-cog',
-            title: 'Система обновлена',
-            description: 'Версия 2.1.4 установлена',
-            time: '1 час назад',
-            color: '#8b5cf6'
-        }
-    ];
-
-    updateActivityStream(activities);
+    loadSensorsActivity();
 }
 
-function updateActivityStream(activities) {
-    const activityStream = document.getElementById('activity-stream');
-    if (!activityStream) return;
+function loadSensorsActivity() {
+    fetch('/api/sensors')
+        .then(response => response.json())
+        .then(sensors => {
+            const sensorsActivityList = document.getElementById('sensors-activity-list');
+            if (sensorsActivityList) {
+                const activeFilter = document.querySelector('.activity-filter-controls .filter-btn.active').getAttribute('data-filter');
 
-    activityStream.innerHTML = activities.map(activity => `
-        <div class="activity-item">
-            <div class="activity-icon" style="color: ${activity.color}">
-                <i class="fas ${activity.icon}"></i>
-            </div>
-            <div class="activity-info">
-                <div class="activity-title">${activity.title}</div>
-                <div class="activity-description">${activity.description}</div>
-                <div class="activity-time">${activity.time}</div>
-            </div>
-        </div>
-    `).join('');
+                let filteredSensors = sensors;
+                if (activeFilter === 'online') {
+                    filteredSensors = sensors.filter(s => s.status === 'active');
+                } else if (activeFilter === 'offline') {
+                    filteredSensors = sensors.filter(s => s.status !== 'active');
+                }
+
+                if (filteredSensors.length === 0) {
+                    sensorsActivityList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-robot" style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px;"></i>
+                            <p>Датчики не найдены</p>
+                        </div>
+                    `;
+                } else {
+                    sensorsActivityList.innerHTML = filteredSensors.map(sensor => {
+                        const statusInfo = getSensorStatusInfo(sensor.status);
+                        const timeAgo = getTimeAgo(sensor.last_updated);
+
+                        return `
+                            <div class="sensor-activity-item">
+                                <div class="sensor-activity-info">
+                                    <div class="sensor-activity-icon ${statusInfo.class}">
+                                        <i class="fas ${statusInfo.icon}"></i>
+                                    </div>
+                                    <div class="sensor-activity-details">
+                                        <h4>${sensor.name}</h4>
+                                        <p>${sensor.location}</p>
+                                    </div>
+                                </div>
+                                <div class="sensor-activity-status">
+                                    <span class="sensor-activity-badge ${statusInfo.class}">${statusInfo.text}</span>
+                                    <div class="sensor-activity-time">${timeAgo}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки активности датчиков:', error);
+            const sensorsActivityList = document.getElementById('sensors-activity-list');
+            if (sensorsActivityList) {
+                sensorsActivityList.innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--error-color); margin-bottom: 16px;"></i>
+                        <p>Ошибка загрузки данных</p>
+                    </div>
+                `;
+            }
+        });
+}
+
+function getSensorStatusInfo(status) {
+    switch (status) {
+        case 'active':
+            return { class: 'online', text: 'Активен', icon: 'fa-check-circle' };
+        case 'inactive':
+            return { class: 'offline', text: 'Неактивен', icon: 'fa-times-circle' };
+        case 'maintenance':
+            return { class: 'warning', text: 'Обслуживание', icon: 'fa-tools' };
+        default:
+            return { class: 'offline', text: 'Неизвестно', icon: 'fa-question-circle' };
+    }
+}
+
+function getTimeAgo(timestamp) {
+    if (!timestamp || timestamp === '-') {
+        return 'Неизвестно';
+    }
+
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Только что';
+        if (diffMins < 60) return `${diffMins} мин назад`;
+        if (diffHours < 24) return `${diffHours} ч назад`;
+        return `${diffDays} дн назад`;
+    } catch (e) {
+        return 'Неизвестно';
+    }
 }
 
 function filterSensors(filter) {
@@ -689,3 +724,18 @@ window.addEventListener('offline', function() {
     window.showAIRecommendations = showAIRecommendations;
     window.showAIPredictions = showAIPredictions;
     window.closeAIModal = closeAIModal;
+
+function setupActivityFilters() {
+    const filterBtns = document.querySelectorAll('.activity-filter-controls .filter-btn');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем активный класс у всех кнопок
+            filterBtns.forEach(b => b.classList.remove('active'));
+            // Добавляем активный класс к нажатой кнопке
+            this.classList.add('active');
+            // Перезагружаем активность датчиков с новым фильтром
+            loadSensorsActivity();
+        });
+    });
+}
