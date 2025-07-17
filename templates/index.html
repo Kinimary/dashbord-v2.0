@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,15 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="dashboard-container">
+    <div class="container">
         <!-- Боковая панель -->
         <div class="sidebar" id="sidebar">
             <div class="logo">
-                <div class="logo-icon">
-                    <div class="bw-logo">BW</div>
-                </div>
-                <span class="logo-text">BELWEST</span>
-                <div class="logo-subtitle">ANALYTICS</div>
+                <span>BELWEST</span>
             </div>
             <ul class="menu">
                 <li class="active">
@@ -62,13 +59,13 @@
         <!-- Основное содержимое -->
         <div class="main-content">
             <!-- Верхняя панель -->
-            <div class="compact-top-bar">
+            <div class="top-bar">
                 <div class="top-bar-left">
                     <h1>Дашборд посетителей</h1>
                 </div>
-                <div class="top-bar-controls">
-                    <div class="control-group">
-                        <select id="hierarchy-type" class="compact-select">
+                <div class="top-bar-center">
+                    <div class="time-filter">
+                        <select id="hierarchy-type" class="modern-select">
                             <option value="">Все данные</option>
                             <option value="manager">По менеджеру</option>
                             <option value="rd">По РД</option>
@@ -76,29 +73,59 @@
                             <option value="store">По магазину</option>
                             <option value="user">По пользователю</option>
                         </select>
-                        <select id="entity-selector" class="compact-select" style="display: none;">
+                        <select id="entity-selector" class="modern-select" style="display: none;">
                             <option value="">Выберите...</option>
                         </select>
-                        <select id="period-select" class="compact-select">
+                        <select id="period-select" class="modern-select">
                             <option value="hour">Час</option>
                             <option value="day">День</option>
                             <option value="week">Неделя</option>
                             <option value="month">Месяц</option>
                         </select>
-                        <button class="compact-refresh-btn" id="refresh-data" title="Обновить данные">
+                        <button class="refresh-btn" id="refresh-data" title="Обновить данные">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
-                    <div class="user-section">
-                        <div class="notifications">
+                </div>
+                <div class="top-bar-right">
+                    <div class="user-profile">
+                        <div class="notifications" id="notifications-btn">
                             <i class="fas fa-bell"></i>
                             <div class="notification-badge">3</div>
+                            <div class="notification-dropdown" id="notification-dropdown">
+                                <div class="notification-header">
+                                    <h4>Уведомления</h4>
+                                    <button class="mark-all-read">Отметить все</button>
+                                </div>
+                                <div class="notification-list">
+                                    <div class="no-notifications">
+                                        <i class="fas fa-bell-slash"></i>
+                                        <p>Нет новых уведомлений</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="user-info" id="user-menu-btn">
                             <div class="user-avatar">А</div>
                             <span>Админ</span>
                             <div class="user-dropdown" id="user-dropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="user-avatar">А</div>
+                                    <div class="user-details">
+                                        <div class="user-name">Администратор</div>
+                                        <div class="user-role">Системный администратор</div>
+                                    </div>
+                                </div>
                                 <div class="user-dropdown-menu">
+                                    <a href="/profile" class="dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Профиль</span>
+                                    </a>
+                                    <a href="/settings" class="dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Настройки</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
                                     <a href="#" class="dropdown-item logout-btn" onclick="logout()">
                                         <i class="fas fa-sign-out-alt"></i>
                                         <span>Выйти</span>
@@ -110,155 +137,142 @@
                 </div>
             </div>
 
-            <!-- Компактные метрики в одну строку -->
-            <div class="compact-metrics-row">
-                <div class="compact-metric-card">
-                    <div class="metric-icon-small green">
+            <!-- Карточки метрик -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon gradient-green">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="metric-content-compact">
-                        <div class="metric-value-compact" id="total-visitors">0</div>
-                        <div class="metric-label-compact">Посетители</div>
-                        <div class="metric-sublabel-compact">За сегодня</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Посетители</div>
+                        <div class="metric-value" id="total-visitors">2947</div>
+                        <div class="metric-subtitle">За сегодня</div>
                     </div>
-                    <div class="metric-chart-mini">
-                        <div class="mini-line-chart" id="visitors-mini-chart"></div>
+                    <div class="metric-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        +12%
                     </div>
                 </div>
 
-                <div class="compact-metric-card">
-                    <div class="metric-icon-small blue">
+                <div class="metric-card">
+                    <div class="metric-icon gradient-blue">
                         <i class="fas fa-wifi"></i>
                     </div>
-                    <div class="metric-content-compact">
-                        <div class="metric-value-compact" id="active-sensors">0</div>
-                        <div class="metric-label-compact">Датчики</div>
-                        <div class="metric-sublabel-compact">Активные</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Датчики</div>
+                        <div class="metric-value" id="active-sensors">94</div>
+                        <div class="metric-subtitle">Активные</div>
                     </div>
-                    <div class="metric-chart-mini">
-                        <div class="mini-line-chart" id="sensors-mini-chart"></div>
+                    <div class="metric-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        +5%
                     </div>
                 </div>
 
-                <div class="compact-metric-card">
-                    <div class="metric-icon-small orange">
+                <div class="metric-card">
+                    <div class="metric-icon gradient-orange">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <div class="metric-content-compact">
-                        <div class="metric-value-compact" id="peak-time">00:00</div>
-                        <div class="metric-label-compact">Пик</div>
-                        <div class="metric-sublabel-compact">Время</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Пик</div>
+                        <div class="metric-value" id="peak-time">14:30</div>
+                        <div class="metric-subtitle">Время</div>
                     </div>
-                    <div class="metric-chart-mini">
-                        <div class="mini-line-chart" id="peak-mini-chart"></div>
+                    <div class="metric-trend neutral">
+                        <i class="fas fa-minus"></i>
+                        0%
                     </div>
                 </div>
 
-                <div class="compact-metric-card">
-                    <div class="metric-icon-small teal">
+                <div class="metric-card">
+                    <div class="metric-icon gradient-teal">
                         <i class="fas fa-store"></i>
                     </div>
-                    <div class="metric-content-compact">
-                        <div class="metric-value-compact" id="active-stores">0</div>
-                        <div class="metric-label-compact">Магазины</div>
-                        <div class="metric-sublabel-compact">В сети</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Магазины</div>
+                        <div class="metric-value" id="active-stores">12</div>
+                        <div class="metric-subtitle">В сети</div>
                     </div>
-                    <div class="metric-chart-mini">
-                        <div class="mini-line-chart" id="stores-mini-chart"></div>
+                    <div class="metric-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        +8%
                     </div>
                 </div>
             </div>
 
-            <!-- Главный график с компактным дизайном -->
-            <div class="main-chart-compact">
-                <div class="chart-header-compact">
-                    <h3>Динамика посещений</h3>
-                    <div class="chart-controls-compact">
-                        <button class="chart-btn-compact active" data-period="day">День</button>
-                        <button class="chart-btn-compact" data-period="week">Неделя</button>
-                        <button class="chart-btn-compact" data-period="month">Месяц</button>
-                    </div>
-                </div>
-                <div class="chart-container-compact">
-                    <canvas id="visitorsChart" width="400" height="200"></canvas>
-                </div>
-            </div>
-
-            <!-- Нижняя секция в две колонки -->
-            <div class="bottom-section-compact">
-                <!-- Левая колонка - Состояние датчиков -->
-                <div class="sensors-status-compact">
-                    <div class="section-header-compact">
-                        <h3>Состояние датчиков</h3>
-                        <div class="status-filter-compact">
-                            <button class="filter-btn-compact active" data-filter="all">
-                                <i class="fas fa-circle"></i> Все
-                            </button>
-                            <button class="filter-btn-compact" data-filter="online">
-                                <i class="fas fa-circle text-success"></i> Онлайн
-                            </button>
-                            <button class="filter-btn-compact" data-filter="offline">
-                                <i class="fas fa-circle text-danger"></i> Офлайн
-                            </button>
+            <!-- Главный график -->
+            <div class="main-chart-container">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Динамика посещений</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-period="day">День</button>
+                            <button class="chart-btn" data-period="week">Неделя</button>
+                            <button class="chart-btn" data-period="month">Месяц</button>
                         </div>
                     </div>
-                    <div class="sensors-list-compact" id="sensors-list">
+                    <div class="chart-content">
+                        <canvas id="visitorsChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Нижняя секция -->
+            <div class="bottom-section">
+                <!-- Состояние датчиков -->
+                <div class="sensors-status">
+                    <div class="section-header">
+                        <h3>Состояние датчиков</h3>
+                        <div class="status-filter">
+                            <button class="filter-btn active" data-filter="all">Все</button>
+                            <button class="filter-btn" data-filter="online">Онлайн</button>
+                            <button class="filter-btn" data-filter="offline">Офлайн</button>
+                        </div>
+                    </div>
+                    <div class="sensors-list" id="sensors-list">
                         <!-- Датчики будут загружены динамически -->
                     </div>
                 </div>
 
-                <!-- Правая колонка - Активность в реальном времени -->
-                <div class="activity-section-compact">
-                    <div class="section-header-compact">
+                <!-- Активность -->
+                <div class="activity-section">
+                    <div class="section-header">
                         <h3>Активность в реальном времени</h3>
-                        <div class="activity-controls-compact">
-                            <button class="activity-btn-compact" id="pause-activity">
+                        <div class="activity-filter-controls">
+                            <button class="filter-btn" id="pause-activity">
                                 <i class="fas fa-pause"></i>
                             </button>
-                            <button class="activity-btn-compact" id="clear-activity">
+                            <button class="filter-btn" id="clear-activity">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="activity-stream-compact" id="activity-stream">
+                    <div class="activity-stream" id="activity-stream">
                         <!-- Активность будет загружена динамически -->
                     </div>
                 </div>
-            </div>
 
-            <!-- Нижняя панель с прогресс-барами -->
-            <div class="progress-section-compact">
-                <div class="progress-item">
-                    <div class="progress-header">
-                        <span class="progress-label">Загрузка системы</span>
-                        <span class="progress-value">67%</span>
+                <!-- Статистика магазинов -->
+                <div class="stores-status">
+                    <div class="section-header">
+                        <h3>Топ магазины</h3>
+                        <div class="activity-filter-controls">
+                            <button class="filter-btn" data-period="today">Сегодня</button>
+                            <button class="filter-btn active" data-period="week">Неделя</button>
+                        </div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 67%; background: #ef4444;"></div>
-                    </div>
-                </div>
-
-                <div class="progress-item">
-                    <div class="progress-header">
-                        <span class="progress-label">Активность датчиков</span>
-                        <span class="progress-value">89%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 89%; background: #22c55e;"></div>
-                    </div>
-                </div>
-
-                <div class="progress-item">
-                    <div class="progress-header">
-                        <span class="progress-label">Качество сигнала</span>
-                        <span class="progress-value">94%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 94%; background: #22c55e;"></div>
+                    <div class="stores-list" id="stores-list">
+                        <!-- Магазины будут загружены динамически -->
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Страница переходов -->
+    <div class="page-transition-overlay" id="page-transition">
+        <div class="transition-spinner"></div>
+        <div class="transition-text">Загрузка...</div>
     </div>
 
     <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
