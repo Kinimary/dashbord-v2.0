@@ -210,10 +210,16 @@ def init_db():
     conn.commit()
     conn.close()
 
+def login_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
+@login_required
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -250,39 +256,33 @@ def logout():
     return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/users')
+@login_required
 def users_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('users.html')
 
 @app.route('/sensors')
+@login_required
 def sensors_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('sensors.html')
 
 @app.route('/reports')
+@login_required
 def reports_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('reports.html')
 
 @app.route('/settings')
+@login_required
 def settings_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('settings.html')
 
 @app.route('/profile')
+@login_required
 def profile_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('profile.html')
 
 @app.route('/map')
+@login_required
 def map_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('map.html')
 
 # API для данных от Arduino
@@ -326,6 +326,7 @@ def receive_visitor_count():
 
 # API для получения данных датчиков
 @app.route('/api/sensor-data')
+@login_required
 def get_sensor_data():
     period = request.args.get('period', 'day')
     hierarchy_type = request.args.get('hierarchy_type', '')
@@ -398,6 +399,7 @@ def get_sensor_data():
 
 # API для иерархии
 @app.route('/api/hierarchy/<hierarchy_type>')
+@login_required
 def get_hierarchy_options(hierarchy_type):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -416,6 +418,7 @@ def get_hierarchy_options(hierarchy_type):
 
 # API для данных карты
 @app.route('/api/map-data')
+@login_required
 def get_map_data():
     conn = get_db_connection()
     cursor = conn.cursor()
