@@ -98,27 +98,11 @@
                             <div class="user-avatar">А</div>
                             <span>Админ</span>
                             <div class="user-dropdown" id="user-dropdown">
-                                <div class="user-dropdown-header">
-                                    <div class="user-details">
-                                        <div class="user-name">Администратор</div>
-                                        <div class="user-role">Полный доступ</div>
-                                    </div>
-                                </div>
-                                <div class="user-dropdown-menu">
-                                    <a href="/profile" class="dropdown-item">
-                                        <i class="fas fa-user"></i>
-                                        <span>Профиль</span>
-                                    </a>
-                                    <a href="/settings" class="dropdown-item">
-                                        <i class="fas fa-cog"></i>
-                                        <span>Настройки</span>
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a href="#" class="dropdown-item logout-btn" onclick="logout()">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>Выйти</span>
-                                    </a>
-                                </div>
+                            <div class="user-dropdown-menu">
+                                <a href="#" class="dropdown-item logout-btn" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -347,3 +331,4 @@
     <script src="{{ url_for('static', filename='js/visitor-dashboard.js') }}"></script>
 </body>
 </html>
+```The code is modified to remove the second settings button and update the user profile section.
