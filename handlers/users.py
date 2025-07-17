@@ -27,27 +27,51 @@ def get_users():
     if user_role not in ['admin', 'manager', 'rd', 'tu']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
 
+    # Get role filter from query parameters
+    role_filter = request.args.get('role')
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Hierarchical access control
+    # Build query based on permissions and filters
     if user_role == 'admin':
-        cursor.execute('''
-            SELECT id, username, email, role, created_at 
-            FROM users
-        ''')
+        if role_filter:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+                WHERE role = ?
+            ''', (role_filter,))
+        else:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+            ''')
     elif user_role == 'manager':
-        cursor.execute('''
-            SELECT id, username, email, role, created_at 
-            FROM users
-            WHERE role IN ('rd', 'tu', 'store')
-        ''')
+        if role_filter and role_filter in ['rd', 'tu', 'store']:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+                WHERE role = ?
+            ''', (role_filter,))
+        else:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+                WHERE role IN ('rd', 'tu', 'store')
+            ''')
     elif user_role == 'rd':
-        cursor.execute('''
-            SELECT id, username, email, role, created_at 
-            FROM users
-            WHERE role IN ('tu', 'store')
-        ''')
+        if role_filter and role_filter in ['tu', 'store']:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+                WHERE role = ?
+            ''', (role_filter,))
+        else:
+            cursor.execute('''
+                SELECT id, username, email, role, created_at 
+                FROM users
+                WHERE role IN ('tu', 'store')
+            ''')
     elif user_role == 'tu':
         cursor.execute('''
             SELECT id, username, email, role, created_at 

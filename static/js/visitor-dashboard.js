@@ -977,505 +977,7 @@ function addActivityItem(sensor) {
     const activityItem = document.createElement('div');
     activityItem.className = 'activity-item';
 
-    const time = new Date().toLocaleTimeString();
-    const visitors = sensor.visitors || sensor.visitor_count || 0;
-
-    activityItem.innerHTML = `
-        <div class="activity-time">${time}</div>
-        <div class="activity-content">
-            <span class="activity-sensor">${sensor.name}</span>
-            <span class="activity-action">зарегистрировал ${visitors} посетителей</span>
-        </div>
-        <div class="activity-indicator active"></div>
-    `;
-
-    activityStream.insertBefore(activityItem, activityStream.firstChild);
-}
-
-// Настройка обработчиков событий
-function setupEventListeners() {
-    // Кнопки фильтра статуса датчиков
-    const statusFilters = document.querySelectorAll('.status-filter .filter-btn');
-    statusFilters.forEach(btn => {
-        btn.addEventListener('click', function() {
-            statusFilters.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            filterSensorsByStatus(this.dataset.filter);
-        });
-    });
-
-    // Фильтры активности датчиков
-    const activityFilters = document.querySelectorAll('.activity-filter-controls .filter-btn');
-    activityFilters.forEach(btn => {
-        btn.addEventListener('click', function() {
-            activityFilters.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            filterSensorsActivity(this.dataset.filter);
-        });
-    });
-
-    // Кнопки периода графика
-    const chartButtons = document.querySelectorAll('.chart-btn');
-    chartButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            chartButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            loadDashboardData();
-        });
-    });
-
-    // Управление активностью
-    const pauseBtn = document.getElementById('pause-activity');
-    const clearBtn = document.getElementById('clear-activity');
-
-    if (pauseBtn) {
-        pauseBtn.addEventListener('click', toggleActivityPause);
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', clearActivityStream);
-    }
-
-    // Меню пользователя
-    const userMenuBtn = document.getElementById('user-menu-btn');
-    const userDropdown = document.getElementById('user-dropdown');
-
-    if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        });
-
-        document.addEventListener('click', function() {
-            userDropdown.classList.remove('show');
-        });
-    }
-
-    // Поиск по дашборду
-    const searchInput = document.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', handleDashboardSearch);
-    }
-}
-
-// Обработчик поиска по дашборду
-function handleDashboardSearch(event) {
-    const searchTerm = event.target.value.toLowerCase();
-
-    // Фильтруем датчики
-    const sensorItems = document.querySelectorAll('.sensor-item');
-    sensorItems.forEach(item => {
-        const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
-        const sensorLocation = item.querySelector('.sensor-location')?.textContent.toLowerCase() || '';
-
-        if (sensorName.includes(searchTerm) || sensorLocation.includes(searchTerm)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-
-    // Фильтруем активность
-    const activityItems = document.querySelectorAll('.sensor-activity-item');
-    activityItems.forEach(item => {
-        const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
-
-        if (sensorName.includes(searchTerm)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-// Фильтрация активности датчиков
-function filterSensorsActivity(filter) {
-    const activityItems = document.querySelectorAll('.sensor-activity-item');
-
-    activityItems.forEach(item => {
-        const statusElement = item.querySelector('.activity-status');
-        const isOnline = statusElement?.classList.contains('online');
-
-        if (filter === 'all') {
-            item.style.display = 'flex';
-        } else if (filter === 'online' && isOnline) {
-            item.style.display = 'flex';
-        } else if (filter === 'offline' && !isOnline) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-// Фильтрация датчиков по статусу
-function filterSensorsByStatus(status) {
-    const sensors = document.querySelectorAll('.sensor-item');
-
-    sensors.forEach(sensor => {
-        if (status === 'all') {
-            sensor.style.display = 'flex';
-        } else {
-            const sensorStatus = sensor.dataset.status;
-            sensor.style.display = (status === 'online' && sensorStatus === 'active') || 
-                                   (status === 'offline' && sensorStatus !== 'active') ? 'flex' : 'none';
-        }
-    });
-}
-
-// Переключение паузы активности
-function toggleActivityPause() {
-    isActivityPaused = !isActivityPaused;
-    const pauseBtn = document.getElementById('pause-activity');
-
-    if (pauseBtn) {
-        const icon = pauseBtn.querySelector('i');
-        if (isActivityPaused) {
-            icon.className = 'fas fa-play';
-            pauseBtn.title = 'Возобновить';
-        } else {
-            icon.className = 'fas fa-pause';
-            pauseBtn.title = 'Приостановить';
-        }
-    }
-}
-
-// Очистка потока активности
-function clearActivityStream() {
-    const activityStream = document.getElementById('activity-stream');
-    if (activityStream) {
-        activityStream.innerHTML = '<div class="no-activity">Нет активности</div>';
-    }
-}
-
-// Обновление данных
-function refreshDashboardData() {
-    const refreshBtn = document.getElementById('refresh-data');
-    if (refreshBtn) {
-        const icon = refreshBtn.querySelector('i');
-        icon.classList.add('fa-spin');
-
-        setTimeout(() => {
-            icon.classList.remove('fa-spin');
-        }, 1000);
-    }
-
-    loadDashboardData();
-}
-
-// Запуск обновлений в реальном времени
-function startRealTimeUpdates() {
-    // Обновляем данные каждые 30 секунд
-    setInterval(loadDashboardData, 30000);
-
-    // Обновляем активность каждые 5 секунд
-    setInterval(() => {
-        if (!isActivityPaused) {
-            const sensors = JSON.parse(localStorage.getItem('lastSensorsData') || '[]');
-            updateActivityStream(sensors);
-        }
-    }, 5000);
-}
-
-// Отображение состояния загрузки
-function showLoadingState() {
-    const metrics = document.querySelectorAll('.metric-value');
-    metrics.forEach(metric => {
-        if (!metric.classList.contains('loading')) {
-            metric.classList.add('loading');
-        }
-    });
-}
-
-// Скрытие состояния загрузки
-function hideLoadingState() {
-    const metrics = document.querySelectorAll('.metric-value');
-    metrics.forEach(metric => {
-        metric.classList.remove('loading');
-    });
-}
-
-// Функция выхода
-function logout() {
-    if (confirm('Вы уверены, что хотите выйти?')) {
-        fetch('/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = data.redirect || '/login';
-            }
-        })
-        .catch(error => {
-            console.error('Logout error:', error);
-            window.location.href = '/login';
-        });
-    }
-}
-
-// Анимация счетчика
-function animateCounter(element, targetValue) {
-    const currentValue = parseInt(element.textContent) || 0;
-    const target = typeof targetValue === 'string' ? parseInt(targetValue) : targetValue;
-
-    if (isNaN(target)) {
-        element.textContent = targetValue;
-        return;
-    }
-
-    const duration = 1000;
-    const startTime = performance.now();
-    const startValue = currentValue;
-
-    function animate(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        const current = startValue + (target - startValue) * easeOutQuart(progress);
-        element.textContent = Math.round(current);
-
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            element.textContent = targetValue;
-        }
-    }
-
-    requestAnimationFrame(animate);
-}
-
-// Функция плавности анимации
-function easeOutQuart(t) {
-    return 1 - (--t) * t * t * t;
-}
-
-// Обновление подписей периодов
-function updatePeriodLabels() {
-    const periodSelect = document.getElementById('period-select');
-    if (!periodSelect) return;
-
-    const period = periodSelect.value;
-    const periodLabels = {
-        'hour': 'За последний час',
-        'day': 'За последние 24 часа',
-        'week': 'За последнюю неделю',
-        'month': 'За последний месяц'
-    };
-
-    const visitorsLabel = document.getElementById('visitors-period');
-    if (visitorsLabel) {
-        visitorsLabel.textContent = periodLabels[period] || 'За последние 24 часа';
-    }
-}
-
-// Инициализация графиков
-function initializeChart() {
-    const ctx = document.getElementById('visitorsChart');
-    if (!ctx) return;
-
-    visitorsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Посетители',
-                data: [],
-                borderColor: '#4f46e5',
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#4f46e5',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 6,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8'
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8'
-                    }
-                }
-            },
-            elements: {
-                point: {
-                    hoverBackgroundColor: '#4f46e5'
-                }
-            }
-        }
-    });
-}
-
-// Обновление графика
-function updateChart(hourlyData) {
-    if (!visitorsChart || !hourlyData) return;
-
-    const labels = hourlyData.map(item => `${item.hour}:00`);
-    const data = hourlyData.map(item => item.visitors || 0);
-
-    visitorsChart.data.labels = labels;
-    visitorsChart.data.datasets[0].data = data;
-    visitorsChart.update('active');
-}
-
-// Обновление списка датчиков
-function updateSensorsList(sensors) {
-    const sensorsList = document.getElementById('sensors-list');
-    if (!sensorsList) return;
-
-    sensorsList.innerHTML = '';
-
-    if (!sensors || sensors.length === 0) {
-        sensorsList.innerHTML = '<div class="no-data">Нет данных о датчиках</div>';
-        return;
-    }
-
-    sensors.forEach(sensor => {
-        const sensorElement = createSensorElement(sensor);
-        sensorsList.appendChild(sensorElement);
-    });
-
-    // Обновляем активность датчиков
-    updateSensorsActivity(sensors);
-
-    // Сохраняем данные для других функций
-    localStorage.setItem('lastSensorsData', JSON.stringify(sensors));
-}
-
-// Обновление активности датчиков
-function updateSensorsActivity(sensors) {
-    const activityList = document.getElementById('sensors-activity-list');
-    if (!activityList) return;
-
-    activityList.innerHTML = '';
-
-    sensors.forEach(sensor => {
-        const activityItem = createSensorActivityItem(sensor);
-        activityList.appendChild(activityItem);
-    });
-}
-
-// Создание элемента активности датчика
-function createSensorActivityItem(sensor) {
-    const activityDiv = document.createElement('div');
-    activityDiv.className = 'sensor-activity-item';
-
-    const statusClass = sensor.status === 'active' ? 'online' : 'offline';
-    const visitors = sensor.visitors || sensor.visitor_count || sensor.current_visitors || 0;
-    const lastUpdate = sensor.last_update ? new Date(sensor.last_update).toLocaleTimeString() : 'Неизвестно';
-
-    activityDiv.innerHTML = `
-        <div class="activity-sensor-info">
-            <div class="sensor-name">${sensor.name || 'Неизвестный датчик'}</div>
-            <div class="sensor-location">${sensor.location || 'Не указано'}</div>
-        </div>
-        <div class="activity-metrics">
-            <div class="activity-visitors">
-                <span class="visitors-count">${visitors}</span>
-                <span class="visitors-label">посетителей</span>
-            </div>
-            <div class="activity-status ${statusClass}">
-                <i class="fas fa-circle"></i>
-                <span>${sensor.status === 'active' ? 'Онлайн' : 'Офлайн'}</span>
-            </div>
-            <div class="activity-time">
-                <i class="fas fa-clock"></i>
-                <span>${lastUpdate}</span>
-            </div>
-        </div>
-        <div class="activity-chart">
-            <div class="mini-chart" data-sensor-id="${sensor.id}">
-                <canvas width="60" height="30"></canvas>
-            </div>
-        </div>
-    `;
-
-    return activityDiv;
-}
-
-// Создание элемента датчика
-function createSensorElement(sensor) {
-    const sensorDiv = document.createElement('div');
-    sensorDiv.className = 'sensor-item';
-    sensorDiv.setAttribute('data-status', sensor.status || 'offline');
-
-    const statusClass = sensor.status === 'active' ? 'online' : 'offline';
-    const statusText = sensor.status === 'active' ? 'Онлайн' : 'Офлайн';
-    const visitors = sensor.visitors || sensor.visitor_count || sensor.current_visitors || 0;
-
-    sensorDiv.innerHTML = `
-        <div class="sensor-info">
-            <div class="sensor-name">${sensor.name || 'Неизвестный датчик'}</div>
-            <div class="sensor-location">${sensor.location || 'Не указано'}</div>
-        </div>
-        <div class="sensor-metrics">
-            <div class="sensor-visitors">${visitors}</div>
-            <div class="sensor-status ${statusClass}">${statusText}</div>
-        </div>
-        <div class="sensor-indicator ${statusClass}"></div>
-    `;
-
-    return sensorDiv;
-}
-
-// Обновление потока активности
-function updateActivityStream(sensors) {
-    if (isActivityPaused) return;
-
-    const activityStream = document.getElementById('activity-stream');
-    if (!activityStream) return;
-
-    // Создаем активность на основе данных датчиков
-    sensors.forEach(sensor => {
-        if (sensor.status === 'active' && Math.random() > 0.7) {
-            addActivityItem(sensor);
-        }
-    });
-
-    // Ограничиваем количество элементов активности
-    const items = activityStream.querySelectorAll('.activity-item');
-    if (items.length > 10) {
-        for (let i = 10; i < items.length; i++) {
-            items[i].remove();
-        }
-    }
-}
-
-// Добавление элемента активности
-function addActivityItem(sensor) {
-    const activityStream = document.getElementById('activity-stream');
-    if (!activityStream) return;
-
-    const activityItem = document.createElement('div');
-    activityItem.className = 'activity-item';
-
-    const time = new Date().toLocaleTimeString();
+    const time = new Date().toLocaleTimeString() => {
     const visitors = sensor.visitors || sensor.visitor_count || 0;
 
     activityItem.innerHTML = `
@@ -1894,17 +1396,25 @@ function setupActivityFilters() {
 
 // Инициализация дашборда
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Дашборд загружается...');
-
-    // Инициализация основных компонентов
-    initializeCharts();
     loadDashboardData();
-    setupEventListeners();
-    initializeSensorsData();
-    startRealTimeUpdates();
-
-    console.log('Дашборд инициализирован');
+    setupTimeFilters();
+    setupNotifications();
+    setupRoleFilter();
+    setupGlobalClickHandler();
+    setInterval(loadDashboardData, 30000); // Обновление каждые 30 секунд
 });
+
+// Глобальный обработчик для закрытия dropdowns
+function setupGlobalClickHandler() {
+    document.addEventListener('click', function(e) {
+        const dropdowns = document.querySelectorAll('.dropdown');
+        dropdowns.forEach(dropdown => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    });
+}
 
 // Инициализация данных датчиков
 function initializeSensorsData() {
@@ -1996,8 +1506,7 @@ function loadRealtimeActivity() {
     const realtimeActivities = [
         { type: 'visitor', title: 'Новый посетитель', description: 'Датчик-001: обнаружен вход', time: '30 сек назад' },
         { type: 'sensor', title: 'Статус датчика', description: 'Датчик-002: соединение восстановлено', time: '2 мин назад' },
-        { type: 'alert', title: 'Предупреждение', description: 'Датчик-003: нет сигнала', time: '5 мин назад' },
-        { type: 'system', title: 'Системное событие', description: 'Обновление конфигурации', time: '10 мин назад' }
+        { type: 'alert', title: 'Предупреждение', description: 'Датчик-003: нет сигнала', description: 'Обновление конфигурации', time: '10 мин назад' }
     ];
 
     let html = '';
@@ -2199,3 +1708,250 @@ function initializeCharts() {
 
     // Делаем функцию глобальной
     window.logout = logout;
+
+// Настройка фильтра по ролям
+function setupRoleFilter() {
+    const roleDropdown = document.querySelector('.time-filters .dropdown');
+    const roleItems = document.querySelectorAll('.time-filters .dropdown-item');
+
+    if (roleItems) {
+        roleItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedRole = this.textContent.trim();
+
+                // Обновляем текст кнопки
+                const dropdownButton = this.closest('.dropdown').querySelector('.dropdown-btn');
+                if (dropdownButton) {
+                    dropdownButton.textContent = selectedRole;
+                }
+
+                // Загружаем пользователей по выбранной роли
+                loadUsersByRole(selectedRole);
+
+                // Закрываем dropdown
+                this.closest('.dropdown').classList.remove('active');
+            });
+        });
+    }
+}
+
+// Загрузка пользователей по роли
+async function loadUsersByRole(selectedRole) {
+    try {
+        // Убираем существующий dropdown с пользователями
+        const existingUserDropdown = document.querySelector('.user-filter-dropdown');
+        if (existingUserDropdown) {
+            existingUserDropdown.remove();
+        }
+
+        // Определяем роль для API запроса
+        let roleFilter = '';
+        switch(selectedRole) {
+            case 'По менеджеру':
+                roleFilter = 'manager';
+                break;
+            case 'По РД':
+                roleFilter = 'rd';
+                break;
+            case 'По ТУ':
+                roleFilter = 'tu';
+                break;
+            case 'По магазину':
+                roleFilter = 'store';
+                break;
+            case 'Все данные':
+                // Загружаем все данные без фильтрации
+                loadDashboardData();
+                return;
+        }
+
+        if (roleFilter) {
+            const response = await fetch(`/api/users?role=${roleFilter}`);
+            const users = await response.json();
+
+            if (response.ok && users.length > 0) {
+                createUserDropdown(users, selectedRole);
+            } else {
+                showMessage('Пользователи с этой ролью не найдены', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки пользователей:', error);
+        showMessage('Ошибка загрузки пользователей', 'error');
+    }
+}
+
+// Создание dropdown для выбора пользователя
+function createUserDropdown(users, roleTitle) {
+    const timeFilters = document.querySelector('.time-filters');
+
+    // Создаем новый dropdown для пользователей
+    const userDropdown = document.createElement('div');
+    userDropdown.className = 'dropdown user-filter-dropdown';
+    userDropdown.innerHTML = `
+        <button class="dropdown-btn">
+            <span>Выберите пользователя</span>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="dropdown-content">
+            <div class="dropdown-item" data-user="all">Все ${roleTitle.toLowerCase()}</div>
+            ${users.map(user => `
+                <div class="dropdown-item" data-user="${user.id}">
+                    ${user.username} (${user.email})
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Добавляем dropdown после существующего
+    timeFilters.appendChild(userDropdown);
+
+    // Настраиваем функционал нового dropdown
+    setupUserDropdown(userDropdown);
+}
+
+// Настройка dropdown пользователей
+function setupUserDropdown(dropdown) {
+    const btn = dropdown.querySelector('.dropdown-btn');
+    const items = dropdown.querySelectorAll('.dropdown-item');
+
+    // Обработчик клика по кнопке
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
+
+        // Закрываем другие dropdowns
+        document.querySelectorAll('.dropdown').forEach(d => {
+            if (d !== dropdown) {
+                d.classList.remove('active');
+            }
+        });
+    });
+
+    // Обработчики для пунктов меню
+    items.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.dataset.user;
+            const userName = this.textContent.trim();
+
+            // Обновляем текст кнопки
+            btn.querySelector('span').textContent = userName;
+
+            // Загружаем данные для выбранного пользователя
+            if (userId === 'all') {
+                loadDashboardData();
+            } else {
+                loadDashboardDataForUser(userId);
+            }
+
+            // Закрываем dropdown
+            dropdown.classList.remove('active');
+        });
+    });
+}
+
+// Загрузка данных для конкретного пользователя
+async function loadDashboardDataForUser(userId) {
+    try {
+        showLoading(true);
+
+        const response = await fetch(`/api/dashboard-data?user_id=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            updateDashboardMetrics(data);
+            showMessage(`Данные для пользователя загружены`, 'success');
+        } else {
+            showMessage('Ошибка загрузки данных пользователя', 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+        showMessage('Ошибка соединения с сервером', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Функция показа уведомлений
+function showMessage(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        max-width: 400px;
+    `;
+
+    if (type === 'success') {
+        notification.style.backgroundColor = 'var(--belwest-green)';
+    } else if (type === 'error') {
+        notification.style.backgroundColor = '#ef4444';
+    } else if (type === 'warning') {
+        notification.style.backgroundColor = '#f59e0b';
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.style.opacity = '1', 100);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+// Функция показа загрузки
+function showLoading(show) {
+    const existingLoader = document.querySelector('.dashboard-loader');
+
+    if (show && !existingLoader) {
+        const loader = document.createElement('div');
+        loader.className = 'dashboard-loader';
+        loader.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            ">
+                <div style="
+                    background: var(--background-primary);
+                    padding: 30px;
+                    border-radius: 12px;
+                    text-align: center;
+                    border: 1px solid var(--glass-border);
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        border: 3px solid var(--glass-border);
+                        border-top: 3px solid var(--belwest-green);
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 15px;
+                    "></div>
+                    <p style="color: var(--text-primary); margin: 0;">Загрузка данных...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(loader);
+    } else if (!show && existingLoader) {
+        existingLoader.remove();
+    }
+}
