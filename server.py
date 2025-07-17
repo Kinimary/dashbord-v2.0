@@ -295,28 +295,43 @@ def receive_visitor_count():
         if not data:
             data = {
                 'device_id': request.form.get('device_id', 'unknown'),
-                'visitor_count': int(request.form.get('visitor_count', 0)),
-                'status': request.form.get('status', 'active'),
-                'location': request.form.get('location', 'unknown')
+                'count': int(request.form.get('count', 0)),
+                'status': request.form.get('status', 'online'),
+                'timestamp': request.form.get('timestamp', datetime.now().timestamp())
             }
+        
+        device_id = data.get('device_id', 'unknown')
+        visitor_count = data.get('count', 0)
+        status = data.get('status', 'online')
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Обновляем или создаем датчик
-        cursor.execute('''
-            INSERT OR REPLACE INTO sensors (name, location, status, last_update, visitor_count)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (data['device_id'], data['location'], data['status'], 
-              datetime.now(), data['visitor_count']))
-
-        sensor_id = cursor.lastrowid
+        # Проверяем существование датчика
+        cursor.execute('SELECT id FROM sensors WHERE name = ?', (device_id,))
+        sensor = cursor.fetchone()
+        
+        if sensor:
+            sensor_id = sensor['id']
+            # Обновляем существующий датчик
+            cursor.execute('''
+                UPDATE sensors 
+                SET status = ?, last_update = ?, visitor_count = ?
+                WHERE id = ?
+            ''', (status, datetime.now(), visitor_count, sensor_id))
+        else:
+            # Создаем новый датчик
+            cursor.execute('''
+                INSERT INTO sensors (name, location, status, last_update, visitor_count)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (device_id, f'Location for {device_id}', status, datetime.now(), visitor_count))
+            sensor_id = cursor.lastrowid
 
         # Сохраняем данные посетителей
         cursor.execute('''
             INSERT INTO visitor_data (sensor_id, visitor_count, timestamp)
             VALUES (?, ?, ?)
-        ''', (sensor_id, data['visitor_count'], datetime.now()))
+        ''', (sensor_id, visitor_count, datetime.now()))
 
         conn.commit()
         conn.close()
@@ -324,6 +339,7 @@ def receive_visitor_count():
         return jsonify({'status': 'success', 'message': 'Data received'})
 
     except Exception as e:
+        print(f"Error in receive_visitor_count: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 # API для получения данных датчиков
