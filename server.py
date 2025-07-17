@@ -212,8 +212,7 @@ def init_db():
     conn.close()
 
 def login_required(f):
-    from functools import wraps
-    @wraps(f)
+    @functools.wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
@@ -418,6 +417,47 @@ def get_hierarchy_options(hierarchy_type):
     conn.close()
 
     return jsonify([dict(row) for row in options])
+
+# API для получения списка датчиков
+@app.route('/api/sensors')
+@login_required
+def get_sensors():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT 
+            s.id,
+            s.name,
+            s.location,
+            s.status,
+            s.last_update,
+            s.visitor_count,
+            COALESCE(vd.visitor_count, 0) as current_visitors
+        FROM sensors s
+        LEFT JOIN (
+            SELECT sensor_id, visitor_count
+            FROM visitor_data vd1
+            WHERE vd1.timestamp = (
+                SELECT MAX(timestamp) 
+                FROM visitor_data vd2 
+                WHERE vd2.sensor_id = vd1.sensor_id
+            )
+        ) vd ON s.id = vd.sensor_id
+        ORDER BY s.name
+    ''')
+    
+    sensors_list = cursor.fetchall()
+    conn.close()
+    
+    result = []
+    for sensor in sensors_list:
+        sensor_dict = dict(sensor)
+        # Добавляем дополнительные поля для совместимости с фронтендом
+        sensor_dict['visitors'] = sensor_dict.get('current_visitors', 0)
+        result.append(sensor_dict)
+    
+    return jsonify(result)
 
 # API для данных карты
 @app.route('/api/map-data')
