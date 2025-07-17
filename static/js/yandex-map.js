@@ -1,175 +1,249 @@
+
 let map;
 let stores = [];
+let clusterer;
 
+// Инициализация карты
 function initMap() {
-    // Initialize Yandex Map
-    ymaps.ready(function() {
-        map = new ymaps.Map('map', {
-            center: [53.9045, 27.5615], // Minsk coordinates
+    ymaps.ready(function () {
+        map = new ymaps.Map('yandex-map', {
+            center: [53.9045, 27.5615], // Минск
             zoom: 11,
             controls: ['zoomControl', 'fullscreenControl', 'searchControl']
         });
 
-        // Load stores data
+        // Создаем кластеризатор
+        clusterer = new ymaps.Clusterer({
+            preset: 'islands#greenClusterIcons',
+            groupByCoordinates: false,
+            clusterDisableClickZoom: false,
+            clusterHideIconOnBalloonOpen: false,
+            geoObjectHideIconOnBalloonOpen: false
+        });
+
+        map.geoObjects.add(clusterer);
+
+        // Загружаем данные магазинов
         loadStoresData();
+
+        // Обновляем данные каждые 30 секунд
+        setInterval(loadStoresData, 30000);
     });
 }
 
+// Загрузка данных магазинов
 function loadStoresData() {
     fetch('/api/map-data')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log('Loaded stores data:', data);
             stores = data;
             displayStoresOnMap();
-            updateStoresList();
         })
         .catch(error => {
             console.error('Error loading stores data:', error);
-            // Show error message to user
-            const errorDiv = document.getElementById('map-error');
-            if (errorDiv) {
-                errorDiv.innerHTML = 'Ошибка загрузки данных карты. Попробуйте обновить страницу.';
-                errorDiv.style.display = 'block';
-            }
+            showErrorMessage('Ошибка загрузки данных карты. Попробуйте обновить страницу.');
         });
 }
 
+// Отображение магазинов на карте
 function displayStoresOnMap() {
-    if (!map) return;
+    if (!map || !clusterer) {
+        console.log('Map or clusterer not ready');
+        return;
+    }
 
-    // Clear existing placemarks
-    map.geoObjects.removeAll();
+    // Очищаем кластеризатор
+    clusterer.removeAll();
 
-    stores.forEach(store => {
-        if (!store.latitude || !store.longitude) return;
+    if (!stores || stores.length === 0) {
+        console.log('No stores data available');
+        showErrorMessage('Нет данных о магазинах для отображения');
+        return;
+    }
 
-        // Create placemark for each store
-        const placemark = new ymaps.Placemark([store.latitude, store.longitude], {
-            balloonContentHeader: `<strong>${store.name}</strong>`,
-            balloonContentBody: `
-                <div class="store-info">
-                    <p><i class="fas fa-map-marker-alt"></i> ${store.address}</p>
-                    <p><i class="fas fa-users"></i> Посетители сегодня: <strong>${store.visitors_today}</strong></p>
-                    <p><i class="fas fa-chart-line"></i> Конверсия: <strong>${store.conversion}%</strong></p>
-                    <p><i class="fas fa-ruble-sign"></i> Выручка: <strong>${store.revenue.toLocaleString()} руб.</strong></p>
-                </div>
-            `,
-            balloonContentFooter: `<small>Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`
-        }, {
-            preset: 'islands#greenShoppingIcon',
-            iconColor: getStoreColor(store.visitors_today),
-            iconImageSize: [30, 42],
-            iconImageOffset: [-15, -42]
-        });
+    const placemarks = [];
 
-        // Add click event
-        placemark.events.add('click', function() {
-            showStoreDetails(store);
-        });
+    stores.forEach((store, index) => {
+        if (!store.latitude || !store.longitude) {
+            console.log(`Store ${store.name} has no coordinates`);
+            return;
+        }
 
-        map.geoObjects.add(placemark);
-    });
-}
+        const visitorCount = store.visitors_today || 0;
+        const iconColor = getStoreColor(visitorCount);
 
-function getStoreColor(visitorCount) {
-    if (visitorCount > 100) return '#27ae60'; // Green for high traffic
-    if (visitorCount > 50) return '#f39c12';  // Orange for medium traffic
-    return '#e74c3c'; // Red for low traffic
-}
-
-function updateStoresList() {
-    const storesList = document.getElementById('stores-list');
-    if (storesList) {
-        storesList.innerHTML = '';
-        stores.forEach(store => {
-            const storeItem = document.createElement('div');
-            storeItem.className = 'store-item';
-            storeItem.innerHTML = `
-                <div class="store-item-header">
-                    <h4>${store.name}</h4>
-                    <span class="visitor-count">${store.visitors_today}</span>
-                </div>
-                <div class="store-item-body">
-                    <p><i class="fas fa-map-marker-alt"></i> ${store.address}</p>
-                    <div class="store-stats">
-                        <span class="stat">
-                            <i class="fas fa-chart-line"></i>
-                            ${store.conversion}%
-                        </span>
-                        <span class="stat">
-                            <i class="fas fa-ruble-sign"></i>
-                            ${store.revenue.toLocaleString()}
-                        </span>
+        const placemark = new ymaps.Placemark(
+            [parseFloat(store.latitude), parseFloat(store.longitude)],
+            {
+                balloonContentHeader: `<strong>${store.name}</strong>`,
+                balloonContentBody: `
+                    <div style="padding: 10px;">
+                        <p><i class="fas fa-map-marker-alt"></i> ${store.address}</p>
+                        <p><i class="fas fa-users"></i> Посетители сегодня: <strong>${visitorCount}</strong></p>
+                        <p><i class="fas fa-chart-line"></i> Конверсия: <strong>${store.conversion || 0}%</strong></p>
+                        <p><i class="fas fa-ruble-sign"></i> Выручка: <strong>${(store.revenue || 0).toLocaleString()} руб.</strong></p>
+                        <button onclick="showStorePanel(${store.id})" style="margin-top: 10px; padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Подробнее
+                        </button>
                     </div>
-                </div>
-            `;
-            storeItem.addEventListener('click', () => {
-                if (store.latitude && store.longitude) {
-                    map.setCenter([store.latitude, store.longitude], 15);
-                    showStoreDetails(store);
-                }
-            });
-            storesList.appendChild(storeItem);
+                `,
+                balloonContentFooter: `<small>Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`,
+                hintContent: `${store.name} - ${visitorCount} посетителей`
+            },
+            {
+                preset: 'islands#icon',
+                iconColor: iconColor,
+                iconImageSize: [30, 42],
+                iconImageOffset: [-15, -42]
+            }
+        );
+
+        // Добавляем обработчик клика
+        placemark.events.add('click', function() {
+            showStorePanel(store.id);
+        });
+
+        placemarks.push(placemark);
+    });
+
+    // Добавляем все метки в кластеризатор
+    clusterer.add(placemarks);
+
+    console.log(`Added ${placemarks.length} stores to map`);
+}
+
+// Определение цвета маркера в зависимости от количества посетителей
+function getStoreColor(visitorCount) {
+    if (visitorCount > 100) return '#22c55e'; // Зеленый - высокая активность
+    if (visitorCount > 50) return '#f59e0b';  // Оранжевый - средняя активность
+    if (visitorCount > 0) return '#ef4444';   // Красный - низкая активность
+    return '#6b7280'; // Серый - неактивный
+}
+
+// Показать панель информации о магазине
+function showStorePanel(storeId) {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+
+    const panel = document.getElementById('store-info-panel');
+    const title = document.getElementById('store-title');
+    const address = document.getElementById('store-address');
+    const visitors = document.getElementById('store-visitors');
+    const conversion = document.getElementById('store-conversion');
+    const revenue = document.getElementById('store-revenue');
+    const sensors = document.getElementById('store-sensors');
+    const peak = document.getElementById('store-peak');
+
+    if (title) title.textContent = store.name;
+    if (address) address.textContent = store.address;
+    if (visitors) visitors.textContent = store.visitors_today || 0;
+    if (conversion) conversion.textContent = `${store.conversion || 0}%`;
+    if (revenue) revenue.textContent = `₽${(store.revenue || 0).toLocaleString()}`;
+    if (sensors) sensors.textContent = Math.floor(Math.random() * 5) + 1; // Случайное число датчиков
+    if (peak) peak.textContent = '14:30'; // Фиксированное пиковое время
+
+    if (panel) {
+        panel.classList.add('active');
+    }
+
+    // Центрируем карту на магазине
+    if (map && store.latitude && store.longitude) {
+        map.setCenter([parseFloat(store.latitude), parseFloat(store.longitude)], 15);
+    }
+}
+
+// Закрыть панель информации о магазине
+function closeStorePanel() {
+    const panel = document.getElementById('store-info-panel');
+    if (panel) {
+        panel.classList.remove('active');
+    }
+}
+
+// Просмотр детальной статистики магазина
+function viewStoreDetails() {
+    alert('Функция детальной статистики в разработке');
+}
+
+// Показать сообщение об ошибке
+function showErrorMessage(message) {
+    const mapContainer = document.querySelector('.map-container');
+    if (mapContainer) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 1000;
+        `;
+        errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+            <p>${message}</p>
+            <button onclick="this.parentElement.remove(); loadStoresData();" style="margin-top: 10px; padding: 5px 15px; background: white; color: #ef4444; border: none; border-radius: 4px; cursor: pointer;">
+                Повторить попытку
+            </button>
+        `;
+        mapContainer.style.position = 'relative';
+        mapContainer.appendChild(errorDiv);
+    }
+}
+
+// Обработчики фильтров карты
+document.addEventListener('DOMContentLoaded', function() {
+    // Фильтр периода
+    const periodFilter = document.getElementById('period-filter');
+    if (periodFilter) {
+        periodFilter.addEventListener('change', function() {
+            console.log('Period changed to:', this.value);
+            loadStoresData();
         });
     }
-}
 
-function showStoreDetails(store) {
-    const detailsContainer = document.getElementById('store-details');
-    if (detailsContainer) {
-        detailsContainer.innerHTML = `
-            <div class="store-details-header">
-                <h3>${store.name}</h3>
-                <button class="close-btn" onclick="hideStoreDetails()">×</button>
-            </div>
-            <div class="store-details-body">
-                <p><i class="fas fa-map-marker-alt"></i> <strong>Адрес:</strong> ${store.address}</p>
-                <p><i class="fas fa-users"></i> <strong>Посетители сегодня:</strong> ${store.visitors_today}</p>
-                <p><i class="fas fa-chart-line"></i> <strong>Конверсия:</strong> ${store.conversion}%</p>
-                <p><i class="fas fa-ruble-sign"></i> <strong>Выручка:</strong> ${store.revenue.toLocaleString()} руб.</p>
-                <div class="store-actions">
-                    <button onclick="viewStoreReports(${store.id})">Отчеты</button>
-                    <button onclick="viewStoreSensors(${store.id})">Датчики</button>
-                </div>
-            </div>
-        `;
-        detailsContainer.style.display = 'block';
+    // Фильтр метрики
+    const metricFilter = document.getElementById('metric-filter');
+    if (metricFilter) {
+        metricFilter.addEventListener('change', function() {
+            console.log('Metric changed to:', this.value);
+            loadStoresData();
+        });
     }
-}
 
-function hideStoreDetails() {
-    const detailsContainer = document.getElementById('store-details');
-    if (detailsContainer) {
-        detailsContainer.style.display = 'none';
+    // Кнопка обновления
+    const refreshBtn = document.getElementById('refresh-map');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            console.log('Refreshing map data');
+            loadStoresData();
+        });
     }
-}
 
-function viewStoreReports(storeId) {
-    window.location.href = `/reports?store_id=${storeId}`;
-}
+    // Кнопка тепловой карты
+    const heatmapBtn = document.getElementById('toggle-heatmap');
+    if (heatmapBtn) {
+        heatmapBtn.addEventListener('click', function() {
+            console.log('Toggle heatmap');
+            // Функционал тепловой карты можно добавить позже
+            alert('Функция тепловой карты в разработке');
+        });
+    }
 
-function viewStoreSensors(storeId) {
-    window.location.href = `/sensors?store_id=${storeId}`;
-}
-
-// Auto-refresh map data every 5 minutes
-setInterval(loadStoresData, 5 * 60 * 1000);
-
-// Initialize map when page loads
-document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация карты
     if (typeof ymaps !== 'undefined') {
         initMap();
     } else {
         console.error('Yandex Maps API not loaded');
-        const errorDiv = document.getElementById('map-error');
-        if (errorDiv) {
-            errorDiv.innerHTML = 'Ошибка загрузки Yandex Maps API. Проверьте подключение к интернету.';
-            errorDiv.style.display = 'block';
-        }
+        showErrorMessage('Ошибка загрузки Yandex Maps API. Проверьте подключение к интернету.');
     }
 });

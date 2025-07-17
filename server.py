@@ -256,33 +256,39 @@ def logout():
     return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/users')
-@login_required
-def users_page():
+def users_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('users.html')
 
 @app.route('/sensors')
-@login_required
-def sensors_page():
+def sensors_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('sensors.html')
 
 @app.route('/reports')
-@login_required
-def reports_page():
+def reports_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('reports.html')
 
 @app.route('/settings')
-@login_required
-def settings_page():
+def settings_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('settings.html')
 
 @app.route('/profile')
-@login_required
-def profile_page():
+def profile_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('profile.html')
 
 @app.route('/map')
-@login_required
-def map_page():
+def map_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('map.html')
 
 # API для данных от Arduino
@@ -418,32 +424,42 @@ def get_hierarchy_options(hierarchy_type):
 
 # API для данных карты
 @app.route('/api/map-data')
-@login_required
-def get_map_data():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+def get_map_data_route():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    cursor.execute('''
-        SELECT 
-            s.id,
-            s.name,
-            s.address,
-            s.latitude,
-            s.longitude,
-            COALESCE(COUNT(vd.id), 0) as visitors_today,
-            ROUND(RANDOM() * 15 + 5, 1) as conversion,
-            ROUND(RANDOM() * 50000 + 20000) as revenue
-        FROM stores s
-        LEFT JOIN store_sensors ss ON s.id = ss.store_id
-        LEFT JOIN visitor_data vd ON ss.sensor_id = vd.sensor_id 
-            AND DATE(vd.timestamp) = DATE('now')
-        GROUP BY s.id, s.name, s.address, s.latitude, s.longitude
-    ''')
+        cursor.execute('''
+            SELECT 
+                s.id,
+                s.name,
+                s.address,
+                s.latitude,
+                s.longitude
+            FROM stores s
+            ORDER BY s.name
+        ''')
 
-    stores = cursor.fetchall()
-    conn.close()
+        stores = cursor.fetchall()
+        conn.close()
 
-    return jsonify([dict(store) for store in stores])
+        # Добавляем случайные данные для демонстрации
+        import random
+        result = []
+        for store in stores:
+            store_data = dict(store)
+            store_data['visitors_today'] = random.randint(20, 150)
+            store_data['conversion'] = round(random.uniform(5.0, 20.0), 1)
+            store_data['revenue'] = random.randint(15000, 75000)
+            result.append(store_data)
+
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in get_map_data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/sensor-assignment', methods=['DELETE'])
 def unassign_sensor():
