@@ -136,22 +136,82 @@ async function loadDashboardData() {
 
 // Обновление метрик
 function updateMetrics(data) {
-    const metrics = {
-        'total-visitors': data.total_visitors || 0,
-        'active-sensors': data.active_sensors || 0,
-        'peak-time': data.peak_weekday || '14:30',
-        'visitors-per-minute': calculateVisitorsPerMinute(data.total_visitors, data.hourly_data),
-        'active-stores': 12, // Статическое значение
-        'system-health': '99.2%' // Статическое значение
+    const period = document.getElementById('period-select')?.value || 'day';
+    const periodText = {
+        'hour': 'За последний час',
+        'day': 'За последние 24 часа', 
+        'week': 'За неделю',
+        'month': 'За месяц'
     };
 
-    Object.entries(metrics).forEach(([id, value]) => {
+    const metrics = {
+        'total-visitors': {
+            value: data.total_visitors || 0,
+            trend: calculateTrend(data.total_visitors, data.previous_visitors)
+        },
+        'active-sensors': {
+            value: data.active_sensors || 0,
+            trend: 'neutral'
+        },
+        'peak-time': {
+            value: data.peak_weekday || '14:30',
+            trend: 'neutral'
+        },
+        'visitors-per-minute': {
+            value: calculateVisitorsPerMinute(data.total_visitors, data.hourly_data),
+            trend: 'up'
+        },
+        'active-stores': {
+            value: data.active_stores || 12,
+            trend: 'up'
+        },
+        'system-health': {
+            value: '99.2%',
+            trend: 'up'
+        }
+    };
+
+    // Обновляем период
+    const periodElement = document.getElementById('visitors-period');
+    if (periodElement) {
+        periodElement.textContent = periodText[period];
+    }
+
+    Object.entries(metrics).forEach(([id, metricData]) => {
         const element = document.getElementById(id);
+        const trendElement = document.getElementById(id.replace('-', '-') + '-trend');
+        
         if (element) {
-            element.textContent = value;
-            animateCounter(element, value);
+            // Удаляем placeholder
+            const placeholder = element.querySelector('.loading-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            element.classList.add('updating');
+            setTimeout(() => {
+                element.textContent = metricData.value;
+                element.classList.remove('updating');
+                animateCounter(element, metricData.value);
+            }, 300);
+        }
+
+        // Обновляем тренд если есть элемент
+        if (trendElement) {
+            trendElement.className = `metric-trend ${metricData.trend}`;
         }
     });
+}
+
+// Расчет тренда
+function calculateTrend(current, previous) {
+    if (!previous || previous === 0) return 'neutral';
+    
+    const change = ((current - previous) / previous) * 100;
+    
+    if (change > 5) return 'up';
+    if (change < -5) return 'down';
+    return 'neutral';
 }
 
 // Анимация счетчика
@@ -269,6 +329,63 @@ function updateSensorsList(sensors) {
         const sensorElement = createSensorElement(sensor);
         sensorsList.appendChild(sensorElement);
     });
+
+    // Обновляем активность датчиков
+    updateSensorsActivity(sensors);
+    
+    // Сохраняем данные для других функций
+    localStorage.setItem('lastSensorsData', JSON.stringify(sensors));
+}
+
+// Обновление активности датчиков
+function updateSensorsActivity(sensors) {
+    const activityList = document.getElementById('sensors-activity-list');
+    if (!activityList) return;
+
+    activityList.innerHTML = '';
+
+    sensors.forEach(sensor => {
+        const activityItem = createSensorActivityItem(sensor);
+        activityList.appendChild(activityItem);
+    });
+}
+
+// Создание элемента активности датчика
+function createSensorActivityItem(sensor) {
+    const activityDiv = document.createElement('div');
+    activityDiv.className = 'sensor-activity-item';
+    
+    const statusClass = sensor.status === 'active' ? 'online' : 'offline';
+    const visitors = sensor.visitors || sensor.visitor_count || sensor.current_visitors || 0;
+    const lastUpdate = sensor.last_update ? new Date(sensor.last_update).toLocaleTimeString() : 'Неизвестно';
+
+    activityDiv.innerHTML = `
+        <div class="activity-sensor-info">
+            <div class="sensor-name">${sensor.name || 'Неизвестный датчик'}</div>
+            <div class="sensor-location">${sensor.location || 'Не указано'}</div>
+        </div>
+        <div class="activity-metrics">
+            <div class="activity-visitors">
+                <span class="visitors-count">${visitors}</span>
+                <span class="visitors-label">посетителей</span>
+            </div>
+            <div class="activity-status ${statusClass}">
+                <i class="fas fa-circle"></i>
+                <span>${sensor.status === 'active' ? 'Онлайн' : 'Офлайн'}</span>
+            </div>
+            <div class="activity-time">
+                <i class="fas fa-clock"></i>
+                <span>${lastUpdate}</span>
+            </div>
+        </div>
+        <div class="activity-chart">
+            <div class="mini-chart" data-sensor-id="${sensor.id}">
+                <canvas width="60" height="30"></canvas>
+            </div>
+        </div>
+    `;
+
+    return activityDiv;
 }
 
 // Создание элемента датчика
@@ -354,6 +471,16 @@ function setupEventListeners() {
         });
     });
 
+    // Фильтры активности датчиков
+    const activityFilters = document.querySelectorAll('.activity-filter-controls .filter-btn');
+    activityFilters.forEach(btn => {
+        btn.addEventListener('click', function() {
+            activityFilters.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filterSensorsActivity(this.dataset.filter);
+        });
+    });
+
     // Кнопки периода графика
     const chartButtons = document.querySelectorAll('.chart-btn');
     chartButtons.forEach(btn => {
@@ -390,6 +517,62 @@ function setupEventListeners() {
             userDropdown.classList.remove('show');
         });
     }
+
+    // Поиск по дашборду
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', handleDashboardSearch);
+    }
+}
+
+// Обработчик поиска по дашборду
+function handleDashboardSearch(event) {
+    const searchTerm = event.target.value.toLowerCase();
+    
+    // Фильтруем датчики
+    const sensorItems = document.querySelectorAll('.sensor-item');
+    sensorItems.forEach(item => {
+        const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
+        const sensorLocation = item.querySelector('.sensor-location')?.textContent.toLowerCase() || '';
+        
+        if (sensorName.includes(searchTerm) || sensorLocation.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Фильтруем активность
+    const activityItems = document.querySelectorAll('.sensor-activity-item');
+    activityItems.forEach(item => {
+        const sensorName = item.querySelector('.sensor-name')?.textContent.toLowerCase() || '';
+        
+        if (sensorName.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Фильтрация активности датчиков
+function filterSensorsActivity(filter) {
+    const activityItems = document.querySelectorAll('.sensor-activity-item');
+    
+    activityItems.forEach(item => {
+        const statusElement = item.querySelector('.activity-status');
+        const isOnline = statusElement?.classList.contains('online');
+        
+        if (filter === 'all') {
+            item.style.display = 'flex';
+        } else if (filter === 'online' && isOnline) {
+            item.style.display = 'flex';
+        } else if (filter === 'offline' && !isOnline) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 }
 
 // Фильтрация датчиков по статусу

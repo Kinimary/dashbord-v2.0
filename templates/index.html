@@ -74,21 +74,23 @@
                             <option value="rd">По РД</option>
                             <option value="tu">По ТУ</option>
                             <option value="store">По магазину</option>
+                            <option value="user">По пользователю</option>
                         </select>
                         <select id="entity-selector" style="display: none;">
                             <option value="">Выберите...</option>
                         </select>
                         <select id="period-select">
-                            <option value="day">День</option>
                             <option value="hour">Час</option>
+                            <option value="day">День</option>
                             <option value="week">Неделя</option>
+                            <option value="month">Месяц</option>
                         </select>
-                        <button class="refresh-btn" id="refresh-data">
+                        <button class="refresh-btn" id="refresh-data" title="Обновить данные">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
                     <div class="search-container">
-                        <input type="text" placeholder="Поиск по дашборду..." class="search-input">
+                        <input type="text" placeholder="Поиск датчиков, локаций..." class="search-input">
                         <i class="fas fa-search search-icon"></i>
                     </div>
                 </div>
@@ -116,13 +118,18 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="metric-content">
-                        <div class="metric-value" id="total-visitors">1,247</div>
+                        <div class="metric-value" id="total-visitors">
+                            <span class="loading-placeholder">Загрузка...</span>
+                        </div>
                         <div class="metric-label">Общее количество посетителей</div>
-                        <div class="metric-sublabel">За последние 24 часа</div>
+                        <div class="metric-sublabel" id="visitors-period">За последние 24 часа</div>
                     </div>
-                    <div class="metric-trend up">
+                    <div class="metric-trend" id="visitors-trend">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+18.4%</span>
+                        <span>+0%</span>
+                    </div>
+                    <div class="metric-indicator">
+                        <div class="pulse-dot"></div>
                     </div>
                 </div>
 
