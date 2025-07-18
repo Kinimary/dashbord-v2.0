@@ -2545,6 +2545,7 @@ align-items: center;
     margin-top: 32px;
     padding-top: 24px;
     border-top: 2px solid var(--glass-border);
+    flex-wrap: wrap;
 }
 
 .settings-actions .btn-primary,
@@ -2555,10 +2556,15 @@ align-items: center;
     font-size: 16px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     text-transform: none;
     letter-spacing: 0;
     transition: var(--transition);
+    min-width: 200px;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: initial;
 }
 
 .settings-actions .btn-primary {
@@ -2678,12 +2684,17 @@ align-items: center;
 
     .settings-actions {
         flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
     }
 
     .settings-actions .btn-primary,
     .settings-actions .btn-secondary {
         width: 100%;
         justify-content: center;
+        min-width: unset;
+        padding: 18px 24px;
+        font-size: 15px;
     }
 }
 
