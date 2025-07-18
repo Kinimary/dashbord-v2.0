@@ -2363,9 +2363,9 @@ align-items: center;
 /* Стили для страницы настроек */
 .settings-container {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 32px;
-    height: calc(100vh - 140px);
+    grid-template-columns: 240px 1fr;
+    gap: 24px;
+    height: calc(100vh - 120px);
     max-width: 100%;
 }
 
@@ -2373,8 +2373,8 @@ align-items: center;
     background: var(--glass-bg);
     backdrop-filter: var(--blur);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 24px 0;
+    border-radius: 16px;
+    padding: 16px 0;
     height: fit-content;
     box-shadow: 0 8px 32px var(--shadow-light);
     position: sticky;
@@ -2384,15 +2384,17 @@ align-items: center;
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 24px;
+    gap: 12px;
+    padding: 12px 20px;
     color: var(--text-secondary);
     cursor: pointer;
     transition: var(--transition);
     border-radius: 0;
     position: relative;
     font-weight: 500;
-    font-size: 15px;
+    font-size: 14px;
+    margin: 0 8px;
+    border-radius: 8px;
 }
 
 .nav-item::before {
@@ -2401,22 +2403,23 @@ align-items: center;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
+    width: 3px;
     background: var(--belwest-green);
     transform: scaleY(0);
     transition: var(--transition);
+    border-radius: 0 3px 3px 0;
 }
 
 .nav-item:hover {
     background: rgba(46, 139, 87, 0.1);
     color: var(--text-primary);
-    transform: translateX(8px);
+    transform: translateX(4px);
 }
 
 .nav-item.active {
     background: rgba(46, 139, 87, 0.15);
     color: var(--belwest-green);
-    transform: translateX(8px);
+    transform: translateX(4px);
 }
 
 .nav-item.active::before {
@@ -2424,20 +2427,20 @@ align-items: center;
 }
 
 .nav-item i {
-    width: 20px;
+    width: 18px;
     text-align: center;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .settings-content {
     background: var(--glass-bg);
     backdrop-filter: var(--blur);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 32px;
+    border-radius: 16px;
+    padding: 24px;
     box-shadow: 0 8px 32px var(--shadow-light);
     overflow-y: auto;
-    max-height: calc(100vh - 180px);
+    max-height: calc(100vh - 160px);
 }
 
 .settings-section {
@@ -2449,7 +2452,17 @@ align-items: center;
 }
 
 .settings-card {
-    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(46, 139, 87, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: var(--transition);
+}
+
+.settings-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(46, 139, 87, 0.3);
 }
 
 .settings-card:last-child {
@@ -2457,36 +2470,36 @@ align-items: center;
 }
 
 .settings-card .card-header {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid var(--glass-border);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .settings-card .card-header h3 {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .settings-card .card-header h3 i {
     color: var(--belwest-green);
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .setting-toggle {
     position: relative;
     display: inline-flex;
     align-items: center;
-    width: 60px;
-    height: 32px;
+    width: 48px;
+    height: 24px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
     cursor: pointer;
     transition: var(--transition);
 }
@@ -2502,126 +2515,117 @@ align-items: center;
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     background: var(--text-secondary);
     border-radius: 50%;
     transition: var(--transition);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .setting-toggle input:checked + .toggle-slider {
-    transform: translateX(28px);
+    transform: translateX(24px);
     background: var(--belwest-green);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(46, 139, 87, 0.4);
 }
 
-.setting-toggle input:checked + .toggle-slider::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 50%;
-    background: var(--belwest-green);
-    z-index: -1;
-    box-shadow: 0 0 20px rgba(46, 139, 87, 0.6);
+.setting-toggle input:checked ~ .setting-toggle {
+    background: rgba(46, 139, 87, 0.2);
+    border-color: var(--belwest-green);
 }
 
 .setting-toggle:hover {
     border-color: var(--belwest-green);
-    box-shadow: 0 0 20px rgba(46, 139, 87, 0.3);
-}
-
-.setting-toggle input:checked {
-    background: linear-gradient(135deg, var(--belwest-green) 0%, var(--belwest-green-light) 100%);
-    border-color: var(--belwest-green);
+    box-shadow: 0 0 12px rgba(46, 139, 87, 0.2);
 }
 
 .settings-actions {
     display: flex;
-    gap: 16px;
-    justify-content: flex-end;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 2px solid var(--glass-border);
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-border);
     flex-wrap: wrap;
 }
 
 .settings-actions .btn-primary,
 .settings-actions .btn-secondary {
-    padding: 16px 32px;
-    border-radius: 12px;
+    padding: 12px 24px;
+    border-radius: 10px;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     text-transform: none;
     letter-spacing: 0;
     transition: var(--transition);
-    min-width: 200px;
+    min-width: 160px;
     white-space: nowrap;
-    overflow: visible;
-    text-overflow: initial;
 }
 
 .settings-actions .btn-primary {
     background: linear-gradient(135deg, var(--belwest-green) 0%, var(--belwest-green-light) 100%);
     color: white;
     border: none;
-    box-shadow: 0 4px 20px rgba(46, 139, 87, 0.3);
+    box-shadow: 0 4px 16px rgba(46, 139, 87, 0.3);
 }
 
 .settings-actions .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(46, 139, 87, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(46, 139, 87, 0.4);
 }
 
 .settings-actions .btn-secondary {
     background: transparent;
     color: var(--text-primary);
-    border: 2px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
 }
 
 .settings-actions .btn-secondary:hover {
     border-color: var(--belwest-green);
     color: var(--belwest-green);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(46, 139, 87, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(46, 139, 87, 0.2);
 }
 
 /* Улучшенные формы в настройках */
+.settings-card .form-group {
+    margin-bottom: 16px;
+}
+
 .settings-card .form-group label {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-primary);
-    margin-bottom: 12px;
-    font-size: 15px;
+    margin-bottom: 8px;
+    font-size: 14px;
 }
 
 .settings-card .form-group label i {
     color: var(--belwest-green);
-    width: 18px;
+    width: 16px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .settings-card .form-group input[type="text"],
 .settings-card .form-group select {
     width: 100%;
-    padding: 14px 18px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid var(--glass-border);
-    border-radius: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
     color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 400;
     transition: var(--transition);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .settings-card .form-group input[type="text"]:focus,
@@ -2629,34 +2633,42 @@ align-items: center;
     outline: none;
     border-color: var(--belwest-green);
     box-shadow: 
-        inset 0 2px 8px rgba(0, 0, 0, 0.1),
-        0 0 20px rgba(46, 139, 87, 0.3);
-    transform: translateY(-2px);
+        inset 0 1px 4px rgba(0, 0, 0, 0.1),
+        0 0 12px rgba(46, 139, 87, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .settings-card .form-group input[type="text"]::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
 /* Адаптивность для настроек */
 @media (max-width: 1200px) {
     .settings-container {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 20px;
     }
 
     .settings-navigation {
         display: flex;
         overflow-x: auto;
-        padding: 16px 0;
+        padding: 12px 8px;
         gap: 8px;
     }
 
     .nav-item {
         flex-shrink: 0;
-        padding: 12px 20px;
+        padding: 10px 16px;
         white-space: nowrap;
-        border-radius: 12px;
+        border-radius: 8px;
+        margin: 0;
     }
 
     .nav-item::before {
@@ -2671,21 +2683,28 @@ align-items: center;
 
 @media (max-width: 768px) {
     .settings-content {
-        padding: 20px;
+        padding: 16px;
+    }
+
+    .settings-card {
+        padding: 16px;
+        margin-bottom: 16px;
     }
 
     .settings-card .card-header h3 {
-        font-size: 20px;
+        font-size: 16px;
     }
 
     .form-row {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .settings-actions {
         flex-direction: column;
         justify-content: center;
         align-items: stretch;
+        gap: 8px;
     }
 
     .settings-actions .btn-primary,
@@ -2693,8 +2712,8 @@ align-items: center;
         width: 100%;
         justify-content: center;
         min-width: unset;
-        padding: 18px 24px;
-        font-size: 15px;
+        padding: 14px 20px;
+        font-size: 14px;
     }
 }
 
