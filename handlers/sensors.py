@@ -448,12 +448,12 @@ def assign_sensor_to_store():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Проверяем существование датчика и магазина
         cursor.execute('SELECT id FROM sensors WHERE id = ?', (sensor_id,))
         if not cursor.fetchone():
             return jsonify({'success': False, 'error': 'Датчик не найден'})
-            
+
         cursor.execute('SELECT id FROM stores WHERE id = ?', (store_id,))
         if not cursor.fetchone():
             return jsonify({'success': False, 'error': 'Магазин не найден'})
@@ -463,7 +463,7 @@ def assign_sensor_to_store():
             INSERT OR REPLACE INTO store_sensors (store_id, sensor_id, created_at)
             VALUES (?, ?, ?)
         ''', (store_id, sensor_id, datetime.now().isoformat()))
-        
+
         # Также создаем запись в hourly_statistics для совместимости
         cursor.execute('''
             INSERT OR IGNORE INTO hourly_statistics (store_id, sensor_id, hour, day_of_week, visitor_count, date)

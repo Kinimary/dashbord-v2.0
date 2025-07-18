@@ -195,7 +195,7 @@ function assignSensorToStore() {
 
     console.log('Привязка датчика:', { sensor_id: sensorId, store_id: storeId });
 
-    fetch('/api/sensor-assignment', {
+    fetch('/api/sensor-store-assignment', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

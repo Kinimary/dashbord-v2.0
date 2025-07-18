@@ -9,12 +9,48 @@
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
         .map-container {
-            height: 80vh;
+            height: 60vh;
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .map-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            border-radius: 0;
+            margin: 0;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            padding: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 16px var(--shadow-light);
+            z-index: 1000;
+        }
+
+        .fullscreen-btn:hover {
+            border-color: var(--belwest-green);
+            color: var(--belwest-green-light);
+            transform: scale(1.1);
+            box-shadow: 0 8px 32px var(--belwest-green-glow);
         }
 
         .map-controls {
@@ -230,10 +266,18 @@
                     <i class="fas fa-fire"></i>
                     Тепловая карта
                 </button>
+
+                <button class="chart-btn" id="exit-fullscreen" style="display: none;">
+                    <i class="fas fa-compress"></i>
+                    Выйти из полноэкранного режима
+                </button>
             </div>
 
             <!-- Карта -->
-            <div class="map-container">
+            <div class="map-container" id="map-container">
+                <button class="fullscreen-btn" id="fullscreen-btn" title="Полноэкранный режим">
+                    <i class="fas fa-expand"></i>
+                </button>
                 <div id="yandex-map" style="width: 100%; height: 100%;"></div>
             </div>
 
