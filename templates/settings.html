@@ -16,31 +16,37 @@
                 <span>BELWEST</span>
             </div>
             <ul class="menu">
-                <li>
+                <li data-page="/">
                     <a href="/">
                         <i class="fas fa-th-large"></i>
-                        <span>Панель управления</span>
+                        <span>Дашборд</span>
                     </a>
                 </li>
-                <li>
+                <li data-page="/users">
                     <a href="/users">
                         <i class="fas fa-users"></i>
                         <span>Пользователи</span>
                     </a>
                 </li>
-                <li>
+                <li data-page="/sensors">
                     <a href="/sensors">
                         <i class="fas fa-robot"></i>
                         <span>Датчики</span>
                     </a>
                 </li>
-                <li>
+                <li data-page="/map">
+                    <a href="/map">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Карта магазинов</span>
+                    </a>
+                </li>
+                <li data-page="/reports">
                     <a href="/reports">
                         <i class="fas fa-file-alt"></i>
                         <span>Отчеты</span>
                     </a>
                 </li>
-                <li class="active">
+                <li data-page="/settings" class="active">
                     <a href="/settings">
                         <i class="fas fa-cog"></i>
                         <span>Настройки</span>
@@ -373,5 +379,22 @@
     <script src="/static/js/page-transitions.js"></script>
     <script src="/static/js/sidebar.js"></script>
     <script src="/static/js/settings.js"></script>
+    
+    <script>
+        // Установка активного пункта меню
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu li');
+            
+            menuItems.forEach(item => {
+                const page = item.getAttribute('data-page');
+                if (page === currentPath) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

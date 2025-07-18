@@ -346,20 +346,26 @@ body::before {
 }
 
 .menu li.active a {
-    background: var(--accent-green);
+    background: linear-gradient(135deg, var(--belwest-green) 0%, var(--belwest-green-light) 100%);
     color: white;
-    box-shadow: 0 4px 20px rgba(75, 222, 128, 0.4);
+    box-shadow: 0 8px 32px var(--belwest-green-glow);
+    border-color: var(--belwest-green);
+    transform: translateY(-2px) scale(1.02);
 }
 
-.menu li a:hover,
-.menu li.active a {
+.menu li a:hover {
     color: #FFFFFF;
-    background: transparent;
+    background: rgba(46, 139, 87, 0.2);
     border-color: var(--belwest-green);
     box-shadow:
         0 8px 32px var(--belwest-green-glow),
         inset 0 1px 4px rgba(255, 255, 255, 0.1);
     transform: translateY(-2px) scale(1.02);
+}
+
+.menu li a:hover::before {
+    left: 0;
+    right: 0;
 }
 
 .menu a i {

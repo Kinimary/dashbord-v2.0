@@ -1,4 +1,3 @@
-
 // Universal sidebar and theme functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize sidebar and theme functionality if elements exist
@@ -176,7 +175,7 @@ function initializeSettings() {
     settingsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         const isActive = settingsDropdown.classList.contains('active');
-        
+
         if (isActive) {
             settingsDropdown.classList.remove('active');
         } else {
@@ -448,7 +447,6 @@ function stopAutoRefresh() {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
     }
-}
 }
 
 // Global logout function
