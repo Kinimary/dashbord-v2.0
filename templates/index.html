@@ -446,12 +446,42 @@
             const entitySelector = document.getElementById('entity-selector');
 
             if (hierarchyType) {
-                entitySelector.style.display = 'block';
+                entitySelector.style.display = 'inline-block';
                 loadHierarchyOptions(hierarchyType);
             } else {
                 entitySelector.style.display = 'none';
                 refreshData();
             }
+        }
+
+        // Глобальная функция для загрузки опций иерархии
+        function loadHierarchyOptions(hierarchyType) {
+            fetch(`/api/hierarchy/${hierarchyType}`)
+                .then(response => response.json())
+                .then(data => {
+                    const entitySelector = document.getElementById('entity-selector');
+                    entitySelector.innerHTML = '<option value="">Выберите пользователя...</option>';
+
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        entitySelector.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading hierarchy options:', error);
+                    // При ошибке показываем демо данные
+                    const entitySelector = document.getElementById('entity-selector');
+                    entitySelector.innerHTML = `
+                        <option value="">Выберите пользователя...</option>
+                        <option value="1">Менеджер 1</option>
+                        <option value="2">Менеджер 2</option>
+                        <option value="3">РД Минск</option>
+                        <option value="4">ТУ Центр</option>
+                        <option value="5">Магазин ТЦ Галерея</option>
+                    `;
+                });
         }
 
         // Функция для загрузки опций иерархии
