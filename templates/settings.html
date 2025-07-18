@@ -11,49 +11,7 @@
 <body>
     <div class="container">
         <!-- Боковая панель -->
-        <div class="sidebar" id="sidebar">
-            <div class="logo">
-                <span>BELWEST</span>
-            </div>
-            <ul class="menu">
-                <li data-page="/">
-                    <a href="/">
-                        <i class="fas fa-th-large"></i>
-                        <span>Дашборд</span>
-                    </a>
-                </li>
-                <li data-page="/users">
-                    <a href="/users">
-                        <i class="fas fa-users"></i>
-                        <span>Пользователи</span>
-                    </a>
-                </li>
-                <li data-page="/sensors">
-                    <a href="/sensors">
-                        <i class="fas fa-robot"></i>
-                        <span>Датчики</span>
-                    </a>
-                </li>
-                <li data-page="/map">
-                    <a href="/map">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Карта магазинов</span>
-                    </a>
-                </li>
-                <li data-page="/reports">
-                    <a href="/reports">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Отчеты</span>
-                    </a>
-                </li>
-                <li data-page="/settings" class="active">
-                    <a href="/settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Настройки</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        {% include 'sidebar.html' %}
 
         <!-- Основное содержимое -->
         <div class="main-content">

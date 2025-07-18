@@ -10,48 +10,7 @@
 <body>
     <div class="dashboard-container">
         <!-- Боковая панель -->
-        <div class="sidebar" id="sidebar">
-            <div class="logo">
-                <div class="logo-icon">
-                    <div class="bw-logo">BW</div>
-                </div>
-                <span class="logo-text">BELWEST</span>
-                <div class="logo-subtitle">ANALYTICS</div>
-            </div>
-            <ul class="menu">
-                <li>
-                    <a href="/">
-                        <i class="fas fa-th-large"></i>
-                        <span>Дашборд</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/users">
-                        <i class="fas fa-users"></i>
-                        <span>Пользователи</span>
-                    </a>
-                </li>
-                <li class="active">
-                    <a href="/sensors">
-                        <i class="fas fa-robot"></i>
-                        <span>Датчики</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/map">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Карта магазинов</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/reports">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Отчеты</span>
-                    </a>
-                </li>
-                
-            </ul>
-        </div>
+        {% include 'sidebar.html' %}
 
         <!-- Основное содержимое -->
         <div class="main-content">

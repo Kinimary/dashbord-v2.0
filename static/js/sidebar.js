@@ -11,14 +11,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeSidebar() {
     // Set active menu item based on current page
     const currentPath = window.location.pathname;
-    const menuItems = document.querySelectorAll('.menu li a');
+    const menuItems = document.querySelectorAll('.menu li');
     
     menuItems.forEach(item => {
-        const link = item.getAttribute('href');
-        if (link === currentPath || (currentPath === '/' && link === '/')) {
-            item.parentElement.classList.add('active');
+        const page = item.getAttribute('data-page');
+        const link = item.querySelector('a')?.getAttribute('href');
+        
+        if (page === currentPath || link === currentPath || (currentPath === '/' && (page === '/' || link === '/'))) {
+            item.classList.add('active');
         } else {
-            item.parentElement.classList.remove('active');
+            item.classList.remove('active');
         }
     });
 }
