@@ -211,24 +211,14 @@
                 </div>
                 <div class="top-bar-right">
                     <div class="user-profile">
-                        <div class="user-info" id="user-menu-btn">
+                        <div class="user-info" id="user-menu-btn" onclick="toggleUserMenu()">
                             <div class="user-avatar">А</div>
                             <span>Админ</span>
                             <div class="user-dropdown" id="user-dropdown">
-                                <div class="user-dropdown-header">
-                                    <div class="user-details">
-                                        <div class="user-name">Администратор</div>
-                                        <div class="user-role">Полный доступ</div>
-                                    </div>
-                                </div>
                                 <div class="user-dropdown-menu">
-                                    <a href="/profile" class="dropdown-item">
+                                    <a href="/profile" class="dropdown-item" onclick="navigateToPage('/profile')">
                                         <i class="fas fa-user"></i>
                                         <span>Профиль</span>
-                                    </a>
-                                    <a href="/settings" class="dropdown-item">
-                                        <i class="fas fa-cog"></i>
-                                        <span>Настройки</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a href="#" class="dropdown-item logout-btn" onclick="logout()">
@@ -341,6 +331,58 @@
             </button>
         </div>
     </div>
+
+    <script>
+        // Функция для переключения меню пользователя
+        function toggleUserMenu() {
+            const userInfo = document.getElementById('user-menu-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            userInfo.classList.toggle('active');
+            dropdown.classList.toggle('show');
+        }
+
+        // Функция для навигации между страницами
+        function navigateToPage(url) {
+            if (window.showPageTransition) {
+                window.showPageTransition();
+            }
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Функция выхода из системы
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            });
+        }
+
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('user-menu-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            if (userMenu && !userMenu.contains(event.target)) {
+                userMenu.classList.remove('active');
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
 
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/visitor-dashboard.js') }}"></script>
