@@ -279,22 +279,20 @@ def login_required(f):
     return decorated_function
 
 @app.route('/')
-# @login_required  # Временно отключено для отладки
+@login_required
 def index():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        data = request.get_json() if request.is_json else request.form
+        username = data.get('username')
+        password = data.get('password')
 
         if not username or not password:
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'Пожалуйста, заполните все поля'})
             return render_template('login.html', error='Пожалуйста, заполните все поля')
 
         conn = get_db_connection()
@@ -310,9 +308,14 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
+            if request.is_json:
+                return jsonify({'success': True, 'redirect': '/'})
             return redirect(url_for('index'))
         else:
-            return render_template('login.html', error='Неверный логин или пароль')
+            error_msg = 'Неверный логин или пароль'
+            if request.is_json:
+                return jsonify({'success': False, 'error': error_msg})
+            return render_template('login.html', error=error_msg)
 
     return render_template('login.html')
 
@@ -322,63 +325,33 @@ def logout():
     return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/users')
-# @login_required  # Временно отключено для отладки
+@login_required
 def users_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('users.html')
 
 @app.route('/sensors')
-# @login_required  # Временно отключено для отладки
+@login_required
 def sensors_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('sensors.html')
 
 @app.route('/reports')
-# @login_required  # Временно отключено для отладки
+@login_required
 def reports_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('reports.html')
 
 @app.route('/settings')
-# @login_required  # Временно отключено для отладки
+@login_required
 def settings_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('settings.html')
 
 @app.route('/profile')
-# @login_required  # Временно отключено для отладки
+@login_required
 def profile_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('profile.html')
 
 @app.route('/map')
-# @login_required  # Временно отключено для отладки
+@login_required
 def map_page():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     return render_template('map.html')
 
 # API для данных от Arduino
@@ -438,13 +411,8 @@ def receive_visitor_count():
 
 # API для получения данных датчиков
 @app.route('/api/sensor-data')
-# @login_required  # Временно отключено для отладки
+@login_required
 def get_sensor_data():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     period = request.args.get('period', 'day')
     hierarchy_type = request.args.get('hierarchy_type', '')
     entity_id = request.args.get('entity_id', '')
@@ -516,13 +484,8 @@ def get_sensor_data():
 
 # API для иерархии
 @app.route('/api/hierarchy')
-# @login_required  # Временно отключено для отладки
+@login_required
 def get_hierarchy():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -535,13 +498,8 @@ def get_hierarchy():
 
 # API для получения списка датчиков
 @app.route('/api/sensors')
-# @login_required  # Временно отключено для отладки
+@login_required
 def get_sensors():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -581,13 +539,8 @@ def get_sensors():
 
 # Маршрут для карты магазинов
 @app.route('/api/map-data')
-# @login_required  # Временно отключено для отладки
+@login_required
 def get_map_data():
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
 
     try:
         conn = get_db_connection()

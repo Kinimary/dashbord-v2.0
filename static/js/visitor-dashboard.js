@@ -1002,3 +1002,61 @@ function addActivityItem() {
         items[items.length - 1].remove();
     }
 }
+function loadDashboard() {
+    console.log('Дашборд загружается...');
+    updateMetrics();
+    loadSensorData();
+    updateCharts();
+}
+
+// Проверка авторизации в запросах
+function fetchWithAuth(url, options = {}) {
+    return fetch(url, options)
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            return response;
+        });
+}
+function loadDashboard() {
+    console.log('Дашборд загружается...');
+    updateMetrics();
+    loadSensorData();
+    updateCharts();
+}
+
+// Проверка авторизации в запросах
+function fetchWithAuth(url, options = {}) {
+    return fetch(url, options)
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            return response;
+        });
+}
+function loadSensorData(period = 'day', hierarchyType = '', entityId = '') {
+    const params = new URLSearchParams({
+        period: period,
+        hierarchy_type: hierarchyType,
+        entity_id: entityId
+    });
+
+    fetchWithAuth(`/api/sensor-data?${params}`)
+        .then(response => {
+            if (!response) return;
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                updateDashboardData(data);
+                updateSensorsList(data.sensors || []);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки данных датчиков:', error);
+        });
+}

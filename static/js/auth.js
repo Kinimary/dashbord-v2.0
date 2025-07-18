@@ -45,8 +45,64 @@ function showAdminInfo() {
 
 // Инициализация при загрузке страницы
 document.addEventListener("DOMContentLoaded", function () {
-    // Показать админ информацию если есть
+    // Проверяем авторизацию для всех страниц кроме логина
     if (window.location.pathname !== "/login") {
+        checkAuth();
         showAdminInfo();
     }
+
+    // Обработчик формы логина
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
 });
+
+// Проверка авторизации
+function checkAuth() {
+    fetch('/api/sensor-data?period=day')
+        .then(response => {
+            if (response.status === 401 || response.redirected) {
+                window.location.href = '/login';
+            }
+        })
+        .catch(() => {
+            // Если есть ошибка сети, перенаправляем на логин
+            window.location.href = '/login';
+        });
+}
+
+// Обработчик формы логина
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const loginData = {
+        username: formData.get('username'),
+        password: formData.get('password')
+    };
+
+    const errorDiv = document.getElementById('error-message');
+    
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect || '/';
+        } else {
+            errorDiv.textContent = data.error;
+            errorDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        errorDiv.textContent = 'Ошибка входа в систему';
+        errorDiv.style.display = 'block';
+    });
+}

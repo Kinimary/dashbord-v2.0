@@ -1,4 +1,3 @@
-
 let map;
 let stores = [];
 let clusterer;
@@ -8,7 +7,7 @@ let isHeatmapActive = false;
 // Инициализация карты
 function initMap() {
     console.log('Initializing Yandex Map...');
-    
+
     // Проверяем наличие контейнера карты
     const mapContainer = document.getElementById('yandex-map');
     if (!mapContainer) {
@@ -111,7 +110,7 @@ function showMapErrorWithFallback(errorMessage) {
 // Загрузка данных магазинов
 function loadStoresData() {
     console.log('Loading stores data...');
-    
+
     // Тестовые данные для демонстрации
     const testStores = [
         {
@@ -169,6 +168,10 @@ function loadStoresData() {
     // Возвращаем Promise для правильной обработки в refreshMap
     return fetch('/api/map-data')
         .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
             if (!response.ok) {
                 throw new Error('API unavailable');
             }
@@ -195,7 +198,7 @@ function loadStoresData() {
 // Отображение магазинов на карте
 function displayStoresOnMap() {
     console.log('Displaying stores on map...', { map: !!map, clusterer: !!clusterer, storesCount: stores.length });
-    
+
     if (!map || !clusterer) {
         console.log('Map or clusterer not ready');
         return;
@@ -338,7 +341,7 @@ function toggleHeatmap() {
     }
 
     const btn = document.getElementById('toggle-heatmap');
-    
+
     if (isHeatmapActive) {
         // Выключаем тепловую карту
         if (heatmap) {
@@ -381,11 +384,11 @@ function toggleHeatmap() {
                 });
 
                 map.geoObjects.add(heatmap);
-                
+
                 if (clusterer) {
                     clusterer.options.set('visible', false);
                 }
-                
+
                 isHeatmapActive = true;
 
                 if (btn) {
@@ -455,7 +458,7 @@ function refreshMap() {
             icon.classList.add('fa-spin');
             refreshBtn.disabled = true;
         }
-        
+
         // Загружаем новые данные
         loadStoresData().then(() => {
             // Останавливаем анимацию после загрузки данных
@@ -486,9 +489,9 @@ function showNotification(message, type = 'info') {
             <i class="fas fa-times"></i>
         </button>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Автоматически удаляем уведомление через 5 секунд
     setTimeout(() => {
         if (notification.parentElement) {
@@ -500,7 +503,7 @@ function showNotification(message, type = 'info') {
 // Обработчики событий
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
-    
+
     // Фильтр периода
     const periodFilter = document.getElementById('period-filter');
     if (periodFilter) {

@@ -20,12 +20,6 @@ def hash_password(password):
 def get_users():
     from flask import session
 
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
-
     # Check if user has permission to view users
     user_role = session.get('role')
     user_id = session.get('user_id')
@@ -147,12 +141,6 @@ def get_user(user_id):
 def create_user():
     from flask import session
 
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
-
     # Check permissions
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
@@ -218,12 +206,6 @@ def create_user():
 @users.route('/api/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
     from flask import session
-
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
 
     # Check permissions
     user_role = session.get('role')
@@ -311,12 +293,6 @@ def update_user(user_id):
 @users.route('/api/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     from flask import session
-
-    # Устанавливаем фиктивную сессию для отладки
-    if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'admin'
-        session['role'] = 'admin'
 
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
