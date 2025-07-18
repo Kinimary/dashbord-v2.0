@@ -2484,9 +2484,55 @@ align-items: center;
     min-height: 300px;
 }
 
+.sensor-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.sensor-item span {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.sensor-checkbox {
+    margin-left: 10px;
+}
+
 .assignment-controls {
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.assignment-controls button {
+    padding: 10px 20px;
+    background: var(--belwest-green);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.assignment-controls button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.assignment-controls button:not(:disabled):hover {
+    background: var(--belwest-green-light);
+    transform: translateY(-2px);
+}tion: column;
     gap: 10px;
     align-self: center;
 }
