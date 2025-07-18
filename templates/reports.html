@@ -46,48 +46,13 @@
                         <span>Карта магазинов</span>
                     </a>
                 </li>
-            </ul>
-            <div class="sidebar-settings">
-                <div class="settings-dropdown">
-                    <button class="settings-btn" id="settings-btn">
+                <li>
+                    <a href="/settings">
                         <i class="fas fa-cog"></i>
                         <span>Настройки</span>
-                        <i class="fas fa-chevron-down settings-arrow"></i>
-                    </button>
-                    <div class="settings-menu">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-moon"></i>
-                                <span>Темная тема</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-bell"></i>
-                                <span>Уведомления</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Авто-обновление</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    </a>
+                </li>
+            </ul>
         </div>
 
         <!-- Основное содержимое -->
@@ -110,7 +75,7 @@
 
             <div class="reports-container">
                 <!-- Карточка для генерации отчетов -->
-                <div class="card">
+                <div class="card reports-generation-card">
                     <div class="card-header">
                         <h3>
                             <i class="fas fa-file-export"></i>
@@ -134,17 +99,17 @@
                                     </label>
                                     <input type="date" id="end-date" required />
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="report-format">
-                                    <i class="fas fa-file-download"></i>
-                                    Формат отчета
-                                </label>
-                                <select id="report-format" required>
-                                    <option value="csv">CSV файл</option>
-                                    <option value="xlsx">Excel (XLSX)</option>
-                                    <option value="pdf">PDF документ</option>
-                                </select>
+                                <div class="form-group">
+                                    <label for="report-format">
+                                        <i class="fas fa-file-download"></i>
+                                        Формат отчета
+                                    </label>
+                                    <select id="report-format" required>
+                                        <option value="csv">CSV файл</option>
+                                        <option value="xlsx">Excel (XLSX)</option>
+                                        <option value="pdf">PDF документ</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-actions">
                                 <button id="generate-report" class="btn-primary">
