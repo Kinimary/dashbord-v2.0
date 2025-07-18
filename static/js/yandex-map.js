@@ -9,6 +9,13 @@ let isHeatmapActive = false;
 function initMap() {
     console.log('Initializing Yandex Map...');
     
+    // Проверяем наличие контейнера карты
+    const mapContainer = document.getElementById('yandex-map');
+    if (!mapContainer) {
+        console.error('Map container not found');
+        return;
+    }
+
     if (typeof ymaps === 'undefined') {
         console.error('Yandex Maps API not loaded');
         showMapError();
@@ -22,10 +29,13 @@ function initMap() {
                 throw new Error('Yandex Maps API not available');
             }
 
+            // Инициализируем карту
             map = new ymaps.Map('yandex-map', {
                 center: [53.9045, 27.5615], // Минск
                 zoom: 11,
                 controls: ['zoomControl', 'fullscreenControl', 'searchControl']
+            }, {
+                searchControlProvider: 'yandex#search'
             });
 
             // Создаем кластеризатор
@@ -38,6 +48,8 @@ function initMap() {
             });
 
             map.geoObjects.add(clusterer);
+
+            console.log('Map and clusterer created successfully');
 
             // Загружаем данные магазинов
             loadStoresData();
@@ -53,11 +65,7 @@ function initMap() {
             showNotification('Карта загружена успешно', 'success');
         } catch (error) {
             console.error('Error initializing map:', error);
-            if (error.message.includes('Invalid API key')) {
-                showMapErrorWithFallback('Проблема с API ключом Яндекс.Карт');
-            } else {
-                showMapError();
-            }
+            showMapErrorWithFallback('Проблема с загрузкой карты');
         }
     });
 }
@@ -195,71 +203,92 @@ function loadStoresData() {
 
 // Отображение магазинов на карте
 function displayStoresOnMap() {
+    console.log('Displaying stores on map...', { map: !!map, clusterer: !!clusterer, storesCount: stores.length });
+    
     if (!map || !clusterer) {
-        console.log('Map or clusterer not ready');
+        console.log('Map or clusterer not ready, waiting...');
+        // Пробуем снова через 1 секунду
+        setTimeout(() => {
+            if (map && clusterer) {
+                displayStoresOnMap();
+            }
+        }, 1000);
         return;
     }
 
-    // Очищаем кластеризатор
-    clusterer.removeAll();
+    try {
+        // Очищаем кластеризатор
+        clusterer.removeAll();
 
-    if (!stores || stores.length === 0) {
-        console.log('No stores data available');
-        return;
-    }
-
-    const placemarks = [];
-
-    stores.forEach((store, index) => {
-        if (!store.latitude || !store.longitude) {
-            console.log(`Store ${store.name} has no coordinates`);
+        if (!stores || stores.length === 0) {
+            console.log('No stores data available');
+            showNotification('Нет данных о магазинах', 'warning');
             return;
         }
 
-        const visitorCount = store.visitors_today || 0;
-        const iconColor = getStoreColor(visitorCount);
+        const placemarks = [];
 
-        const placemark = new ymaps.Placemark(
-            [parseFloat(store.latitude), parseFloat(store.longitude)],
-            {
-                balloonContentHeader: `<strong style="color: var(--belwest-green); font-size: 16px;">${store.name}</strong>`,
-                balloonContentBody: `
-                    <div style="padding: 12px; font-family: 'Segoe UI', sans-serif;">
-                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-map-marker-alt" style="color: var(--belwest-green); margin-right: 8px;"></i> ${store.address}</p>
-                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-users" style="color: var(--belwest-green); margin-right: 8px;"></i> Посетители сегодня: <strong style="color: var(--belwest-green);">${visitorCount}</strong></p>
-                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-chart-line" style="color: var(--belwest-green); margin-right: 8px;"></i> Конверсия: <strong style="color: var(--belwest-green);">${store.conversion || 0}%</strong></p>
-                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-ruble-sign" style="color: var(--belwest-green); margin-right: 8px;"></i> Выручка: <strong style="color: var(--belwest-green);">${(store.revenue || 0).toLocaleString()} руб.</strong></p>
-                        <button onclick="showStorePanel(${store.id})" style="margin-top: 12px; padding: 8px 16px; background: var(--belwest-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            Подробнее
-                        </button>
-                    </div>
-                `,
-                balloonContentFooter: `<small style="color: var(--text-secondary); font-size: 12px;">Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`,
-                hintContent: `${store.name} - ${visitorCount} посетителей`
-            },
-            {
-                preset: 'islands#icon',
-                iconColor: iconColor,
-                iconImageSize: [30, 42],
-                iconImageOffset: [-15, -42]
+        stores.forEach((store, index) => {
+            if (!store.latitude || !store.longitude) {
+                console.log(`Store ${store.name} has no coordinates`);
+                return;
             }
-        );
 
-        // Добавляем обработчик клика
-        placemark.events.add('click', function() {
-            showStorePanel(store.id);
+            const visitorCount = store.visitors_today || 0;
+            const iconColor = getStoreColor(visitorCount);
+
+            try {
+                const placemark = new ymaps.Placemark(
+                    [parseFloat(store.latitude), parseFloat(store.longitude)],
+                    {
+                        balloonContentHeader: `<strong style="color: #2E8B57; font-size: 16px;">${store.name}</strong>`,
+                        balloonContentBody: `
+                            <div style="padding: 12px; font-family: 'Segoe UI', sans-serif; color: #333;">
+                                <p style="margin: 8px 0;"><i class="fas fa-map-marker-alt" style="color: #2E8B57; margin-right: 8px;"></i> ${store.address}</p>
+                                <p style="margin: 8px 0;"><i class="fas fa-users" style="color: #2E8B57; margin-right: 8px;"></i> Посетители: <strong style="color: #2E8B57;">${visitorCount}</strong></p>
+                                <p style="margin: 8px 0;"><i class="fas fa-chart-line" style="color: #2E8B57; margin-right: 8px;"></i> Конверсия: <strong style="color: #2E8B57;">${store.conversion || 0}%</strong></p>
+                                <p style="margin: 8px 0;"><i class="fas fa-ruble-sign" style="color: #2E8B57; margin-right: 8px;"></i> Выручка: <strong style="color: #2E8B57;">${(store.revenue || 0).toLocaleString()} руб.</strong></p>
+                                <button onclick="showStorePanel(${store.id})" style="margin-top: 12px; padding: 8px 16px; background: #2E8B57; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                    Подробнее
+                                </button>
+                            </div>
+                        `,
+                        balloonContentFooter: `<small style="color: #666; font-size: 12px;">Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`,
+                        hintContent: `${store.name} - ${visitorCount} посетителей`
+                    },
+                    {
+                        preset: 'islands#icon',
+                        iconColor: iconColor,
+                        iconImageSize: [30, 42],
+                        iconImageOffset: [-15, -42]
+                    }
+                );
+
+                // Добавляем обработчик клика
+                placemark.events.add('click', function() {
+                    showStorePanel(store.id);
+                });
+
+                placemarks.push(placemark);
+                console.log(`Created placemark for ${store.name}`);
+            } catch (placemarkError) {
+                console.error(`Error creating placemark for ${store.name}:`, placemarkError);
+            }
         });
 
-        placemarks.push(placemark);
-    });
-
-    // Добавляем все метки в кластеризатор
-    clusterer.add(placemarks);
-
-    console.log(`Added ${placemarks.length} stores to map`);
-    
-    // Показываем уведомление об успешной загрузке
-    showNotification('Данные магазинов успешно загружены', 'success');
+        if (placemarks.length > 0) {
+            // Добавляем все метки в кластеризатор
+            clusterer.add(placemarks);
+            console.log(`Added ${placemarks.length} stores to map`);
+            showNotification(`Загружено ${placemarks.length} магазинов`, 'success');
+        } else {
+            console.log('No valid placemarks created');
+            showNotification('Не удалось создать метки магазинов', 'warning');
+        }
+    } catch (error) {
+        console.error('Error displaying stores on map:', error);
+        showNotification('Ошибка отображения магазинов на карте', 'error');
+    }
 }
 
 // Определение цвета маркера в зависимости от количества посетителей
