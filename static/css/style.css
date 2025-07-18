@@ -1003,8 +1003,7 @@ input:checked+.toggle-slider:before {
     margin-right: 12px;
     border: 2px solid var(--belwest-green);
     box-shadow: 0 0 16px var(--belwest-green-glow);
-```python
-    background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
+background: linear-gradient(135deg, var(--belwest-green), var(--belwest-green-light));
     display: flex;
     align-items: center;
     justify-content: center;
