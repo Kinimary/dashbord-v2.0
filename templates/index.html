@@ -297,9 +297,9 @@
                     <div class="chart-header">
                         <h3>Динамика посещений</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn active" data-period="day" onclick="updateChartPeriod('day')">День</button>
-                            <button class="chart-btn" data-period="week" onclick="updateChartPeriod('week')">Неделя</button>
-                            <button class="chart-btn" data-period="month" onclick="updateChartPeriod('month')">Месяц</button>
+                            <button class="chart-btn active" data-period="день" onclick="updateChartPeriod('day')">День</button>
+                            <button class="chart-btn" data-period="неделя" onclick="updateChartPeriod('week')">Неделя</button>
+                            <button class="chart-btn" data-period="месяц" onclick="updateChartPeriod('month')">Месяц</button>
                         </div>
                     </div>
                     <div class="chart-content">
@@ -402,7 +402,7 @@
         function toggleUserMenu() {
             const userInfo = document.getElementById('user-menu-btn');
             const dropdown = document.getElementById('user-dropdown');
-            
+
             userInfo.classList.toggle('active');
             dropdown.classList.toggle('show');
         }
