@@ -1993,7 +1993,61 @@ align-items: center;
 
 /* Стили для управления пользователями */
 .user-management {
-    padding: 20px;
+    padding: 0;
+    margin-top: 0;
+}
+
+.users-page .main-content {
+    padding: 20px 32px;
+}
+
+.users-page .top-bar {
+    padding: 16px 32px;
+    margin-bottom: 0;
+}
+
+.users-page .top-bar h1 {
+    font-size: 28px;
+    margin: 0;
+}
+
+.compact-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px var(--shadow-light);
+}
+
+.compact-card .card-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.compact-card .card-header h3 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 .dashboard-tabs {

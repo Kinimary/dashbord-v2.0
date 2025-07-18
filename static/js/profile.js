@@ -753,6 +753,24 @@ window.deleteHierarchy = function(hierarchyId) {
     }
 };
 
+// Функция переключения меню пользователя
+function toggleUserMenu() {
+    const dropdown = document.getElementById('user-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+// Закрытие меню при клике вне его
+document.addEventListener('click', function(event) {
+    const userMenu = document.getElementById('user-menu-btn');
+    const dropdown = document.getElementById('user-dropdown');
+    
+    if (userMenu && dropdown && !userMenu.contains(event.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
 // Функция выхода
 function logout() {
     fetch('/logout', {
