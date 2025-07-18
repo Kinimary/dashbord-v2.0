@@ -1,4 +1,3 @@
-
 let map;
 let stores = [];
 let clusterer;
@@ -240,7 +239,7 @@ function toggleHeatmap() {
         }
         clusterer.options.set('visible', true);
         isHeatmapActive = false;
-        
+
         const btn = document.getElementById('toggle-heatmap');
         if (btn) {
             btn.innerHTML = '<i class="fas fa-fire"></i> Тепловая карта';
@@ -255,18 +254,23 @@ function toggleHeatmap() {
                 store.visitors_today || 0
             ]);
 
-            heatmap = new ymaps.Heatmap(heatmapData, {
-                radius: 50,
-                dissipating: false,
-                opacity: 0.8,
-                intensityOfMidpoint: 0.5,
-                gradient: {
-                    0.1: 'rgba(128, 255, 0, 0.7)',
-                    0.4: 'rgba(255, 255, 0, 0.8)',
-                    0.7: 'rgba(234, 72, 58, 0.9)',
-                    1.0: 'rgba(162, 36, 25, 1)'
-                }
-            });
+            // Создание тепловой карты
+            if (ymaps.Heatmap) {
+                window.heatmap = new ymaps.Heatmap(heatmapData, {
+                    radius: 20,
+                    dissipating: false,
+                    opacity: 0.8,
+                    intensityOfMidpoint: 0.2,
+                    gradient: {
+                        0.1: 'rgba(128, 255, 0, 0.7)',
+                        0.2: 'rgba(255, 255, 0, 0.8)',
+                        0.7: 'rgba(234, 72, 58, 0.9)',
+                        1.0: 'rgba(162, 36, 25, 1)'
+                    }
+                });
+            } else {
+                console.warn('ymaps.Heatmap не доступен. Убедитесь, что подключен модуль heatmap.');
+            }
 
             map.geoObjects.add(heatmap);
             clusterer.options.set('visible', false);
@@ -286,14 +290,14 @@ function toggleFullscreen() {
     const container = document.getElementById('map-container');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
     const exitBtn = document.getElementById('exit-fullscreen');
-    
+
     if (container.classList.contains('fullscreen')) {
         // Выходим из полноэкранного режима
         container.classList.remove('fullscreen');
         fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
         fullscreenBtn.title = 'Полноэкранный режим';
         if (exitBtn) exitBtn.style.display = 'none';
-        
+
         // Перерисовываем карту
         setTimeout(() => {
             if (map) {
@@ -306,7 +310,7 @@ function toggleFullscreen() {
         fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
         fullscreenBtn.title = 'Выйти из полноэкранного режима';
         if (exitBtn) exitBtn.style.display = 'inline-flex';
-        
+
         // Перерисовываем карту
         setTimeout(() => {
             if (map) {
@@ -375,7 +379,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Инициализация карты
     if (typeof ymaps !== 'undefined') {
-        initMap();
+        ymaps.ready(['package.full', 'package.heatmap'], function() {
+            console.log('Yandex Maps API загружен');
+    
+            window.myMap = new ymaps.Map('map', {
+                center: [53.9, 27.5667], // Минск
+                zoom: 10,
+                controls: ['zoomControl', 'searchControl', 'typeSelector', 'fullscreenControl']
+            });
+    
+            // Загружаем данные магазинов
+            loadMapData();
+    
+            // Обновляем данные каждые 30 секунд
+            setInterval(loadMapData, 30000);
+        }, function(error) {
+            console.error('Ошибка загрузки Yandex Maps:', error);
+        });
     } else {
         console.error('Yandex Maps API not loaded');
     }

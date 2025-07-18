@@ -50,13 +50,13 @@ def hash_password(password):
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     # Получаем список существующих таблиц
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
     existing_tables = {row[0] for row in cursor.fetchall()}
-    
+
     print(f"Инициализация базы данных. Найдено таблиц: {len(existing_tables)}")
-    
+
     # Определяем все необходимые таблицы
     required_tables = {
         'users': '''
@@ -160,7 +160,7 @@ def init_db():
             )
         '''
     }
-    
+
     # Проверяем и создаем недостающие таблицы
     created_tables = []
     for table_name, create_sql in required_tables.items():
@@ -173,17 +173,17 @@ def init_db():
                 print(f"Ошибка при создании таблицы {table_name}: {e}")
         else:
             print(f"Таблица {table_name} уже существует")
-    
+
     # Проверяем и добавляем недостающие колонки в существующие таблицы
     check_and_add_columns(cursor)
-    
+
     # Инициализируем базовые данные только если таблицы были созданы
     if created_tables or 'users' in created_tables:
         initialize_default_data(cursor)
-    
+
     conn.commit()
     conn.close()
-    
+
     if created_tables:
         print(f"База данных обновлена. Создано таблиц: {len(created_tables)}")
     else:
@@ -191,41 +191,41 @@ def init_db():
 
 def check_and_add_columns(cursor):
     """Проверяет и добавляет недостающие колонки в существующие таблицы"""
-    
+
     # Проверка колонок для таблицы sensors
     try:
         cursor.execute("PRAGMA table_info(sensors)")
         sensor_columns = {row[1] for row in cursor.fetchall()}
-        
+
         if 'user_id' not in sensor_columns:
             cursor.execute("ALTER TABLE sensors ADD COLUMN user_id INTEGER REFERENCES users(id)")
             print("Добавлена колонка user_id в таблицу sensors")
-            
+
     except sqlite3.Error as e:
         print(f"Ошибка при проверке колонок sensors: {e}")
-    
+
     # Проверка колонок для таблицы stores
     try:
         cursor.execute("PRAGMA table_info(stores)")
         store_columns = {row[1] for row in cursor.fetchall()}
-        
+
         missing_columns = {
             'tu_id': 'INTEGER REFERENCES users(id)',
             'rd_id': 'INTEGER REFERENCES users(id)',
             'created_at': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
         }
-        
+
         for col_name, col_type in missing_columns.items():
             if col_name not in store_columns:
                 cursor.execute(f"ALTER TABLE stores ADD COLUMN {col_name} {col_type}")
                 print(f"Добавлена колонка {col_name} в таблицу stores")
-                
+
     except sqlite3.Error as e:
         print(f"Ошибка при проверке колонок stores: {e}")
 
 def initialize_default_data(cursor):
     """Инициализирует базовые данные при первом запуске"""
-    
+
     # Проверяем, есть ли пользователь admin
     cursor.execute('SELECT COUNT(*) FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone()[0] == 0:
@@ -393,7 +393,7 @@ def receive_visitor_count():
                 'status': request.form.get('status', 'online'),
                 'timestamp': request.form.get('timestamp', datetime.now().timestamp())
             }
-        
+
         device_id = data.get('device_id', 'unknown')
         visitor_count = data.get('count', 0)
         status = data.get('status', 'online')
@@ -404,7 +404,7 @@ def receive_visitor_count():
         # Проверяем существование датчика
         cursor.execute('SELECT id FROM sensors WHERE name = ?', (device_id,))
         sensor = cursor.fetchone()
-        
+
         if sensor:
             sensor_id = sensor['id']
             # Обновляем существующий датчик
@@ -515,9 +515,9 @@ def get_sensor_data():
     })
 
 # API для иерархии
-@app.route('/api/hierarchy/<hierarchy_type>')
+@app.route('/api/hierarchy')
 # @login_required  # Временно отключено для отладки
-def get_hierarchy_options(hierarchy_type):
+def get_hierarchy():
     # Устанавливаем фиктивную сессию для отладки
     if 'user_id' not in session:
         session['user_id'] = 1
@@ -526,12 +526,7 @@ def get_hierarchy_options(hierarchy_type):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    if hierarchy_type == 'store':
-        cursor.execute('SELECT id, name FROM stores ORDER BY name')
-    elif hierarchy_type in ['manager', 'rd', 'tu']:
-        cursor.execute('SELECT id, username as name FROM users WHERE role = ? ORDER BY username', (hierarchy_type,))
-    else:
-        return jsonify([])
+    cursor.execute('SELECT id, name FROM stores ORDER BY name')
 
     options = cursor.fetchall()
     conn.close()
@@ -549,7 +544,7 @@ def get_sensors():
         session['role'] = 'admin'
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute('''
         SELECT 
             s.id,
@@ -571,25 +566,29 @@ def get_sensors():
         ) vd ON s.id = vd.sensor_id
         ORDER BY s.name
     ''')
-    
+
     sensors_list = cursor.fetchall()
     conn.close()
-    
+
     result = []
     for sensor in sensors_list:
         sensor_dict = dict(sensor)
         # Добавляем дополнительные поля для совместимости с фронтендом
         sensor_dict['visitors'] = sensor_dict.get('current_visitors', 0)
         result.append(sensor_dict)
-    
+
     return jsonify(result)
 
-# API для данных карты
+# Маршрут для карты магазинов
 @app.route('/api/map-data')
-def get_map_data_route():
+# @login_required  # Временно отключено для отладки
+def get_map_data():
+    # Устанавливаем фиктивную сессию для отладки
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-        
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -634,7 +633,7 @@ def unassign_sensor():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         cursor.execute('UPDATE sensors SET store_id = NULL WHERE id = ?', (sensor_id,))
         conn.commit()
         conn.close()

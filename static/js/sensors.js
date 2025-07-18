@@ -181,7 +181,7 @@ function assignSensorToStore() {
     const storeSelect = document.getElementById('store-select');
 
     if (!sensorSelect || !storeSelect) {
-        console.error('Элементы формы не найдены');
+        alert('Элементы не найдены');
         return;
     }
 
@@ -189,28 +189,29 @@ function assignSensorToStore() {
     const storeId = storeSelect.value;
 
     if (!sensorId || !storeId) {
-        alert('Пожалуйста, выберите датчик и магазин');
+        alert('Выберите датчик и магазин');
         return;
     }
 
-    console.log('Привязка датчика:', { sensor_id: sensorId, store_id: storeId });
+    const data = {
+        sensor_id: parseInt(sensorId),
+        store_id: parseInt(storeId)
+    };
 
-    fetch('/api/sensor-store-assignment', {
+    fetch('/api/sensor-assignment', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            sensor_id: parseInt(sensorId),
-            store_id: parseInt(storeId)
-        })
+        body: JSON.stringify(data)
     })
     .then(response => {
-        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         return response.json();
     })
     .then(data => {
-        console.log('Response data:', data);
         if (data.success) {
             alert('Датчик успешно привязан к магазину');
             loadSensors();
@@ -390,3 +391,29 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+function loadSensorsForAssignment() {
+    fetch('/api/sensors')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(sensors => {
+        const sensorSelect = document.getElementById('sensor-select');
+        if (!sensorSelect) return;
+
+        sensorSelect.innerHTML = '<option value="">Выберите датчик...</option>';
+
+        sensors.forEach(sensor => {
+            const option = document.createElement('option');
+            option.value = sensor.id;
+            option.textContent = `${sensor.name} (${sensor.location})`;
+            sensorSelect.appendChild(option);
+        });
+    })
+    .catch(error => {
+        console.error('Ошибка загрузки датчиков для назначения:', error);
+    });
+}
