@@ -6,3 +6,10 @@ PyJWT==2.8.0
 flask-session
 werkzeug
 xlsxwriter
+Flask==2.3.3
+flask-session
+openpyxl
+pandas
+PyJWT==2.8.0
+werkzeug
+xlsxwriter
