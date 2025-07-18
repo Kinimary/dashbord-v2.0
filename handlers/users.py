@@ -724,6 +724,241 @@ def get_hierarchy_candidates(parent_id):
         conn.close()
 
 # API для управления ролями и правами доступа
+@users.route('/api/user-sensors/<int:user_id>', methods=['GET'])
+def get_user_sensors(user_id):
+    """Get available and assigned sensors for a user"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get assigned sensors
+        cursor.execute('''
+            SELECT s.id, s.name, s.location, s.status
+            FROM sensors s
+            JOIN user_sensors us ON s.id = us.sensor_id
+            WHERE us.user_id = ?
+        ''', (user_id,))
+        
+        assigned = []
+        for row in cursor.fetchall():
+            assigned.append({
+                'id': row[0],
+                'name': row[1],
+                'location': row[2],
+                'status': row[3]
+            })
+
+        # Get available sensors (not assigned to this user)
+        cursor.execute('''
+            SELECT s.id, s.name, s.location, s.status
+            FROM sensors s
+            WHERE s.id NOT IN (
+                SELECT sensor_id FROM user_sensors WHERE user_id = ?
+            )
+        ''', (user_id,))
+        
+        available = []
+        for row in cursor.fetchall():
+            available.append({
+                'id': row[0],
+                'name': row[1],
+                'location': row[2],
+                'status': row[3]
+            })
+
+        return jsonify({
+            'assigned': assigned,
+            'available': available
+        })
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/assign-sensors', methods=['POST'])
+def assign_sensors():
+    """Assign sensors to a user"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    sensor_ids = data.get('sensor_ids', [])
+
+    if not user_id or not sensor_ids:
+        return jsonify({'error': 'Missing required data'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        for sensor_id in sensor_ids:
+            cursor.execute('''
+                INSERT OR IGNORE INTO user_sensors (user_id, sensor_id)
+                VALUES (?, ?)
+            ''', (user_id, sensor_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Sensors assigned successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/unassign-sensors', methods=['POST'])
+def unassign_sensors():
+    """Unassign sensors from a user"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    sensor_ids = data.get('sensor_ids', [])
+
+    if not user_id or not sensor_ids:
+        return jsonify({'error': 'Missing required data'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        for sensor_id in sensor_ids:
+            cursor.execute('''
+                DELETE FROM user_sensors 
+                WHERE user_id = ? AND sensor_id = ?
+            ''', (user_id, sensor_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Sensors unassigned successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/hierarchy', methods=['GET'])
+def get_hierarchy():
+    """Get hierarchy relationships"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            SELECT 
+                uh.parent_id,
+                uh.child_id,
+                parent.username as parent_username,
+                parent.role as parent_role,
+                child.username as child_username,
+                child.role as child_role
+            FROM user_hierarchy uh
+            JOIN users parent ON uh.parent_id = parent.id
+            JOIN users child ON uh.child_id = child.id
+            ORDER BY parent.username, child.username
+        ''')
+
+        hierarchy = []
+        for row in cursor.fetchall():
+            hierarchy.append({
+                'parent_id': row[0],
+                'child_id': row[1],
+                'parent_username': row[2],
+                'parent_role': row[3],
+                'child_username': row[4],
+                'child_role': row[5]
+            })
+
+        return jsonify(hierarchy)
+    except Exception as e:
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/hierarchy', methods=['POST'])
+def create_hierarchy():
+    """Create hierarchy relationship"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    data = request.get_json()
+    parent_id = data.get('parent_id')
+    child_id = data.get('child_id')
+
+    if not parent_id or not child_id:
+        return jsonify({'error': 'Missing required data'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            INSERT OR IGNORE INTO user_hierarchy (parent_id, child_id, hierarchy_type, created_at)
+            VALUES (?, ?, 'hierarchical', ?)
+        ''', (parent_id, child_id, datetime.now().isoformat()))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Hierarchy created successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
+@users.route('/api/hierarchy', methods=['DELETE'])
+def delete_hierarchy():
+    """Delete hierarchy relationship"""
+    from flask import session
+
+    user_role = session.get('role')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Недостаточно прав доступа'}), 403
+
+    data = request.get_json()
+    parent_id = data.get('parent_id')
+    child_id = data.get('child_id')
+
+    if not parent_id or not child_id:
+        return jsonify({'error': 'Missing required data'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            DELETE FROM user_hierarchy 
+            WHERE parent_id = ? AND child_id = ?
+        ''', (parent_id, child_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Hierarchy deleted successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        conn.close()
+
 @users.route('/api/user-permissions', methods=['GET'])
 def get_user_permissions():
     """Get detailed user permissions based on role"""

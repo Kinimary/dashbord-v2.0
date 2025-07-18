@@ -1,4 +1,3 @@
-
 // Глобальные переменные
 let currentEditingUser = null;
 let currentEditingSensor = null;
@@ -11,7 +10,7 @@ let selectedAssignedSensors = [];
 // Инициализация страницы
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Загрузка страницы управления пользователями...');
-    
+
     initializeTabs();
     initializeUserManagement();
     initializeSensorManagement();
@@ -32,15 +31,15 @@ function initializeTabs() {
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
-            
+
             // Убираем активный класс у всех табов
             tabs.forEach(t => t.classList.remove('active'));
             tabContents.forEach(tc => tc.classList.remove('active'));
-            
+
             // Добавляем активный класс к выбранному табу
             this.classList.add('active');
             document.getElementById(targetTab).classList.add('active');
-            
+
             // Загружаем данные для активного таба
             switch(targetTab) {
                 case 'user-list':
@@ -85,11 +84,11 @@ function initializeUserManagement() {
     if (saveBtn) {
         saveBtn.addEventListener('click', saveUser);
     }
-    
+
     if (deleteBtn) {
         deleteBtn.addEventListener('click', deleteUser);
     }
-    
+
     if (clearBtn) {
         clearBtn.addEventListener('click', clearUserForm);
     }
@@ -115,11 +114,11 @@ function initializeSensorManagement() {
     if (saveSensorBtn) {
         saveSensorBtn.addEventListener('click', saveSensor);
     }
-    
+
     if (deleteSensorBtn) {
         deleteSensorBtn.addEventListener('click', deleteSensor);
     }
-    
+
     if (clearSensorBtn) {
         clearSensorBtn.addEventListener('click', clearSensorForm);
     }
@@ -145,11 +144,11 @@ function initializeStoreManagement() {
     if (saveStoreBtn) {
         saveStoreBtn.addEventListener('click', saveStore);
     }
-    
+
     if (deleteStoreBtn) {
         deleteStoreBtn.addEventListener('click', deleteStore);
     }
-    
+
     if (clearStoreBtn) {
         clearStoreBtn.addEventListener('click', clearStoreForm);
     }
@@ -174,7 +173,7 @@ function initializeSensorAssignment() {
     if (assignBtn) {
         assignBtn.addEventListener('click', assignSelectedSensors);
     }
-    
+
     if (unassignBtn) {
         unassignBtn.addEventListener('click', unassignSelectedSensors);
     }
@@ -256,7 +255,7 @@ function updateUsersList(users) {
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    
+
     users.forEach(user => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -277,20 +276,20 @@ function updateUsersList(users) {
 // Обновление селектов пользователей
 function updateUserSelects(users) {
     const selects = ['user-select', 'assignment-user-select', 'hierarchy-parent-select'];
-    
+
     selects.forEach(selectId => {
         const select = document.getElementById(selectId);
         if (select) {
             const currentValue = select.value;
             select.innerHTML = '<option value="">-- Выберите пользователя --</option>';
-            
+
             users.forEach(user => {
                 const option = document.createElement('option');
                 option.value = user.id;
                 option.textContent = `${user.username} (${getRoleName(user.role)})`;
                 select.appendChild(option);
             });
-            
+
             if (currentValue) {
                 select.value = currentValue;
             }
@@ -304,7 +303,7 @@ function updateSensorsList(sensors) {
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    
+
     sensors.forEach(sensor => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -328,14 +327,14 @@ function updateSensorSelects(sensors) {
     if (select) {
         const currentValue = select.value;
         select.innerHTML = '<option value="">-- Создать новый --</option>';
-        
+
         sensors.forEach(sensor => {
             const option = document.createElement('option');
             option.value = sensor.id;
             option.textContent = `${sensor.name} (${sensor.location})`;
             select.appendChild(option);
         });
-        
+
         if (currentValue) {
             select.value = currentValue;
         }
@@ -348,7 +347,7 @@ function updateStoresList(stores) {
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    
+
     stores.forEach(store => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -372,14 +371,14 @@ function updateStoreSelects(stores) {
     if (select) {
         const currentValue = select.value;
         select.innerHTML = '<option value="">-- Создать новый --</option>';
-        
+
         stores.forEach(store => {
             const option = document.createElement('option');
             option.value = store.id;
             option.textContent = store.name;
             select.appendChild(option);
         });
-        
+
         if (currentValue) {
             select.value = currentValue;
         }
@@ -404,7 +403,7 @@ function loadSensorsForAssignment(userId) {
 function updateSensorAssignmentLists() {
     const availableList = document.getElementById('available-sensors-list');
     const assignedList = document.getElementById('assigned-sensors-list');
-    
+
     if (availableList) {
         availableList.innerHTML = '';
         availableSensors.forEach(sensor => {
@@ -412,7 +411,7 @@ function updateSensorAssignmentLists() {
             availableList.appendChild(item);
         });
     }
-    
+
     if (assignedList) {
         assignedList.innerHTML = '';
         assignedSensors.forEach(sensor => {
@@ -420,7 +419,7 @@ function updateSensorAssignmentLists() {
             assignedList.appendChild(item);
         });
     }
-    
+
     updateAssignmentButtons();
 }
 
@@ -430,13 +429,13 @@ function createSensorAssignmentItem(sensor, type) {
     item.className = 'sensor-item';
     item.dataset.sensorId = sensor.id;
     item.dataset.type = type;
-    
+
     item.innerHTML = `
         <span>${sensor.name}</span>
         <small>${sensor.location}</small>
         <input type="checkbox" class="sensor-checkbox" onchange="updateAssignmentButtons()">
     `;
-    
+
     item.addEventListener('click', function(e) {
         if (e.target.type !== 'checkbox') {
             const checkbox = this.querySelector('.sensor-checkbox');
@@ -444,7 +443,7 @@ function createSensorAssignmentItem(sensor, type) {
             updateAssignmentButtons();
         }
     });
-    
+
     return item;
 }
 
@@ -452,14 +451,14 @@ function createSensorAssignmentItem(sensor, type) {
 function updateAssignmentButtons() {
     const assignBtn = document.getElementById('assign-sensor-btn');
     const unassignBtn = document.getElementById('unassign-sensor-btn');
-    
+
     const selectedAvailable = document.querySelectorAll('#available-sensors-list .sensor-checkbox:checked').length;
     const selectedAssigned = document.querySelectorAll('#assigned-sensors-list .sensor-checkbox:checked').length;
-    
+
     if (assignBtn) {
         assignBtn.disabled = selectedAvailable === 0;
     }
-    
+
     if (unassignBtn) {
         unassignBtn.disabled = selectedAssigned === 0;
     }
@@ -472,9 +471,9 @@ function assignSelectedSensors() {
     const sensorIds = Array.from(selectedItems).map(item => 
         item.closest('.sensor-item').dataset.sensorId
     );
-    
+
     if (sensorIds.length === 0) return;
-    
+
     fetch('/api/assign-sensors', {
         method: 'POST',
         headers: {
@@ -506,9 +505,9 @@ function unassignSelectedSensors() {
     const sensorIds = Array.from(selectedItems).map(item => 
         item.closest('.sensor-item').dataset.sensorId
     );
-    
+
     if (sensorIds.length === 0) return;
-    
+
     fetch('/api/unassign-sensors', {
         method: 'POST',
         headers: {
@@ -537,10 +536,10 @@ function unassignSelectedSensors() {
 function clearSensorAssignmentLists() {
     const availableList = document.getElementById('available-sensors-list');
     const assignedList = document.getElementById('assigned-sensors-list');
-    
+
     if (availableList) availableList.innerHTML = '';
     if (assignedList) assignedList.innerHTML = '';
-    
+
     updateAssignmentButtons();
 }
 
@@ -580,7 +579,7 @@ function loadUsersForHierarchy() {
 // Обновление селектов иерархии
 function updateHierarchySelects(users) {
     const parentSelect = document.getElementById('hierarchy-parent-select');
-    
+
     if (parentSelect) {
         parentSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
         users.forEach(user => {
@@ -631,7 +630,7 @@ function updateHierarchyTable(hierarchy) {
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    
+
     hierarchy.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -653,7 +652,7 @@ function updateCreateHierarchyButton() {
     const parentSelect = document.getElementById('hierarchy-parent-select');
     const childSelect = document.getElementById('hierarchy-child-select');
     const createBtn = document.getElementById('create-hierarchy-btn');
-    
+
     if (createBtn && parentSelect && childSelect) {
         createBtn.disabled = !parentSelect.value || !childSelect.value;
     }
@@ -663,9 +662,9 @@ function updateCreateHierarchyButton() {
 function createHierarchy() {
     const parentId = document.getElementById('hierarchy-parent-select').value;
     const childId = document.getElementById('hierarchy-child-select').value;
-    
+
     if (!parentId || !childId) return;
-    
+
     fetch('/api/hierarchy', {
         method: 'POST',
         headers: {
@@ -702,21 +701,21 @@ function saveUser() {
         password: document.getElementById('new-password').value,
         role: document.getElementById('new-role').value
     };
-    
+
     if (!userData.username || !userData.email || !userData.password) {
         alert('Пожалуйста, заполните все обязательные поля');
         return;
     }
-    
+
     const confirmPassword = document.getElementById('confirm-new-password').value;
     if (userData.password !== confirmPassword) {
         alert('Пароли не совпадают');
         return;
     }
-    
+
     const url = currentEditingUser ? `/api/users/${currentEditingUser}` : '/api/users';
     const method = currentEditingUser ? 'PUT' : 'POST';
-    
+
     fetch(url, {
         method: method,
         headers: {
@@ -743,9 +742,9 @@ function saveUser() {
 // Удаление пользователя
 function deleteUser() {
     if (!currentEditingUser) return;
-    
+
     if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
-    
+
     fetch(`/api/users/${currentEditingUser}`, {
         method: 'DELETE'
     })
@@ -803,15 +802,15 @@ function saveSensor() {
         location: document.getElementById('sensor-location').value,
         status: document.getElementById('sensor-status').value
     };
-    
+
     if (!sensorData.name || !sensorData.location) {
         alert('Пожалуйста, заполните все обязательные поля');
         return;
     }
-    
+
     const url = currentEditingSensor ? `/api/sensors/${currentEditingSensor}` : '/api/sensors';
     const method = currentEditingSensor ? 'PUT' : 'POST';
-    
+
     fetch(url, {
         method: method,
         headers: {
@@ -838,9 +837,9 @@ function saveSensor() {
 // Удаление датчика
 function deleteSensor() {
     if (!currentEditingSensor) return;
-    
+
     if (!confirm('Вы уверены, что хотите удалить этот датчик?')) return;
-    
+
     fetch(`/api/sensors/${currentEditingSensor}`, {
         method: 'DELETE'
     })
@@ -895,15 +894,15 @@ function saveStore() {
         tu_id: document.getElementById('store-tu').value || null,
         rd_id: document.getElementById('store-rd').value || null
     };
-    
+
     if (!storeData.name || !storeData.address) {
         alert('Пожалуйста, заполните все обязательные поля');
         return;
     }
-    
+
     const url = currentEditingStore ? `/api/stores/${currentEditingStore}` : '/api/stores';
     const method = currentEditingStore ? 'PUT' : 'POST';
-    
+
     fetch(url, {
         method: method,
         headers: {
@@ -930,9 +929,9 @@ function saveStore() {
 // Удаление магазина
 function deleteStore() {
     if (!currentEditingStore) return;
-    
+
     if (!confirm('Вы уверены, что хотите удалить этот магазин?')) return;
-    
+
     fetch(`/api/stores/${currentEditingStore}`, {
         method: 'DELETE'
     })
@@ -1006,14 +1005,14 @@ function getStatusName(status) {
 function editUser(userId) {
     document.getElementById('user-select').value = userId;
     loadUserForEdit(userId);
-    
+
     // Переключаемся на первый таб
     document.querySelector('.tab[data-tab="user-form"]').click();
 }
 
 function deleteUserById(userId) {
     if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
-    
+
     fetch(`/api/users/${userId}`, {
         method: 'DELETE'
     })
@@ -1024,7 +1023,7 @@ function deleteUserById(userId) {
             alert('Пользователь удален');
         } else {
             alert('Ошибка: ' + data.error);
-        }
+}
     })
     .catch(error => {
         console.error('Ошибка:', error);
@@ -1035,14 +1034,14 @@ function deleteUserById(userId) {
 function editSensor(sensorId) {
     document.getElementById('sensor-select').value = sensorId;
     loadSensorForEdit(sensorId);
-    
+
     // Переключаемся на таб управления датчиками
     document.querySelector('.tab[data-tab="sensor-management"]').click();
 }
 
 function deleteSensorById(sensorId) {
     if (!confirm('Вы уверены, что хотите удалить этот датчик?')) return;
-    
+
     fetch(`/api/sensors/${sensorId}`, {
         method: 'DELETE'
     })
@@ -1064,14 +1063,14 @@ function deleteSensorById(sensorId) {
 function editStore(storeId) {
     document.getElementById('store-select').value = storeId;
     loadStoreForEdit(storeId);
-    
+
     // Переключаемся на таб управления магазинами
     document.querySelector('.tab[data-tab="store-management"]').click();
 }
 
 function deleteStoreById(storeId) {
     if (!confirm('Вы уверены, что хотите удалить этот магазин?')) return;
-    
+
     fetch(`/api/stores/${storeId}`, {
         method: 'DELETE'
     })
@@ -1092,7 +1091,7 @@ function deleteStoreById(storeId) {
 
 function deleteHierarchy(parentId, childId) {
     if (!confirm('Вы уверены, что хотите удалить эту иерархическую связь?')) return;
-    
+
     fetch('/api/hierarchy', {
         method: 'DELETE',
         headers: {
