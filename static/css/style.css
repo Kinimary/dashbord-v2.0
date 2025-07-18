@@ -1278,6 +1278,25 @@ select option:disabled {
     box-shadow: 0 8px 32px var(--belwest-green-glow);
 }
 
+.fa-spin {
+            animation: fa-spin 1s infinite linear;
+        }
+
+        @keyframes fa-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .refresh-btn:disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+
 /* Анимация для выпадающих элементов */
 @keyframes dropdownSlideIn {
     from {
@@ -2719,8 +2738,7 @@ align-items: center;
     }
 }
 
-/* Адаптивность для отчетов */
-@media (max-width: 1200px) {
+/* Адаптивность для отчетов */@media (max-width: 1200px) {
     .reports-generation-card .form-row {
         grid-template-columns: 1fr 1fr;
         gap: 16px;

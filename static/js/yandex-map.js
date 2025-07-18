@@ -17,6 +17,11 @@ function initMap() {
 
     ymaps.ready(function () {
         try {
+            // Проверяем доступность API
+            if (!ymaps.Map) {
+                throw new Error('Yandex Maps API not available');
+            }
+
             map = new ymaps.Map('yandex-map', {
                 center: [53.9045, 27.5615], // Минск
                 zoom: 11,
@@ -38,12 +43,21 @@ function initMap() {
             loadStoresData();
 
             // Обновляем данные каждые 30 секунд
-            setInterval(loadStoresData, 30000);
+            setInterval(() => {
+                loadStoresData().catch(error => {
+                    console.error('Error updating stores data:', error);
+                });
+            }, 30000);
 
             console.log('Yandex Map initialized successfully');
+            showNotification('Карта загружена успешно', 'success');
         } catch (error) {
             console.error('Error initializing map:', error);
-            showMapError();
+            if (error.message.includes('Invalid API key')) {
+                showMapErrorWithFallback('Проблема с API ключом Яндекс.Карт');
+            } else {
+                showMapError();
+            }
         }
     });
 }
@@ -64,6 +78,38 @@ function showMapError() {
                 </div>
             </div>
         `;
+    }
+}
+
+// Показать ошибку карты с fallback отображением данных
+function showMapErrorWithFallback(errorMessage) {
+    const mapContainer = document.getElementById('yandex-map');
+    if (mapContainer) {
+        // Загружаем данные магазинов для отображения в виде списка
+        loadStoresData().then(() => {
+            mapContainer.innerHTML = `
+                <div style="height: 100%; background: var(--card-bg); border-radius: 12px; padding: 20px; overflow-y: auto;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <i class="fas fa-map-marked-alt" style="font-size: 24px; color: var(--warning-color); margin-bottom: 8px;"></i>
+                        <div style="font-size: 16px; color: var(--text-secondary);">${errorMessage}</div>
+                        <div style="font-size: 14px; opacity: 0.7;">Отображается список магазинов</div>
+                    </div>
+                    <div id="stores-list" style="display: grid; gap: 15px;">
+                        ${stores.map(store => `
+                            <div onclick="showStorePanel(${store.id})" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; padding: 15px; cursor: pointer; transition: var(--transition);" 
+                                 onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-weight: 600; color: var(--belwest-green); margin-bottom: 8px;">${store.name}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">${store.address}</div>
+                                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <span>Посетители: <strong style="color: var(--belwest-green);">${store.visitors_today}</strong></span>
+                                    <span>Конверсия: <strong style="color: var(--belwest-green);">${store.conversion}%</strong></span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
     }
 }
 
@@ -125,8 +171,8 @@ function loadStoresData() {
         }
     ];
 
-    // Пытаемся загрузить данные с API
-    fetch('/api/map-data')
+    // Возвращаем Promise для правильной обработки в refreshMap
+    return fetch('/api/map-data')
         .then(response => {
             if (!response.ok) {
                 throw new Error('API unavailable');
@@ -137,11 +183,13 @@ function loadStoresData() {
             console.log('Loaded stores data from API:', data);
             stores = data.stores || testStores;
             displayStoresOnMap();
+            return stores;
         })
         .catch(error => {
             console.log('Using test data:', error.message);
             stores = testStores;
             displayStoresOnMap();
+            return stores;
         });
 }
 
@@ -391,17 +439,25 @@ function refreshMap() {
         const icon = refreshBtn.querySelector('i');
         if (icon) {
             icon.classList.add('fa-spin');
+            refreshBtn.disabled = true;
         }
         
         // Загружаем новые данные
-        loadStoresData();
-        
-        // Останавливаем анимацию через 2 секунды
-        setTimeout(() => {
+        loadStoresData().then(() => {
+            // Останавливаем анимацию после загрузки данных
             if (icon) {
                 icon.classList.remove('fa-spin');
+                refreshBtn.disabled = false;
             }
-        }, 2000);
+            showNotification('Карта обновлена', 'success');
+        }).catch(() => {
+            // Останавливаем анимацию в случае ошибки
+            if (icon) {
+                icon.classList.remove('fa-spin');
+                refreshBtn.disabled = false;
+            }
+            showNotification('Ошибка обновления карты', 'error');
+        });
     }
 }
 
