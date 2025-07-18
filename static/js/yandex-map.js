@@ -13,29 +13,23 @@ function initMap() {
     const mapContainer = document.getElementById('yandex-map');
     if (!mapContainer) {
         console.error('Map container not found');
+        showMapError();
         return;
     }
 
     if (typeof ymaps === 'undefined') {
         console.error('Yandex Maps API not loaded');
-        showMapError();
+        showMapErrorWithFallback('Яндекс.Карты недоступны');
         return;
     }
 
     ymaps.ready(function () {
         try {
-            // Проверяем доступность API
-            if (!ymaps.Map) {
-                throw new Error('Yandex Maps API not available');
-            }
-
             // Инициализируем карту
             map = new ymaps.Map('yandex-map', {
                 center: [53.9045, 27.5615], // Минск
                 zoom: 11,
-                controls: ['zoomControl', 'fullscreenControl', 'searchControl']
-            }, {
-                searchControlProvider: 'yandex#search'
+                controls: ['zoomControl', 'fullscreenControl']
             });
 
             // Создаем кластеризатор
@@ -54,18 +48,11 @@ function initMap() {
             // Загружаем данные магазинов
             loadStoresData();
 
-            // Обновляем данные каждые 30 секунд
-            setInterval(() => {
-                loadStoresData().catch(error => {
-                    console.error('Error updating stores data:', error);
-                });
-            }, 30000);
-
             console.log('Yandex Map initialized successfully');
             showNotification('Карта загружена успешно', 'success');
         } catch (error) {
             console.error('Error initializing map:', error);
-            showMapErrorWithFallback('Проблема с загрузкой карты');
+            showMapErrorWithFallback('Ошибка загрузки карты');
         }
     });
 }
@@ -189,14 +176,18 @@ function loadStoresData() {
         })
         .then(data => {
             console.log('Loaded stores data from API:', data);
-            stores = data.stores || testStores;
-            displayStoresOnMap();
+            stores = data;
+            if (map && clusterer) {
+                displayStoresOnMap();
+            }
             return stores;
         })
         .catch(error => {
             console.log('Using test data:', error.message);
             stores = testStores;
-            displayStoresOnMap();
+            if (map && clusterer) {
+                displayStoresOnMap();
+            }
             return stores;
         });
 }
@@ -206,13 +197,7 @@ function displayStoresOnMap() {
     console.log('Displaying stores on map...', { map: !!map, clusterer: !!clusterer, storesCount: stores.length });
     
     if (!map || !clusterer) {
-        console.log('Map or clusterer not ready, waiting...');
-        // Пробуем снова через 1 секунду
-        setTimeout(() => {
-            if (map && clusterer) {
-                displayStoresOnMap();
-            }
-        }, 1000);
+        console.log('Map or clusterer not ready');
         return;
     }
 
@@ -574,21 +559,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Yandex Maps API found, initializing...');
         initMap();
     } else {
-        console.log('Yandex Maps API not found, waiting...');
-        // Ждем загрузки API
-        let attempts = 0;
-        const checkInterval = setInterval(() => {
-            attempts++;
-            if (typeof ymaps !== 'undefined') {
-                console.log('Yandex Maps API loaded after', attempts, 'attempts');
-                clearInterval(checkInterval);
-                initMap();
-            } else if (attempts > 20) {
-                console.error('Yandex Maps API failed to load after 20 attempts');
-                clearInterval(checkInterval);
-                showMapError();
-            }
-        }, 500);
+        console.log('Yandex Maps API not found, using fallback...');
+        showMapErrorWithFallback('Яндекс.Карты недоступны');
     }
 });
 
