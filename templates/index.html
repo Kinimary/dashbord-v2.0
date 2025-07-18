@@ -351,6 +351,27 @@
         </div>
     </div>
 
+                <!-- AI Insights Widget -->
+                <div class="glass-card ai-insights-widget">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> AI Insights</h3>
+                        <button id="refresh-ai-insights" class="btn-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="ai-insights-content">
+                        <div id="ai-insights-list">
+                            <div class="insight-item loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Загрузка AI анализа...</span>
+                            </div>
+                        </div>
+                        <div class="ai-recommendations" id="ai-recommendations">
+                            <!-- AI рекомендации будут загружены здесь -->
+                        </div>
+                    </div>
+                </div>
+
     <!-- Страница переходов -->
     <div class="page-transition-overlay" id="page-transition">
         <div class="transition-spinner"></div>

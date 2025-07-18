@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import statistics
 import re
+from flask import request
 
 class BelwestAIAgent:
     def __init__(self, db_path: str = 'visitor_data.db'):

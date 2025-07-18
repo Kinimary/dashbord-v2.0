@@ -12,7 +12,7 @@ from handlers.users import users
 from handlers.sensors import sensors as sensors_bp
 from handlers.reports import reports
 from handlers.permissions import permissions
-from ai_agent import create_ai_endpoints
+from ai_agent import create_ai_endpoints, BelwestAIAgent
 
 app = Flask(__name__)
 
@@ -634,4 +634,14 @@ if __name__ == '__main__':
         os.makedirs('flask_session')
 
     init_db()
+
+    # Инициализация AI агента
+    ai_agent = BelwestAIAgent()
+    app.ai_agent = ai_agent
+
+    # Регистрация AI endpoints
+    create_ai_endpoints(app, ai_agent)
+
+    print("AI агент инициализирован и активирован")
+
     app.run(host='0.0.0.0', port=5000, debug=True)

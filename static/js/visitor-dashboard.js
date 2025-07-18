@@ -912,7 +912,8 @@ function showErrorState(message) {
 
 // Глобальные функции для экспорта
 window.refreshDashboardData = refreshDashboardData;
-window.filterSensorsList = filterSensorsByStatus;
+window.filterSensorsList = filter```python
+SensorsByStatus;
 window.toggleActivityStream = toggleActivityPause;
 window.clearActivityStream = clearActivityStream;
 window.updateStoresData = updateStoresData;
@@ -1005,8 +1006,20 @@ function addActivityItem() {
 function loadDashboard() {
     console.log('Дашборд загружается...');
     updateMetrics();
-    loadSensorData();
-    updateCharts();
+    loadChartData();
+    loadAIInsights();
+
+    // Автообновление каждые 30 секунд
+    setInterval(updateMetrics, 30000);
+    setInterval(loadAIInsights, 60000); // AI инсайты каждую минуту
+
+    // Обработчик кнопки обновления AI инсайтов
+    const refreshAIBtn = document.getElementById('refresh-ai-insights');
+    if (refreshAIBtn) {
+        refreshAIBtn.addEventListener('click', loadAIInsights);
+    }
+
+    console.log('Дашборд инициализирован');
 }
 
 // Проверка авторизации в запросах
@@ -1023,8 +1036,20 @@ function fetchWithAuth(url, options = {}) {
 function loadDashboard() {
     console.log('Дашборд загружается...');
     updateMetrics();
-    loadSensorData();
-    updateCharts();
+    loadChartData();
+    loadAIInsights();
+
+    // Автообновление каждые 30 секунд
+    setInterval(updateMetrics, 30000);
+    setInterval(loadAIInsights, 60000); // AI инсайты каждую минуту
+
+    // Обработчик кнопки обновления AI инсайтов
+    const refreshAIBtn = document.getElementById('refresh-ai-insights');
+    if (refreshAIBtn) {
+        refreshAIBtn.addEventListener('click', loadAIInsights);
+    }
+
+    console.log('Дашборд инициализирован');
 }
 
 // Проверка авторизации в запросах
@@ -1059,4 +1084,112 @@ function loadSensorData(period = 'day', hierarchyType = '', entityId = '') {
         .catch(error => {
             console.error('Ошибка загрузки данных датчиков:', error);
         });
+}
+
+// Функция загрузки данных для графиков
+async function loadChartData() {
+    try {
+        const response = await fetch('/api/dashboard-data');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            updateCharts(data.chart_data);
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных графиков:', error);
+    }
+}
+
+// Функция загрузки AI инсайтов
+async function loadAIInsights() {
+    try {
+        const insightsList = document.getElementById('ai-insights-list');
+        const recommendationsDiv = document.getElementById('ai-recommendations');
+
+        if (!insightsList) return;
+
+        // Показываем индикатор загрузки
+        insightsList.innerHTML = `
+            <div class="insight-item loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Загрузка AI анализа...</span>
+            </div>
+        `;
+
+        // Загружаем инсайты
+        const insightsResponse = await fetch('/api/ai/insights');
+        const insightsData = await insightsResponse.json();
+
+        if (insightsData.status === 'success') {
+            displayAIInsights(insightsData.insights);
+        }
+
+        // Загружаем рекомендации
+        const recommendationsResponse = await fetch('/api/ai/recommendations');
+        const recommendationsData = await recommendationsResponse.json();
+
+        if (recommendationsData.status === 'success') {
+            displayAIRecommendations(recommendationsData.recommendations);
+        }
+
+    } catch (error) {
+        console.error('Ошибка загрузки AI инсайтов:', error);
+        const insightsList = document.getElementById('ai-insights-list');
+        if (insightsList) {
+            insightsList.innerHTML = `
+                <div class="insight-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Ошибка загрузки AI данных</span>
+                </div>
+            `;
+        }
+    }
+}
+
+// Функция отображения AI инсайтов
+function displayAIInsights(insights) {
+    const insightsList = document.getElementById('ai-insights-list');
+    if (!insightsList) return;
+
+    if (insights.length === 0) {
+        insightsList.innerHTML = `
+            <div class="insight-item">
+                <i class="fas fa-info-circle"></i>
+                <span>Нет доступных инсайтов</span>
+            </div>
+        `;
+        return;
+    }
+
+    const insightsHTML = insights.map(insight => `
+        <div class="insight-item">
+            <i class="fas fa-lightbulb"></i>
+            <span>${insight}</span>
+        </div>
+    `).join('');
+
+    insightsList.innerHTML = insightsHTML;
+}
+
+// Функция отображения AI рекомендаций
+function displayAIRecommendations(recommendations) {
+    const recommendationsDiv = document.getElementById('ai-recommendations');
+    if (!recommendationsDiv) return;
+
+    if (recommendations.length === 0) {
+        recommendationsDiv.innerHTML = '';
+        return;
+    }
+
+    const recommendationsHTML = recommendations.slice(0, 3).map(rec => `
+        <div class="recommendation-item">
+            <div class="title">
+                ${rec.title}
+                <span class="recommendation-priority priority-${rec.priority}">${rec.priority}</span>
+            </div>
+            <div class="description">${rec.description}</div>
+        </div>
+    `).join('');
+
+    recommendationsDiv.innerHTML = recommendationsHTML;
 }
