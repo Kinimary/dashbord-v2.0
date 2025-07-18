@@ -389,32 +389,7 @@ def get_store_sensors(store_id):
     finally:
         conn.close()
 
-@sensors.route('/api/store-sensors/<int:store_id>/<int:sensor_id>', methods=['POST'])
-def assign_sensor_to_store(store_id, sensor_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    try:
-        # Check if assignment already exists
-        cursor.execute('''
-            SELECT COUNT(*) FROM hourly_statistics 
-            WHERE store_id = ? AND sensor_id = ?
-        ''', (store_id, sensor_id))
-
-        if cursor.fetchone()[0] == 0:
-            # Create initial assignment
-            cursor.execute('''
-                INSERT INTO hourly_statistics (store_id, sensor_id, hour, day_of_week, visitor_count, date)
-                VALUES (?, ?, 0, 0, 0, date('now'))
-            ''', (store_id, sensor_id))
-
-        conn.commit()
-        return jsonify({'message': 'Датчик привязан к магазину'}), 200
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'error': 'Ошибка привязки датчика'}), 500
-    finally:
-        conn.close()
 
 @sensors.route('/api/store-sensors/<int:store_id>/<int:sensor_id>', methods=['DELETE'])
 def unassign_sensor_from_store(store_id, sensor_id):
@@ -436,7 +411,7 @@ def unassign_sensor_from_store(store_id, sensor_id):
         conn.close()
 
 @sensors.route('/api/sensor-assignment', methods=['POST'])
-def assign_sensor_to_store():
+def assign_sensor_to_store_new():
     """Привязка датчика к магазину"""
     try:
         data = request.get_json()

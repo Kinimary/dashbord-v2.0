@@ -11,6 +11,7 @@ import functools
 from handlers.users import users
 from handlers.sensors import sensors as sensors_bp
 from handlers.reports import reports
+from handlers.permissions import permissions
 from ai_agent import create_ai_endpoints
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ Session(app)
 app.register_blueprint(users, url_prefix='/')
 app.register_blueprint(sensors_bp, url_prefix='/')
 app.register_blueprint(reports, url_prefix='/')
+app.register_blueprint(permissions, url_prefix='/')
 
 # Регистрация AI endpoints
 create_ai_endpoints(app)
