@@ -434,3 +434,47 @@ def unassign_sensor_from_store(store_id, sensor_id):
         return jsonify({'error': 'Ошибка отвязки датчика'}), 500
     finally:
         conn.close()
+
+@sensors.route('/api/sensor-assignment', methods=['POST'])
+def assign_sensor_to_store():
+    """Привязка датчика к магазину"""
+    try:
+        data = request.get_json()
+        sensor_id = data.get('sensor_id')
+        store_id = data.get('store_id')
+
+        if not sensor_id or not store_id:
+            return jsonify({'success': False, 'error': 'Sensor ID and Store ID are required'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Проверяем существование датчика и магазина
+        cursor.execute('SELECT id FROM sensors WHERE id = ?', (sensor_id,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Датчик не найден'})
+            
+        cursor.execute('SELECT id FROM stores WHERE id = ?', (store_id,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Магазин не найден'})
+
+        # Создаем связь через store_sensors
+        cursor.execute('''
+            INSERT OR REPLACE INTO store_sensors (store_id, sensor_id, created_at)
+            VALUES (?, ?, ?)
+        ''', (store_id, sensor_id, datetime.now().isoformat()))
+        
+        # Также создаем запись в hourly_statistics для совместимости
+        cursor.execute('''
+            INSERT OR IGNORE INTO hourly_statistics (store_id, sensor_id, hour, day_of_week, visitor_count, date)
+            VALUES (?, ?, 0, 0, 0, date('now'))
+        ''', (store_id, sensor_id))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Датчик успешно привязан к магазину'})
+
+    except Exception as e:
+        print(f"Error assigning sensor: {e}")
+        return jsonify({'success': False, 'error': str(e)})

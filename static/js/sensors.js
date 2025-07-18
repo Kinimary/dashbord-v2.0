@@ -177,13 +177,23 @@ function updateMetrics(sensors) {
 }
 
 function assignSensorToStore() {
-    const sensorId = document.getElementById('sensor-select').value;
-    const storeId = document.getElementById('store-select').value;
+    const sensorSelect = document.getElementById('sensor-select');
+    const storeSelect = document.getElementById('store-select');
+
+    if (!sensorSelect || !storeSelect) {
+        console.error('Элементы формы не найдены');
+        return;
+    }
+
+    const sensorId = sensorSelect.value;
+    const storeId = storeSelect.value;
 
     if (!sensorId || !storeId) {
         alert('Пожалуйста, выберите датчик и магазин');
         return;
     }
+
+    console.log('Привязка датчика:', { sensor_id: sensorId, store_id: storeId });
 
     fetch('/api/sensor-assignment', {
         method: 'POST',
@@ -191,23 +201,28 @@ function assignSensorToStore() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            sensor_id: sensorId,
-            store_id: storeId
+            sensor_id: parseInt(sensorId),
+            store_id: parseInt(storeId)
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
-            alert('Датчик успешно привязан к магазину!');
-            loadSensors(); // Обновляем список датчиков
-            clearAssignmentForm();
+            alert('Датчик успешно привязан к магазину');
+            loadSensors();
+            sensorSelect.value = '';
+            storeSelect.value = '';
         } else {
-            alert('Ошибка при привязке датчика: ' + (data.error || 'Неизвестная ошибка'));
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
         }
     })
     .catch(error => {
         console.error('Ошибка при привязке датчика:', error);
-        alert('Ошибка при привязке датчика');
+        alert('Ошибка при привязке датчика: ' + error.message);
     });
 }
 

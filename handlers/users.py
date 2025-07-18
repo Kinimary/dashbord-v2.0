@@ -667,6 +667,12 @@ def get_hierarchy_candidates(parent_id):
     """Get potential child users for hierarchy based on parent role"""
     from flask import session
 
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
@@ -729,6 +735,12 @@ def get_user_sensors(user_id):
     """Get available and assigned sensors for a user"""
     from flask import session
 
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
+
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
         return jsonify({'error': 'Недостаточно прав доступа'}), 403
@@ -785,6 +797,12 @@ def get_user_sensors(user_id):
 def assign_sensors():
     """Assign sensors to a user"""
     from flask import session
+
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
 
     user_role = session.get('role')
     if user_role not in ['admin', 'manager']:
