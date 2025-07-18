@@ -2126,6 +2126,8 @@ align-items: center;
     backdrop-filter: var(--blur);
     border-radius: 16px 16px 0 0;
     box-shadow: 0 4px 16px var(--shadow-light);
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .dashboard-tabs .tab {
@@ -2138,13 +2140,25 @@ align-items: center;
     transition: all 0.3s ease;
     font-weight: 600;
     font-size: 13px;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 120px;
     text-align: center;
     position: relative;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.dashboard-tabs .tab.active {
+    flex: 0 0 auto;
+    max-width: none;
+    min-width: fit-content;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    padding: 12px 24px;
+    font-size: 14px;
 }
 
 .dashboard-tabs .tab::before {
@@ -2172,6 +2186,10 @@ align-items: center;
     background: rgba(46, 139, 87, 0.15);
     border-color: var(--belwest-green);
     transform: translateY(-2px);
+    box-shadow: 
+        0 4px 20px rgba(46, 139, 87, 0.3),
+        0 0 15px rgba(46, 139, 87, 0.2);
+    z-index: 10;
 }
 
 .dashboard-tabs .tab.active::before {
