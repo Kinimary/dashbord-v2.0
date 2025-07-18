@@ -23,3 +23,7 @@ args = "python server.py"
 [[ports]]
 localPort = 1521
 externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
