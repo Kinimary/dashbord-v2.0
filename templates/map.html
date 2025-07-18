@@ -6,7 +6,7 @@
     <title>BELWEST - Карта магазинов</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU&mode=release&load=package.full,package.heatmap" type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&mode=release&load=package.full,package.heatmap" type="text/javascript"></script>
     <style>
         .map-container {
             height: 60vh;
@@ -148,6 +148,21 @@
             width: 16px;
             height: 16px;
             border-radius: 50%;
+        }
+
+        .chart-btn.active {
+            background: var(--belwest-green) !important;
+            color: white !important;
+            border-color: var(--belwest-green) !important;
+        }
+
+        .fa-spin {
+            animation: fa-spin 1s infinite linear;
+        }
+
+        @keyframes fa-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>

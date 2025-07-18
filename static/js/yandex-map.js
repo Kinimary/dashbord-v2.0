@@ -1,3 +1,4 @@
+
 let map;
 let stores = [];
 let clusterer;
@@ -229,22 +230,30 @@ function viewStoreDetails() {
 
 // Функция тепловой карты
 function toggleHeatmap() {
-    if (!map) return;
+    if (!map) {
+        console.log('Карта не инициализирована');
+        return;
+    }
 
+    const btn = document.getElementById('toggle-heatmap');
+    
     if (isHeatmapActive) {
         // Выключаем тепловую карту
         if (heatmap) {
             map.geoObjects.remove(heatmap);
             heatmap = null;
         }
-        clusterer.options.set('visible', true);
+        if (clusterer) {
+            clusterer.options.set('visible', true);
+        }
         isHeatmapActive = false;
 
-        const btn = document.getElementById('toggle-heatmap');
         if (btn) {
             btn.innerHTML = '<i class="fas fa-fire"></i> Тепловая карта';
+            btn.classList.remove('active');
             btn.style.background = '';
         }
+        console.log('Тепловая карта выключена');
     } else {
         // Включаем тепловую карту
         if (stores && stores.length > 0) {
@@ -255,8 +264,8 @@ function toggleHeatmap() {
             ]);
 
             // Создание тепловой карты
-            if (ymaps.Heatmap) {
-                window.heatmap = new ymaps.Heatmap(heatmapData, {
+            try {
+                heatmap = new ymaps.Heatmap(heatmapData, {
                     radius: 20,
                     dissipating: false,
                     opacity: 0.8,
@@ -268,19 +277,29 @@ function toggleHeatmap() {
                         1.0: 'rgba(162, 36, 25, 1)'
                     }
                 });
-            } else {
-                console.warn('ymaps.Heatmap не доступен. Убедитесь, что подключен модуль heatmap.');
-            }
 
-            map.geoObjects.add(heatmap);
-            clusterer.options.set('visible', false);
-            isHeatmapActive = true;
+                map.geoObjects.add(heatmap);
+                
+                if (clusterer) {
+                    clusterer.options.set('visible', false);
+                }
+                
+                isHeatmapActive = true;
 
-            const btn = document.getElementById('toggle-heatmap');
-            if (btn) {
-                btn.innerHTML = '<i class="fas fa-fire"></i> Выключить тепловую карту';
-                btn.style.background = 'var(--belwest-green)';
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-fire"></i> Выключить тепловую карту';
+                    btn.classList.add('active');
+                    btn.style.background = 'var(--belwest-green)';
+                    btn.style.color = 'white';
+                }
+                console.log('Тепловая карта включена');
+            } catch (error) {
+                console.error('Ошибка создания тепловой карты:', error);
+                alert('Тепловая карта временно недоступна');
             }
+        } else {
+            console.log('Нет данных для тепловой карты');
+            alert('Нет данных для отображения тепловой карты');
         }
     }
 }
@@ -320,14 +339,31 @@ function toggleFullscreen() {
     }
 }
 
-// Обработчики фильтров карты
+// Функция обновления карты
+function refreshMap() {
+    const refreshBtn = document.getElementById('refresh-map');
+    if (refreshBtn) {
+        const icon = refreshBtn.querySelector('i');
+        icon.classList.add('fa-spin');
+        
+        // Загружаем новые данные
+        loadStoresData();
+        
+        // Останавливаем анимацию через 2 секунды
+        setTimeout(() => {
+            icon.classList.remove('fa-spin');
+        }, 2000);
+    }
+}
+
+// Обработчики событий
 document.addEventListener('DOMContentLoaded', function() {
     // Фильтр периода
     const periodFilter = document.getElementById('period-filter');
     if (periodFilter) {
         periodFilter.addEventListener('change', function() {
             console.log('Period changed to:', this.value);
-            loadStoresData();
+            refreshMap();
         });
     }
 
@@ -336,17 +372,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (metricFilter) {
         metricFilter.addEventListener('change', function() {
             console.log('Metric changed to:', this.value);
-            loadStoresData();
+            refreshMap();
         });
     }
 
     // Кнопка обновления
     const refreshBtn = document.getElementById('refresh-map');
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            console.log('Refreshing map data');
-            loadStoresData();
-        });
+        refreshBtn.addEventListener('click', refreshMap);
     }
 
     // Кнопка тепловой карты
@@ -377,26 +410,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Инициализация карты
+    // Инициализация карты после загрузки ymaps
     if (typeof ymaps !== 'undefined') {
-        ymaps.ready(['package.full', 'package.heatmap'], function() {
-            console.log('Yandex Maps API загружен');
-    
-            window.myMap = new ymaps.Map('map', {
-                center: [53.9, 27.5667], // Минск
-                zoom: 10,
-                controls: ['zoomControl', 'searchControl', 'typeSelector', 'fullscreenControl']
-            });
-    
-            // Загружаем данные магазинов
-            loadMapData();
-    
-            // Обновляем данные каждые 30 секунд
-            setInterval(loadMapData, 30000);
-        }, function(error) {
-            console.error('Ошибка загрузки Yandex Maps:', error);
-        });
+        console.log('Инициализация Яндекс.Карт...');
+        initMap();
     } else {
-        console.error('Yandex Maps API not loaded');
+        console.error('Yandex Maps API не загружен');
+        // Показываем сообщение об ошибке
+        const mapContainer = document.getElementById('yandex-map');
+        if (mapContainer) {
+            mapContainer.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
+                        <div>Карта временно недоступна</div>
+                        <div style="font-size: 14px; margin-top: 8px;">Проверьте подключение к интернету</div>
+                    </div>
+                </div>
+            `;
+        }
     }
 });
+
+// Экспортируем функции для глобального доступа
+window.showStorePanel = showStorePanel;
+window.closeStorePanel = closeStorePanel;
+window.viewStoreDetails = viewStoreDetails;
+window.toggleHeatmap = toggleHeatmap;
+window.toggleFullscreen = toggleFullscreen;
+window.refreshMap = refreshMap;
