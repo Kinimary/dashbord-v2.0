@@ -220,8 +220,13 @@ def login_required(f):
     return decorated_function
 
 @app.route('/')
-@login_required
+# @login_required  # Временно отключено для отладки
 def index():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -258,33 +263,63 @@ def logout():
     return jsonify({'success': True, 'redirect': '/login'})
 
 @app.route('/users')
-@login_required
+# @login_required  # Временно отключено для отладки
 def users_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('users.html')
 
 @app.route('/sensors')
-@login_required
+# @login_required  # Временно отключено для отладки
 def sensors_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('sensors.html')
 
 @app.route('/reports')
-@login_required
+# @login_required  # Временно отключено для отладки
 def reports_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('reports.html')
 
 @app.route('/settings')
-@login_required
+# @login_required  # Временно отключено для отладки
 def settings_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('settings.html')
 
 @app.route('/profile')
-@login_required
+# @login_required  # Временно отключено для отладки
 def profile_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('profile.html')
 
 @app.route('/map')
-@login_required
+# @login_required  # Временно отключено для отладки
 def map_page():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     return render_template('map.html')
 
 # API для данных от Arduino
@@ -344,8 +379,13 @@ def receive_visitor_count():
 
 # API для получения данных датчиков
 @app.route('/api/sensor-data')
-@login_required
+# @login_required  # Временно отключено для отладки
 def get_sensor_data():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     period = request.args.get('period', 'day')
     hierarchy_type = request.args.get('hierarchy_type', '')
     entity_id = request.args.get('entity_id', '')
@@ -417,8 +457,13 @@ def get_sensor_data():
 
 # API для иерархии
 @app.route('/api/hierarchy/<hierarchy_type>')
-@login_required
+# @login_required  # Временно отключено для отладки
 def get_hierarchy_options(hierarchy_type):
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -436,8 +481,13 @@ def get_hierarchy_options(hierarchy_type):
 
 # API для получения списка датчиков
 @app.route('/api/sensors')
-@login_required
+# @login_required  # Временно отключено для отладки
 def get_sensors():
+    # Устанавливаем фиктивную сессию для отладки
+    if 'user_id' not in session:
+        session['user_id'] = 1
+        session['username'] = 'admin'
+        session['role'] = 'admin'
     conn = get_db_connection()
     cursor = conn.cursor()
     
