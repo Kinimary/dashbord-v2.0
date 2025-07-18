@@ -38,84 +38,98 @@ def get_reports_data():
 
 @reports.route('/api/export', methods=['POST'])
 def export_data():
-    data = request.get_json()
-    export_format = data.get('format', 'csv')
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
+    import io
+    from flask import Response
+    
+    data_format = request.form.get('format', 'csv')
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
     query = '''
-        SELECT 
-            s.name as sensor_name,
-            s.location,
-            vd.visitor_count,
-            vd.timestamp
-        FROM visitor_data vd
-        JOIN sensors s ON vd.sensor_id = s.id
+        SELECT device_id, count, timestamp, status, received_at, location
+        FROM visitor_counts
         WHERE 1=1
     '''
     
     params = []
     if start_date:
-        query += ' AND DATE(vd.timestamp) >= ?'
+        query += ' AND DATE(received_at) >= ?'
         params.append(start_date)
     
     if end_date:
-        query += ' AND DATE(vd.timestamp) <= ?'
+        query += ' AND DATE(received_at) <= ?'
         params.append(end_date)
     
-    query += ' ORDER BY vd.timestamp DESC'
+    query += ' ORDER BY received_at DESC'
     
     cursor.execute(query, params)
-    results = cursor.fetchall()
+    rows = cursor.fetchall()
     conn.close()
     
-    if export_format == 'csv':
-        output = io.StringIO()
-        writer = csv.writer(output)
-        
-        # Заголовки
-        writer.writerow(['Датчик', 'Местоположение', 'Количество посетителей', 'Время'])
-        
-        # Данные
-        for row in results:
-            writer.writerow([row[0], row[1], row[2], row[3]])
-        
-        output.seek(0)
-        
-        return Response(
-            output.getvalue(),
-            mimetype='text/csv',
-            headers={'Content-Disposition': f'attachment;filename=report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
-        )
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    elif export_format == 'excel':
-        output = io.BytesIO()
-        workbook = xlsxwriter.Workbook(output)
+    if data_format == 'csv':
+        filename = f'report_{timestamp}.csv'
+        filepath = os.path.join('static', filename)
+        
+        # Создаем директорию static если её нет
+        os.makedirs('static', exist_ok=True)
+        
+        with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Device ID', 'Count', 'Timestamp', 'Status', 'Received At', 'Location'])
+            for row in rows:
+                writer.writerow(row)
+                
+    elif data_format == 'xlsx':
+        filename = f'report_{timestamp}.xlsx'
+        filepath = os.path.join('static', filename)
+        
+        # Создаем директорию static если её нет
+        os.makedirs('static', exist_ok=True)
+        
+        workbook = xlsxwriter.Workbook(filepath)
         worksheet = workbook.add_worksheet()
         
         # Заголовки
-        headers = ['Датчик', 'Местоположение', 'Количество посетителей', 'Время']
+        headers = ['Device ID', 'Count', 'Timestamp', 'Status', 'Received At', 'Location']
         for col, header in enumerate(headers):
             worksheet.write(0, col, header)
         
         # Данные
-        for row_num, row_data in enumerate(results, 1):
-            for col, value in enumerate(row_data):
-                worksheet.write(row_num, col, value)
+        for row_idx, row in enumerate(rows, start=1):
+            for col, value in enumerate(row):
+                worksheet.write(row_idx, col, value)
         
         workbook.close()
-        output.seek(0)
         
-        return Response(
-            output.getvalue(),
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={'Content-Disposition': f'attachment;filename=report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'}
-        )
+    elif data_format == 'pdf':
+        # Базовая поддержка PDF (можно расширить)
+        filename = f'report_{timestamp}.txt'
+        filepath = os.path.join('static', filename)
+        
+        os.makedirs('static', exist_ok=True)
+        
+        with open(filepath, 'w', encoding='utf-8') as txtfile:
+            txtfile.write('BELWEST - Отчет по посещаемости\n')
+            txtfile.write('=' * 50 + '\n\n')
+            txtfile.write(f'Период: {start_date} - {end_date}\n')
+            txtfile.write(f'Дата создания: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")}\n\n')
+            txtfile.write('Device ID\tCount\tTimestamp\tStatus\tReceived At\tLocation\n')
+            txtfile.write('-' * 80 + '\n')
+            for row in rows:
+                txtfile.write('\t'.join(str(x) for x in row) + '\n')
+    else:
+        return jsonify({'error': 'Неподдерживаемый формат'}), 400
     
-    return jsonify({'error': 'Неподдерживаемый формат экспорта'}), 400
+    return jsonify({
+        'message': 'Отчет успешно сгенерирован',
+        'filename': filename,
+        'format': data_format
+    })
 def export_data():
     data_format = request.form.get('format', 'csv')
     start_date = request.form.get('start_date')

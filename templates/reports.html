@@ -1,196 +1,478 @@
+
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>BELWEST - Отчеты</title>
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='css/style.css') }}"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-    </head>
-    <body>
-        <div class="container">
-            <!-- Боковая панель -->
-            <div class="sidebar" id="sidebar">
-                <div class="logo">
-                    <span>BELWEST</span>
-                </div>
-                <ul class="menu">
-                    <li>
-                        <a href="/">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Дашборд</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/users">
-                            <i class="fas fa-users"></i>
-                            <span>Пользователи</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/sensors">
-                            <i class="fas fa-robot"></i>
-                            <span>Датчики</span>
-                        </a>
-                    </li>
-                    <li class="active">
-                        <a href="/reports">
-                            <i class="fas fa-file-alt"></i>
-                            <span>Отчеты</span>
-                        </a>
-                    </li>
-                    
-                </ul>
-                <div class="sidebar-settings">
-                    <div class="settings-dropdown">
-                        <button class="settings-btn" id="settings-btn">
-                            <i class="fas fa-cog"></i>
-                            <span>Настройки</span>
-                            <i class="fas fa-chevron-down settings-arrow"></i>
-                        </button>
-                        <div class="settings-menu">
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-moon"></i>
-                                    <span>Темная тема</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
-                                    <span class="toggle-slider"></span>
-                                </div>
-                            </div>
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-bell"></i>
-                                    <span>Уведомления</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
-                            </div>
-                            <div class="setting-item">
-                                <div class="setting-label">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Авто-обновление</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BELWEST - Отчеты</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Боковая панель -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <span>BELWEST</span>
             </div>
-
-            <!-- Основное содержимое -->
-            <div class="main-content">
-                <div class="top-bar">
-                    <h1>Отчеты</h1>
-                    <div class="user-profile">
-                        <div class="user-info">
-                            <div class="user-avatar">
-                                <i class="fas fa-user"></i>
+            <ul class="menu">
+                <li>
+                    <a href="/">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/users">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/sensors">
+                        <i class="fas fa-robot"></i>
+                        <span>Датчики</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="/reports">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/map">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Карта магазинов</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-settings">
+                <div class="settings-dropdown">
+                    <button class="settings-btn" id="settings-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                        <i class="fas fa-chevron-down settings-arrow"></i>
+                    </button>
+                    <div class="settings-menu">
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-moon"></i>
+                                <span>Темная тема</span>
                             </div>
-                            <span>Админ</span>
-                            <div class="user-details">
-                                <p>Samantha Maybury</p>
-                                <a href="#" onclick="logout()">Выйти</a>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="dark-mode-toggle" data-setting="darkMode">
+                                <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="reports-container">
-                    <h2>Выбор отчета</h2>
-                    <div class="report-filters">
-                        <div class="form-group">
-                            <label for="start-date">Дата начала</label>
-                            <input type="date" id="start-date" required />
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-bell"></i>
+                                <span>Уведомления</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications-toggle" data-setting="notifications" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="end-date">Дата окончания</label>
-                            <input type="date" id="end-date" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="report-format">Формат отчета</label>
-                            <select id="report-format" required>
-                                <option value="csv">CSV</option>
-                                <option value="xlsx">Excel (XLSX)</option>
-                                <option value="pdf">PDF</option>
-                            </select>
-                        </div>
-                        <button id="generate-report">
-                            Сгенерировать отчет
-                        </button>
-                    </div>
-
-                    <div class="report-preview">
-                        <h3>Предпросмотр отчета</h3>
-                        <div id="report-preview-content">
-                            <!-- Предпросмотр отчета загружается здесь -->
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Авто-обновление</span>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="auto-update-toggle" data-setting="autoUpdate" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script src="/static/js/page-transitions.js"></script>
-        <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-        <script>
-            // Additional page-specific functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const generateReportBtn =
-                    document.getElementById("generate-report");
-                generateReportBtn.addEventListener("click", generateReport);
+        <!-- Основное содержимое -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h1>Отчеты</h1>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span>Админ</span>
+                        <div class="user-details">
+                            <p>Samantha Maybury</p>
+                            <a href="#" onclick="logout()">Выйти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                function generateReport() {
-                    const startDate =
-                        document.getElementById("start-date").value;
-                    const endDate = document.getElementById("end-date").value;
-                    const format =
-                        document.getElementById("report-format").value;
+            <div class="reports-container">
+                <!-- Карточка для генерации отчетов -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-file-export"></i>
+                            Генерация отчетов
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-filters">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="start-date">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        Дата начала
+                                    </label>
+                                    <input type="date" id="start-date" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="end-date">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        Дата окончания
+                                    </label>
+                                    <input type="date" id="end-date" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="report-format">
+                                    <i class="fas fa-file-download"></i>
+                                    Формат отчета
+                                </label>
+                                <select id="report-format" required>
+                                    <option value="csv">CSV файл</option>
+                                    <option value="xlsx">Excel (XLSX)</option>
+                                    <option value="pdf">PDF документ</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button id="generate-report" class="btn-primary">
+                                    <i class="fas fa-download"></i>
+                                    Сгенерировать отчет
+                                </button>
+                                <button id="preview-report" class="btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                    Предпросмотр
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    if (!startDate || !endDate) {
-                        alert("Пожалуйста, укажите даты");
-                        return;
-                    }
+                <!-- Карточка предпросмотра -->
+                <div class="card" id="preview-card" style="display: none;">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-search"></i>
+                            Предпросмотр отчета
+                        </h3>
+                        <div class="card-actions">
+                            <button id="refresh-preview" class="btn-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button id="close-preview" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="preview-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" id="preview-records">0</div>
+                                <div class="stat-label">Записей найдено</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="preview-period">-</div>
+                                <div class="stat-label">Период</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="preview-size">0 KB</div>
+                                <div class="stat-label">Размер файла</div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <div id="report-preview-content">
+                                <div class="loading-message">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    Загрузка предпросмотра...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    fetch("/api/export", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        body: `format=${format}&start_date=${startDate}&end_date=${endDate}`,
-                    })
-                        .then((response) => response.json())
-                        .then((data) => {
-                            if (data.filename) {
-                                alert(
-                                    `Отчет успешно сгенерирован в формате ${data.format}.`
-                                );
-                                // Здесь можно добавить код для автоматической загрузки файла
-                            } else {
-                                alert("Ошибка при генерации отчета");
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Ошибка:", error);
-                            alert("Произошла ошибка при генерации отчета");
-                        });
+                <!-- Карточка истории отчетов -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-history"></i>
+                            История отчетов
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="reports-history">
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-name">Отчет за неделю</div>
+                                    <div class="history-date">15.07.2025 14:30</div>
+                                </div>
+                                <div class="history-format">CSV</div>
+                                <div class="history-size">245 KB</div>
+                                <div class="history-actions">
+                                    <button class="btn-download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn-delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-name">Месячный отчет</div>
+                                    <div class="history-date">10.07.2025 09:15</div>
+                                </div>
+                                <div class="history-format">XLSX</div>
+                                <div class="history-size">1.2 MB</div>
+                                <div class="history-actions">
+                                    <button class="btn-download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn-delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущей даты по умолчанию
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 7);
+            
+            document.getElementById('start-date').value = yesterday.toISOString().split('T')[0];
+            document.getElementById('end-date').value = today.toISOString().split('T')[0];
+
+            // Обработчики событий
+            const generateBtn = document.getElementById('generate-report');
+            const previewBtn = document.getElementById('preview-report');
+            const closePreviewBtn = document.getElementById('close-preview');
+            const refreshPreviewBtn = document.getElementById('refresh-preview');
+
+            generateBtn.addEventListener('click', generateReport);
+            previewBtn.addEventListener('click', showPreview);
+            closePreviewBtn.addEventListener('click', hidePreview);
+            refreshPreviewBtn.addEventListener('click', refreshPreview);
+
+            // Автоматический предпросмотр при изменении дат
+            document.getElementById('start-date').addEventListener('change', autoPreview);
+            document.getElementById('end-date').addEventListener('change', autoPreview);
+
+            function generateReport() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                const format = document.getElementById('report-format').value;
+
+                if (!startDate || !endDate) {
+                    showNotification('Пожалуйста, укажите даты', 'warning');
+                    return;
                 }
-            });
-        </script>
-    </body>
+
+                if (new Date(startDate) > new Date(endDate)) {
+                    showNotification('Дата начала не может быть больше даты окончания', 'error');
+                    return;
+                }
+
+                // Показываем индикатор загрузки
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
+                generateBtn.disabled = true;
+
+                fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `format=${format}&start_date=${startDate}&end_date=${endDate}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.filename) {
+                        showNotification(`Отчет успешно сгенерирован в формате ${data.format}`, 'success');
+                        // Автоматическое скачивание файла
+                        window.location.href = `/static/${data.filename}`;
+                        addToHistory(data.filename, format, startDate, endDate);
+                    } else {
+                        showNotification('Ошибка при генерации отчета', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    showNotification('Произошла ошибка при генерации отчета', 'error');
+                })
+                .finally(() => {
+                    generateBtn.innerHTML = '<i class="fas fa-download"></i> Сгенерировать отчет';
+                    generateBtn.disabled = false;
+                });
+            }
+
+            function showPreview() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+
+                if (!startDate || !endDate) {
+                    showNotification('Пожалуйста, укажите даты для предпросмотра', 'warning');
+                    return;
+                }
+
+                document.getElementById('preview-card').style.display = 'block';
+                loadPreviewData(startDate, endDate);
+            }
+
+            function hidePreview() {
+                document.getElementById('preview-card').style.display = 'none';
+            }
+
+            function refreshPreview() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                loadPreviewData(startDate, endDate);
+            }
+
+            function autoPreview() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                
+                if (startDate && endDate && document.getElementById('preview-card').style.display === 'block') {
+                    loadPreviewData(startDate, endDate);
+                }
+            }
+
+            function loadPreviewData(startDate, endDate) {
+                const previewContent = document.getElementById('report-preview-content');
+                previewContent.innerHTML = '<div class="loading-message"><i class="fas fa-spinner fa-spin"></i> Загрузка данных...</div>';
+
+                fetch(`/api/reports?start=${startDate}&end=${endDate}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            // Обновляем статистику
+                            document.getElementById('preview-records').textContent = data.length;
+                            document.getElementById('preview-period').textContent = `${startDate} - ${endDate}`;
+                            document.getElementById('preview-size').textContent = estimateFileSize(data.length);
+
+                            // Создаем таблицу
+                            let html = `
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID Датчика</th>
+                                            <th>Местоположение</th>
+                                            <th>Количество</th>
+                                            <th>Дата и время</th>
+                                            <th>Статус</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            `;
+                            
+                            data.slice(0, 10).forEach(row => {
+                                html += `
+                                    <tr>
+                                        <td>${row.device_id || 'N/A'}</td>
+                                        <td>${row.location || 'Неизвестно'}</td>
+                                        <td>${row.count || 0}</td>
+                                        <td>${new Date(row.timestamp || row.received_at).toLocaleString('ru-RU')}</td>
+                                        <td><span class="status-badge status-${(row.status || 'active').toLowerCase()}">${row.status || 'Активен'}</span></td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            html += '</tbody></table>';
+                            
+                            if (data.length > 10) {
+                                html += `<div class="preview-note">Показано первых 10 записей из ${data.length}</div>`;
+                            }
+                            
+                            previewContent.innerHTML = html;
+                        } else {
+                            previewContent.innerHTML = '<div class="no-data-message"><i class="fas fa-info-circle"></i> Нет данных за выбранный период</div>';
+                            document.getElementById('preview-records').textContent = '0';
+                            document.getElementById('preview-size').textContent = '0 KB';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка загрузки предпросмотра:', error);
+                        previewContent.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки данных</div>';
+                    });
+            }
+
+            function estimateFileSize(recordCount) {
+                const avgRecordSize = 150; // bytes
+                const totalSize = recordCount * avgRecordSize;
+                
+                if (totalSize < 1024) return totalSize + ' B';
+                if (totalSize < 1024 * 1024) return Math.round(totalSize / 1024) + ' KB';
+                return (totalSize / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+
+            function addToHistory(filename, format, startDate, endDate) {
+                // Добавляем запись в историю (в реальном приложении это сохранялось бы в БД)
+                const historyContainer = document.querySelector('.reports-history');
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-info">
+                        <div class="history-name">Отчет ${startDate} - ${endDate}</div>
+                        <div class="history-date">${new Date().toLocaleString('ru-RU')}</div>
+                    </div>
+                    <div class="history-format">${format.toUpperCase()}</div>
+                    <div class="history-size">-</div>
+                    <div class="history-actions">
+                        <button class="btn-download" onclick="window.location.href='/static/${filename}'">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+            }
+
+            function showNotification(message, type = 'info') {
+                // Простая система уведомлений
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</body>
 </html>
-```
