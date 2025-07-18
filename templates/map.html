@@ -9,14 +9,16 @@
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&mode=release&load=package.full,package.heatmap" type="text/javascript"></script>
     <style>
         .map-container {
-            height: 60vh;
+            height: 65vh;
             width: 100%;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            margin-bottom: 24px;
             position: relative;
             transition: all 0.3s ease;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
         }
 
         .map-container.fullscreen {

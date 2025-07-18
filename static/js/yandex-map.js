@@ -7,35 +7,71 @@ let isHeatmapActive = false;
 
 // Инициализация карты
 function initMap() {
+    console.log('Initializing Yandex Map...');
+    
+    if (typeof ymaps === 'undefined') {
+        console.error('Yandex Maps API not loaded');
+        showMapError();
+        return;
+    }
+
     ymaps.ready(function () {
-        map = new ymaps.Map('yandex-map', {
-            center: [53.9045, 27.5615], // Минск
-            zoom: 11,
-            controls: ['zoomControl', 'fullscreenControl', 'searchControl']
-        });
+        try {
+            map = new ymaps.Map('yandex-map', {
+                center: [53.9045, 27.5615], // Минск
+                zoom: 11,
+                controls: ['zoomControl', 'fullscreenControl', 'searchControl']
+            });
 
-        // Создаем кластеризатор
-        clusterer = new ymaps.Clusterer({
-            preset: 'islands#greenClusterIcons',
-            groupByCoordinates: false,
-            clusterDisableClickZoom: false,
-            clusterHideIconOnBalloonOpen: false,
-            geoObjectHideIconOnBalloonOpen: false
-        });
+            // Создаем кластеризатор
+            clusterer = new ymaps.Clusterer({
+                preset: 'islands#greenClusterIcons',
+                groupByCoordinates: false,
+                clusterDisableClickZoom: false,
+                clusterHideIconOnBalloonOpen: false,
+                geoObjectHideIconOnBalloonOpen: false
+            });
 
-        map.geoObjects.add(clusterer);
+            map.geoObjects.add(clusterer);
 
-        // Загружаем данные магазинов
-        loadStoresData();
+            // Загружаем данные магазинов
+            loadStoresData();
 
-        // Обновляем данные каждые 30 секунд
-        setInterval(loadStoresData, 30000);
+            // Обновляем данные каждые 30 секунд
+            setInterval(loadStoresData, 30000);
+
+            console.log('Yandex Map initialized successfully');
+        } catch (error) {
+            console.error('Error initializing map:', error);
+            showMapError();
+        }
     });
+}
+
+// Показать ошибку карты
+function showMapError() {
+    const mapContainer = document.getElementById('yandex-map');
+    if (mapContainer) {
+        mapContainer.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--card-bg); color: var(--text-secondary); border-radius: 12px;">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--warning-color); margin-bottom: 16px;"></i>
+                    <div style="font-size: 18px; margin-bottom: 8px;">Карта временно недоступна</div>
+                    <div style="font-size: 14px; opacity: 0.7;">Проверьте подключение к интернету и перезагрузите страницу</div>
+                    <button onclick="location.reload()" style="margin-top: 16px; padding: 8px 16px; background: var(--belwest-green); color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Перезагрузить
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // Загрузка данных магазинов
 function loadStoresData() {
-    // Используем тестовые данные если API недоступен
+    console.log('Loading stores data...');
+    
+    // Тестовые данные для демонстрации
     const testStores = [
         {
             id: 1,
@@ -89,21 +125,21 @@ function loadStoresData() {
         }
     ];
 
+    // Пытаемся загрузить данные с API
     fetch('/api/map-data')
         .then(response => {
             if (!response.ok) {
-                console.log('API недоступен, используем тестовые данные');
-                return { stores: testStores };
+                throw new Error('API unavailable');
             }
             return response.json();
         })
         .then(data => {
-            console.log('Loaded stores data:', data);
+            console.log('Loaded stores data from API:', data);
             stores = data.stores || testStores;
             displayStoresOnMap();
         })
         .catch(error => {
-            console.log('Используем тестовые данные:', error);
+            console.log('Using test data:', error.message);
             stores = testStores;
             displayStoresOnMap();
         });
@@ -138,19 +174,19 @@ function displayStoresOnMap() {
         const placemark = new ymaps.Placemark(
             [parseFloat(store.latitude), parseFloat(store.longitude)],
             {
-                balloonContentHeader: `<strong>${store.name}</strong>`,
+                balloonContentHeader: `<strong style="color: var(--belwest-green); font-size: 16px;">${store.name}</strong>`,
                 balloonContentBody: `
-                    <div style="padding: 10px;">
-                        <p><i class="fas fa-map-marker-alt"></i> ${store.address}</p>
-                        <p><i class="fas fa-users"></i> Посетители сегодня: <strong>${visitorCount}</strong></p>
-                        <p><i class="fas fa-chart-line"></i> Конверсия: <strong>${store.conversion || 0}%</strong></p>
-                        <p><i class="fas fa-ruble-sign"></i> Выручка: <strong>${(store.revenue || 0).toLocaleString()} руб.</strong></p>
-                        <button onclick="showStorePanel(${store.id})" style="margin-top: 10px; padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <div style="padding: 12px; font-family: 'Segoe UI', sans-serif;">
+                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-map-marker-alt" style="color: var(--belwest-green); margin-right: 8px;"></i> ${store.address}</p>
+                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-users" style="color: var(--belwest-green); margin-right: 8px;"></i> Посетители сегодня: <strong style="color: var(--belwest-green);">${visitorCount}</strong></p>
+                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-chart-line" style="color: var(--belwest-green); margin-right: 8px;"></i> Конверсия: <strong style="color: var(--belwest-green);">${store.conversion || 0}%</strong></p>
+                        <p style="margin: 8px 0; color: var(--text-primary);"><i class="fas fa-ruble-sign" style="color: var(--belwest-green); margin-right: 8px;"></i> Выручка: <strong style="color: var(--belwest-green);">${(store.revenue || 0).toLocaleString()} руб.</strong></p>
+                        <button onclick="showStorePanel(${store.id})" style="margin-top: 12px; padding: 8px 16px; background: var(--belwest-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                             Подробнее
                         </button>
                     </div>
                 `,
-                balloonContentFooter: `<small>Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`,
+                balloonContentFooter: `<small style="color: var(--text-secondary); font-size: 12px;">Обновлено: ${new Date().toLocaleString('ru-RU')}</small>`,
                 hintContent: `${store.name} - ${visitorCount} посетителей`
             },
             {
@@ -173,6 +209,9 @@ function displayStoresOnMap() {
     clusterer.add(placemarks);
 
     console.log(`Added ${placemarks.length} stores to map`);
+    
+    // Показываем уведомление об успешной загрузке
+    showNotification('Данные магазинов успешно загружены', 'success');
 }
 
 // Определение цвета маркера в зависимости от количества посетителей
@@ -225,13 +264,14 @@ function closeStorePanel() {
 
 // Просмотр детальной статистики магазина
 function viewStoreDetails() {
-    alert('Функция детальной статистики в разработке');
+    showNotification('Функция детальной статистики в разработке', 'info');
 }
 
 // Функция тепловой карты
 function toggleHeatmap() {
     if (!map) {
         console.log('Карта не инициализирована');
+        showNotification('Карта не инициализирована', 'error');
         return;
     }
 
@@ -252,8 +292,9 @@ function toggleHeatmap() {
             btn.innerHTML = '<i class="fas fa-fire"></i> Тепловая карта';
             btn.classList.remove('active');
             btn.style.background = '';
+            btn.style.color = '';
         }
-        console.log('Тепловая карта выключена');
+        showNotification('Тепловая карта выключена', 'info');
     } else {
         // Включаем тепловую карту
         if (stores && stores.length > 0) {
@@ -263,13 +304,12 @@ function toggleHeatmap() {
                 store.visitors_today || 0
             ]);
 
-            // Создание тепловой карты
             try {
                 heatmap = new ymaps.Heatmap(heatmapData, {
-                    radius: 20,
+                    radius: 25,
                     dissipating: false,
                     opacity: 0.8,
-                    intensityOfMidpoint: 0.2,
+                    intensityOfMidpoint: 0.3,
                     gradient: {
                         0.1: 'rgba(128, 255, 0, 0.7)',
                         0.2: 'rgba(255, 255, 0, 0.8)',
@@ -292,14 +332,13 @@ function toggleHeatmap() {
                     btn.style.background = 'var(--belwest-green)';
                     btn.style.color = 'white';
                 }
-                console.log('Тепловая карта включена');
+                showNotification('Тепловая карта включена', 'success');
             } catch (error) {
                 console.error('Ошибка создания тепловой карты:', error);
-                alert('Тепловая карта временно недоступна');
+                showNotification('Тепловая карта временно недоступна', 'error');
             }
         } else {
-            console.log('Нет данных для тепловой карты');
-            alert('Нет данных для отображения тепловой карты');
+            showNotification('Нет данных для отображения тепловой карты', 'warning');
         }
     }
 }
@@ -310,11 +349,15 @@ function toggleFullscreen() {
     const fullscreenBtn = document.getElementById('fullscreen-btn');
     const exitBtn = document.getElementById('exit-fullscreen');
 
+    if (!container) return;
+
     if (container.classList.contains('fullscreen')) {
         // Выходим из полноэкранного режима
         container.classList.remove('fullscreen');
-        fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-        fullscreenBtn.title = 'Полноэкранный режим';
+        if (fullscreenBtn) {
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            fullscreenBtn.title = 'Полноэкранный режим';
+        }
         if (exitBtn) exitBtn.style.display = 'none';
 
         // Перерисовываем карту
@@ -326,8 +369,10 @@ function toggleFullscreen() {
     } else {
         // Включаем полноэкранный режим
         container.classList.add('fullscreen');
-        fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-        fullscreenBtn.title = 'Выйти из полноэкранного режима';
+        if (fullscreenBtn) {
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            fullscreenBtn.title = 'Выйти из полноэкранного режима';
+        }
         if (exitBtn) exitBtn.style.display = 'inline-flex';
 
         // Перерисовываем карту
@@ -344,20 +389,48 @@ function refreshMap() {
     const refreshBtn = document.getElementById('refresh-map');
     if (refreshBtn) {
         const icon = refreshBtn.querySelector('i');
-        icon.classList.add('fa-spin');
+        if (icon) {
+            icon.classList.add('fa-spin');
+        }
         
         // Загружаем новые данные
         loadStoresData();
         
         // Останавливаем анимацию через 2 секунды
         setTimeout(() => {
-            icon.classList.remove('fa-spin');
+            if (icon) {
+                icon.classList.remove('fa-spin');
+            }
         }, 2000);
     }
 }
 
+// Функция показа уведомлений
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматически удаляем уведомление через 5 секунд
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
 // Обработчики событий
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    
     // Фильтр периода
     const periodFilter = document.getElementById('period-filter');
     if (periodFilter) {
@@ -410,25 +483,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Инициализация карты после загрузки ymaps
+    // Инициализация карты
+    console.log('Checking for Yandex Maps API...');
     if (typeof ymaps !== 'undefined') {
-        console.log('Инициализация Яндекс.Карт...');
+        console.log('Yandex Maps API found, initializing...');
         initMap();
     } else {
-        console.error('Yandex Maps API не загружен');
-        // Показываем сообщение об ошибке
-        const mapContainer = document.getElementById('yandex-map');
-        if (mapContainer) {
-            mapContainer.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666;">
-                    <div style="text-align: center;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
-                        <div>Карта временно недоступна</div>
-                        <div style="font-size: 14px; margin-top: 8px;">Проверьте подключение к интернету</div>
-                    </div>
-                </div>
-            `;
-        }
+        console.log('Yandex Maps API not found, waiting...');
+        // Ждем загрузки API
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+            attempts++;
+            if (typeof ymaps !== 'undefined') {
+                console.log('Yandex Maps API loaded after', attempts, 'attempts');
+                clearInterval(checkInterval);
+                initMap();
+            } else if (attempts > 20) {
+                console.error('Yandex Maps API failed to load after 20 attempts');
+                clearInterval(checkInterval);
+                showMapError();
+            }
+        }, 500);
     }
 });
 
@@ -439,3 +514,4 @@ window.viewStoreDetails = viewStoreDetails;
 window.toggleHeatmap = toggleHeatmap;
 window.toggleFullscreen = toggleFullscreen;
 window.refreshMap = refreshMap;
+window.initMap = initMap;
