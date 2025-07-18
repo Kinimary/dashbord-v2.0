@@ -454,12 +454,19 @@ body::before {
 .top-bar-center {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
     flex: 1;
     justify-content: flex-start;
     max-width: none;
     margin-left: 40px;
     margin-right: 40px;
+}
+
+.time-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .top-bar-left {
@@ -1380,6 +1387,17 @@ input::placeholder, textarea::placeholder {
 
     .top-bar h1 {
         font-size: 24px;
+    }
+
+    .time-filter {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .time-filter select,
+    .time-filter button {
+        width: 100%;
     }
 }
 
