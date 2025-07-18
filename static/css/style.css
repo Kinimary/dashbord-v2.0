@@ -1088,6 +1088,267 @@ button {
     }
 }
 
+/* Выпадающие списки и селекты */
+select, .select-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: var(--transition);
+    cursor: pointer;
+    box-shadow: 0 4px 16px var(--shadow-light);
+    outline: none;
+    position: relative;
+}
+
+select:hover, .select-wrapper:hover {
+    border-color: var(--belwest-green);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--belwest-green-glow);
+}
+
+select:focus, .select-wrapper:focus {
+    border-color: var(--belwest-green-light);
+    box-shadow: 
+        0 8px 32px var(--belwest-green-glow),
+        0 0 20px rgba(46, 139, 87, 0.3);
+}
+
+select option {
+    background: var(--background-secondary);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border: none;
+    font-weight: 500;
+}
+
+select option:hover, select option:checked {
+    background: var(--belwest-green);
+    color: #FFFFFF;
+}
+
+/* Стеклянное админ меню */
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px);
+    border: 2px solid rgba(46, 139, 87, 0.3);
+    border-radius: 20px;
+    padding: 16px 0;
+    min-width: 240px;
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.25),
+        0 0 50px rgba(46, 139, 87, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        rgba(46, 139, 87, 0.1) 0%,
+        transparent 70%);
+    pointer-events: none;
+}
+
+.user-info.active .user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition);
+    position: relative;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+}
+
+.dropdown-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        var(--belwest-green) 0%,
+        var(--belwest-green-light) 100%);
+    opacity: 0;
+    transition: var(--transition);
+    z-index: -1;
+}
+
+.dropdown-item:hover {
+    color: #FFFFFF;
+    transform: translateX(8px);
+}
+
+.dropdown-item:hover::before {
+    opacity: 1;
+}
+
+.dropdown-item i {
+    width: 18px;
+    text-align: center;
+    font-size: 16px;
+    color: var(--belwest-green);
+    transition: var(--transition);
+}
+
+.dropdown-item:hover i {
+    color: #FFFFFF;
+    transform: scale(1.1);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(46, 139, 87, 0.3) 50%,
+        transparent 100%);
+    margin: 12px 20px;
+    position: relative;
+}
+
+.dropdown-divider::after {
+    content: '';
+    position: absolute;
+    top: -0.5px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 100%);
+}
+
+/* Стили для кнопки обновления */
+.refresh-btn {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 16px var(--shadow-light);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    height: 48px;
+}
+
+.refresh-btn:hover {
+    border-color: var(--belwest-green);
+    color: var(--belwest-green-light);
+    transform: translateY(-2px) rotate(180deg);
+    box-shadow: 0 8px 32px var(--belwest-green-glow);
+}
+
+/* Анимация для выпадающих элементов */
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    animation: dropdownSlideIn 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.dropdown-item:nth-child(1) { animation-delay: 0.05s; }
+.dropdown-item:nth-child(2) { animation-delay: 0.1s; }
+.dropdown-item:nth-child(3) { animation-delay: 0.15s; }
+.dropdown-item:nth-child(4) { animation-delay: 0.2s; }
+.dropdown-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* Стеклянный эффект для всех интерактивных элементов */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Дополнительные стили для консистентности */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="number"], 
+input[type="date"], 
+textarea {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+    box-shadow: 0 4px 16px var(--shadow-light);
+    outline: none;
+}
+
+input[type="text"]:focus, 
+input[type="email"]:focus, 
+input[type="password"]:focus, 
+input[type="number"]:focus, 
+input[type="date"]:focus, 
+textarea:focus {
+    border-color: var(--belwest-green);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 32px var(--belwest-green-glow),
+        0 0 20px rgba(46, 139, 87, 0.3);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+}
+
 /* Адаптивный дизайн */
 @media (max-width: 768px) {
     .container {
