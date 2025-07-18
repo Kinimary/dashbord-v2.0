@@ -1096,29 +1096,45 @@ button {
 }
 
 /* Выпадающие списки и селекты */
-select, .select-wrapper {
+select {
     background: var(--glass-bg);
     backdrop-filter: var(--blur);
     border: 2px solid var(--glass-border);
     border-radius: 12px;
     color: var(--text-primary);
     padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: var(--transition);
     cursor: pointer;
+    transition: var(--transition);
     box-shadow: 0 4px 16px var(--shadow-light);
-    outline: none;
-    position: relative;
+    font-size: 14px;
+    font-weight: 500;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
-select:hover, .select-wrapper:hover {
+/* Стили для Chrome/Safari */
+select::-webkit-appearance {
+    -webkit-appearance: none;
+}
+
+/* Стили для Firefox */
+select::-moz-appearance {
+    -moz-appearance: none;
+}
+
+select:hover {
     border-color: var(--belwest-green);
     transform: translateY(-2px);
     box-shadow: 0 8px 32px var(--belwest-green-glow);
 }
 
-select:focus, .select-wrapper:focus {
+select:focus {
     border-color: var(--belwest-green-light);
     box-shadow: 
         0 8px 32px var(--belwest-green-glow),
@@ -1126,8 +1142,8 @@ select:focus, .select-wrapper:focus {
 }
 
 select option {
-    background: var(--background-secondary);
-    color: var(--text-primary);
+    background: #1a1f3a;
+    color: #FFFFFF;
     padding: 12px 16px;
     border: none;
     font-weight: 500;
@@ -1136,6 +1152,11 @@ select option {
 select option:hover, select option:checked {
     background: var(--belwest-green);
     color: #FFFFFF;
+}
+
+select option:disabled {
+    background: #2d3561;
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* Стеклянное админ меню */
@@ -2730,26 +2751,26 @@ align-items: center;
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .form-actions {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .btn-primary, .btn-secondary {
         width: 100%;
         min-width: unset;
     }
-    
+
     .preview-stats {
         grid-template-columns: 1fr;
     }
-    
+
     .history-item {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-    
+
     .history-actions {
         justify-content: center;
     }
@@ -2840,7 +2861,7 @@ align-items: center;
         flex-direction: column;
         gap: 2px;
     }
-    
+
     .dashboard-tabs .tab {
         flex: none;
         width: 100%;
@@ -3351,29 +3372,6 @@ align-items: center;
 .assignment-controls button:not(:disabled):hover {
     background: var(--belwest-green-light);
     transform: translateY(-2px);
-}tion: column;
-    gap: 10px;
-    align-self: center;
-}
-
-.assignment-controls button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: var(--belwest-green);
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.assignment-controls button:hover:not(:disabled) {
-    background: var(--belwest-green-light);
-}
-
-.assignment-controls button:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
 }
 
 .sensor-item {
