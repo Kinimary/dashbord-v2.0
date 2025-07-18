@@ -297,9 +297,18 @@
                     <div class="chart-header">
                         <h3>Динамика посещений</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn active" data-period="день" onclick="updateChartPeriod('day')">День</button>
-                            <button class="chart-btn" data-period="неделя" onclick="updateChartPeriod('week')">Неделя</button>
-                            <button class="chart-btn" data-period="месяц" onclick="updateChartPeriod('month')">Месяц</button>
+                            <button class="chart-btn active" data-period="день" onclick="updateChartPeriod('day')">
+                                <i class="fas fa-calendar-day"></i>
+                                День
+                            </button>
+                            <button class="chart-btn" data-period="неделя" onclick="updateChartPeriod('week')">
+                                <i class="fas fa-calendar-week"></i>
+                                Неделя
+                            </button>
+                            <button class="chart-btn" data-period="месяц" onclick="updateChartPeriod('month')">
+                                <i class="fas fa-calendar-alt"></i>
+                                Месяц
+                            </button>
                         </div>
                     </div>
                     <div class="chart-content">
@@ -313,11 +322,23 @@
                 <!-- Состояние датчиков -->
                 <div class="sensors-status">
                     <div class="section-header">
-                        <h3>Состояние датчиков</h3>
+                        <h3>
+                            <i class="fas fa-wifi"></i>
+                            Состояние датчиков
+                        </h3>
                         <div class="status-filter">
-                            <button class="filter-btn active" data-filter="all" onclick="filterSensors('all')">Все</button>
-                            <button class="filter-btn" data-filter="online" onclick="filterSensors('online')">Онлайн</button>
-                            <button class="filter-btn" data-filter="offline" onclick="filterSensors('offline')">Офлайн</button>
+                            <button class="filter-btn active" data-filter="all" onclick="filterSensors('all')">
+                                <i class="fas fa-list"></i>
+                                Все
+                            </button>
+                            <button class="filter-btn" data-filter="online" onclick="filterSensors('online')">
+                                <i class="fas fa-check-circle"></i>
+                                Онлайн
+                            </button>
+                            <button class="filter-btn" data-filter="offline" onclick="filterSensors('offline')">
+                                <i class="fas fa-times-circle"></i>
+                                Офлайн
+                            </button>
                         </div>
                     </div>
                     <div class="sensors-list" id="sensors-list">
@@ -328,12 +349,15 @@
                 <!-- Активность -->
                 <div class="activity-section">
                     <div class="section-header">
-                        <h3>Активность в реальном времени</h3>
+                        <h3>
+                            <i class="fas fa-chart-line"></i>
+                            Активность в реальном времени
+                        </h3>
                         <div class="activity-filter-controls">
-                            <button class="filter-btn" id="pause-activity" onclick="toggleActivityPause()">
+                            <button class="filter-btn" id="pause-activity" onclick="toggleActivityPause()" title="Пауза">
                                 <i class="fas fa-pause"></i>
                             </button>
-                            <button class="filter-btn" id="clear-activity" onclick="clearActivity()">
+                            <button class="filter-btn" id="clear-activity" onclick="clearActivity()" title="Очистить">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -346,10 +370,19 @@
                 <!-- Статистика магазинов -->
                 <div class="stores-status">
                     <div class="section-header">
-                        <h3>Топ магазины</h3>
+                        <h3>
+                            <i class="fas fa-trophy"></i>
+                            Топ магазины
+                        </h3>
                         <div class="activity-filter-controls">
-                            <button class="filter-btn" data-period="today" onclick="updateStoresPeriod('today')">Сегодня</button>
-                            <button class="filter-btn active" data-period="week" onclick="updateStoresPeriod('week')">Неделя</button>
+                            <button class="filter-btn" data-period="today" onclick="updateStoresPeriod('today')">
+                                <i class="fas fa-calendar-day"></i>
+                                Сегодня
+                            </button>
+                            <button class="filter-btn active" data-period="week" onclick="updateStoresPeriod('week')">
+                                <i class="fas fa-calendar-week"></i>
+                                Неделя
+                            </button>
                         </div>
                     </div>
                     <div class="stores-list" id="stores-list">

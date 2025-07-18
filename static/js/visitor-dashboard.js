@@ -2051,9 +2051,63 @@ function clearActivityStream() {
 
 // Функция обновления данных магазинов
 function updateStoresData(period) {
-    // Здесь можно добавить логику обновления данных магазинов
     console.log('Updating stores data for period:', period);
+    
+    const storesList = document.getElementById('stores-list');
+    if (!storesList) return;
+    
+    // Демо данные для магазинов
+    const storesData = period === 'today' ? [
+        { name: 'ТЦ Галерея', visitors: 364, revenue: '89,500₽', trend: 'up', change: '+15%' },
+        { name: 'BELWEST Dana Mall', visitors: 298, revenue: '72,400₽', trend: 'up', change: '+8%' },
+        { name: 'Магазин на Немиге', visitors: 245, revenue: '58,200₽', trend: 'down', change: '-3%' },
+        { name: 'ТЦ Столица', visitors: 189, revenue: '45,800₽', trend: 'up', change: '+12%' },
+        { name: 'Магазин на Скорины', visitors: 156, revenue: '38,900₽', trend: 'neutral', change: '0%' }
+    ] : [
+        { name: 'ТЦ Галерея', visitors: 2547, revenue: '625,300₽', trend: 'up', change: '+23%' },
+        { name: 'BELWEST Dana Mall', visitors: 2089, revenue: '507,200₽', trend: 'up', change: '+18%' },
+        { name: 'Магазин на Немиге', visitors: 1715, revenue: '407,800₽', trend: 'up', change: '+5%' },
+        { name: 'ТЦ Столица', visitors: 1322, revenue: '320,600₽', trend: 'up', change: '+15%' },
+        { name: 'Магазин на Скорины', visitors: 1094, revenue: '272,400₽', trend: 'down', change: '-2%' }
+    ];
+    
+    let html = '';
+    storesData.forEach((store, index) => {
+        const trendIcon = store.trend === 'up' ? 'fa-arrow-up' : 
+                         store.trend === 'down' ? 'fa-arrow-down' : 'fa-minus';
+        const trendClass = store.trend === 'up' ? 'trend-up' : 
+                          store.trend === 'down' ? 'trend-down' : 'trend-neutral';
+        
+        html += `
+            <div class="store-item" data-rank="${index + 1}">
+                <div class="store-rank">
+                    <div class="rank-number">${index + 1}</div>
+                    <div class="rank-icon">
+                        <i class="fas ${index === 0 ? 'fa-crown' : index === 1 ? 'fa-medal' : 'fa-star'}"></i>
+                    </div>
+                </div>
+                <div class="store-info">
+                    <div class="store-name">${store.name}</div>
+                    <div class="store-stats">
+                        <span class="visitors-count">${store.visitors} чел.</span>
+                        <span class="revenue">${store.revenue}</span>
+                    </div>
+                </div>
+                <div class="store-trend ${trendClass}">
+                    <i class="fas ${trendIcon}"></i>
+                    <span>${store.change}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    storesList.innerHTML = html;
 }
+
+// Вызываем функцию при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    updateStoresData('week');
+});
 
 // Функция запуска обновлений активности
 function startActivityUpdates() {
