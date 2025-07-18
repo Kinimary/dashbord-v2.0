@@ -1175,7 +1175,8 @@ select option:hover, select option:checked {
     pointer-events: none;
 }
 
-.user-info.active .user-dropdown {
+.user-info.active .user-dropdown,
+.user-dropdown.show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);

@@ -13,3 +13,4 @@ pandas
 PyJWT==2.8.0
 werkzeug
 xlsxwriter
+flask
