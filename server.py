@@ -33,8 +33,7 @@ app.register_blueprint(sensors_bp, url_prefix='/')
 app.register_blueprint(reports, url_prefix='/')
 app.register_blueprint(permissions, url_prefix='/')
 
-# Регистрация AI endpoints
-create_ai_endpoints(app)
+# AI endpoints будут зарегистрированы в main блоке
 
 # Путь к базе данных
 DB_PATH = 'visitor_data.db'
@@ -640,7 +639,7 @@ if __name__ == '__main__':
     app.ai_agent = ai_agent
 
     # Регистрация AI endpoints
-    create_ai_endpoints(app, ai_agent)
+    create_ai_endpoints(app)
 
     print("AI агент инициализирован и активирован")
 
