@@ -28,3 +28,10 @@ pandas
 PyJWT
 werkzeug
 xlsxwriter
+Flask
+flask-session
+openpyxl
+pandas
+PyJWT
+werkzeug
+xlsxwriter
