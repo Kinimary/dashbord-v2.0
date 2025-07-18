@@ -2003,26 +2003,39 @@ align-items: center;
 .user-management .dashboard-tabs {
     margin: 0 0 20px 0;
     width: 100%;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(46, 139, 87, 0.3) transparent;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
-.user-management .dashboard-tabs::-webkit-scrollbar {
-    height: 6px;
+/* Адаптивные стили для табов */
+@media (max-width: 1200px) {
+    .dashboard-tabs .tab {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
 }
 
-.user-management .dashboard-tabs::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
+@media (max-width: 992px) {
+    .dashboard-tabs {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .dashboard-tabs .tab {
+        flex: none;
+        width: 100%;
+        text-align: left;
+        border-radius: 8px;
+        margin-bottom: 2px;
+    }
 }
 
-.user-management .dashboard-tabs::-webkit-scrollbar-thumb {
-    background: rgba(46, 139, 87, 0.3);
-    border-radius: 3px;
-}
-
-.user-management .dashboard-tabs::-webkit-scrollbar-thumb:hover {
-    background: rgba(46, 139, 87, 0.5);
+@media (max-width: 768px) {
+    .dashboard-tabs .tab {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
 }
 
 .users-page .main-content {
@@ -2104,11 +2117,11 @@ align-items: center;
 
 .dashboard-tabs {
     display: flex;
+    flex-wrap: wrap;
     margin-bottom: 20px;
     border-bottom: 2px solid var(--glass-border);
-    overflow-x: auto;
-    gap: 8px;
-    padding: 0 4px;
+    gap: 4px;
+    padding: 8px;
     background: var(--glass-bg);
     backdrop-filter: var(--blur);
     border-radius: 16px 16px 0 0;
@@ -2116,22 +2129,22 @@ align-items: center;
 }
 
 .dashboard-tabs .tab {
-    padding: 16px 24px;
+    padding: 12px 16px;
     background: transparent;
     border: 2px solid transparent;
-    border-radius: 12px 12px 0 0;
+    border-radius: 12px;
     color: var(--text-secondary);
     cursor: pointer;
-    white-space: nowrap;
     transition: all 0.3s ease;
     font-weight: 600;
-    font-size: 14px;
-    min-width: fit-content;
-    flex-shrink: 0;
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     text-overflow: ellipsis;
-    border-bottom: none;
+    white-space: nowrap;
 }
 
 .dashboard-tabs .tab::before {
