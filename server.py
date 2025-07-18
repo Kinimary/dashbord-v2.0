@@ -48,125 +48,182 @@ def hash_password(password):
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    # Получаем список существующих таблиц
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    existing_tables = {row[0] for row in cursor.fetchall()}
+    
+    print(f"Инициализация базы данных. Найдено таблиц: {len(existing_tables)}")
+    
+    # Определяем все необходимые таблицы
+    required_tables = {
+        'users': '''
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''',
+        'user_hierarchy': '''
+            CREATE TABLE user_hierarchy (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                parent_id INTEGER NOT NULL,
+                child_id INTEGER NOT NULL,
+                hierarchy_type TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (parent_id) REFERENCES users (id) ON DELETE CASCADE,
+                FOREIGN KEY (child_id) REFERENCES users (id) ON DELETE CASCADE,
+                UNIQUE(parent_id, child_id)
+            )
+        ''',
+        'sensors': '''
+            CREATE TABLE sensors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                status TEXT DEFAULT 'active',
+                last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                visitor_count INTEGER DEFAULT 0,
+                user_id INTEGER,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''',
+        'visitor_data': '''
+            CREATE TABLE visitor_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sensor_id INTEGER,
+                visitor_count INTEGER DEFAULT 0,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+            )
+        ''',
+        'stores': '''
+            CREATE TABLE stores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                latitude REAL,
+                longitude REAL,
+                tu_id INTEGER,
+                rd_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (tu_id) REFERENCES users (id),
+                FOREIGN KEY (rd_id) REFERENCES users (id)
+            )
+        ''',
+        'user_sensors': '''
+            CREATE TABLE user_sensors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                sensor_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id),
+                FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+            )
+        ''',
+        'store_sensors': '''
+            CREATE TABLE store_sensors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                store_id INTEGER,
+                sensor_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (store_id) REFERENCES stores (id),
+                FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+            )
+        ''',
+        'hourly_statistics': '''
+            CREATE TABLE hourly_statistics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sensor_id INTEGER,
+                store_id INTEGER,
+                hour INTEGER,
+                day_of_week INTEGER,
+                visitor_count INTEGER DEFAULT 0,
+                date DATE,
+                FOREIGN KEY (sensor_id) REFERENCES sensors (id),
+                FOREIGN KEY (store_id) REFERENCES stores (id)
+            )
+        ''',
+        'sensor_downtime': '''
+            CREATE TABLE sensor_downtime (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sensor_id INTEGER,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                reason TEXT,
+                FOREIGN KEY (sensor_id) REFERENCES sensors (id)
+            )
+        '''
+    }
+    
+    # Проверяем и создаем недостающие таблицы
+    created_tables = []
+    for table_name, create_sql in required_tables.items():
+        if table_name not in existing_tables:
+            try:
+                cursor.execute(create_sql)
+                created_tables.append(table_name)
+                print(f"Создана таблица: {table_name}")
+            except sqlite3.Error as e:
+                print(f"Ошибка при создании таблицы {table_name}: {e}")
+        else:
+            print(f"Таблица {table_name} уже существует")
+    
+    # Проверяем и добавляем недостающие колонки в существующие таблицы
+    check_and_add_columns(cursor)
+    
+    # Инициализируем базовые данные только если таблицы были созданы
+    if created_tables or 'users' in created_tables:
+        initialize_default_data(cursor)
+    
+    conn.commit()
+    conn.close()
+    
+    if created_tables:
+        print(f"База данных обновлена. Создано таблиц: {len(created_tables)}")
+    else:
+        print("База данных актуальна. Новые таблицы не требуются.")
 
-    # Создание таблицы пользователей
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+def check_and_add_columns(cursor):
+    """Проверяет и добавляет недостающие колонки в существующие таблицы"""
+    
+    # Проверка колонок для таблицы sensors
+    try:
+        cursor.execute("PRAGMA table_info(sensors)")
+        sensor_columns = {row[1] for row in cursor.fetchall()}
+        
+        if 'user_id' not in sensor_columns:
+            cursor.execute("ALTER TABLE sensors ADD COLUMN user_id INTEGER REFERENCES users(id)")
+            print("Добавлена колонка user_id в таблицу sensors")
+            
+    except sqlite3.Error as e:
+        print(f"Ошибка при проверке колонок sensors: {e}")
+    
+    # Проверка колонок для таблицы stores
+    try:
+        cursor.execute("PRAGMA table_info(stores)")
+        store_columns = {row[1] for row in cursor.fetchall()}
+        
+        missing_columns = {
+            'tu_id': 'INTEGER REFERENCES users(id)',
+            'rd_id': 'INTEGER REFERENCES users(id)',
+            'created_at': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+        }
+        
+        for col_name, col_type in missing_columns.items():
+            if col_name not in store_columns:
+                cursor.execute(f"ALTER TABLE stores ADD COLUMN {col_name} {col_type}")
+                print(f"Добавлена колонка {col_name} в таблицу stores")
+                
+    except sqlite3.Error as e:
+        print(f"Ошибка при проверке колонок stores: {e}")
 
-    # Создание таблицы иерархии пользователей
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_hierarchy (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parent_id INTEGER NOT NULL,
-            child_id INTEGER NOT NULL,
-            hierarchy_type TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES users (id) ON DELETE CASCADE,
-            FOREIGN KEY (child_id) REFERENCES users (id) ON DELETE CASCADE,
-            UNIQUE(parent_id, child_id)
-        )
-    ''')
-
-    # Создание таблицы датчиков
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sensors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            location TEXT NOT NULL,
-            status TEXT DEFAULT 'active',
-            last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            visitor_count INTEGER DEFAULT 0,
-            user_id INTEGER,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-
-    # Создание таблицы данных посетителей
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS visitor_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sensor_id INTEGER,
-            visitor_count INTEGER DEFAULT 0,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
-        )
-    ''')
-
-    # Создание таблицы магазинов
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS stores (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            address TEXT NOT NULL,
-            latitude REAL,
-            longitude REAL,
-            tu_id INTEGER,
-            rd_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (tu_id) REFERENCES users (id),
-            FOREIGN KEY (rd_id) REFERENCES users (id)
-        )
-    ''')
-
-    # Создание таблицы привязки датчиков к пользователям
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_sensors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            sensor_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
-        )
-    ''')
-
-    # Создание таблицы привязки датчиков к магазинам
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS store_sensors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            store_id INTEGER,
-            sensor_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (store_id) REFERENCES stores (id),
-            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
-        )
-    ''')
-
-    # Создание таблицы для статистики по часам
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS hourly_statistics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sensor_id INTEGER,
-            store_id INTEGER,
-            hour INTEGER,
-            day_of_week INTEGER,
-            visitor_count INTEGER DEFAULT 0,
-            date DATE,
-            FOREIGN KEY (sensor_id) REFERENCES sensors (id),
-            FOREIGN KEY (store_id) REFERENCES stores (id)
-        )
-    ''')
-
-    # Создание таблицы для простоев датчиков
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sensor_downtime (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sensor_id INTEGER,
-            start_time TIMESTAMP,
-            end_time TIMESTAMP,
-            reason TEXT,
-            FOREIGN KEY (sensor_id) REFERENCES sensors (id)
-        )
-    ''')
-
+def initialize_default_data(cursor):
+    """Инициализирует базовые данные при первом запуске"""
+    
     # Проверяем, есть ли пользователь admin
     cursor.execute('SELECT COUNT(*) FROM users WHERE username = ?', ('admin',))
     if cursor.fetchone()[0] == 0:
@@ -175,6 +232,7 @@ def init_db():
             INSERT INTO users (username, password, email, role)
             VALUES (?, ?, ?, ?)
         ''', ('admin', hashed_password, 'admin@belwest.com', 'admin'))
+        print("Создан пользователь admin")
 
     # Добавляем тестовые данные датчиков
     cursor.execute('SELECT COUNT(*) FROM sensors')
@@ -191,6 +249,7 @@ def init_db():
             INSERT INTO sensors (name, location, status)
             VALUES (?, ?, ?)
         ''', test_sensors)
+        print("Добавлены тестовые датчики")
 
     # Добавляем тестовые данные магазинов
     cursor.execute('SELECT COUNT(*) FROM stores')
@@ -207,9 +266,7 @@ def init_db():
             INSERT INTO stores (name, address, latitude, longitude)
             VALUES (?, ?, ?, ?)
         ''', test_stores)
-
-    conn.commit()
-    conn.close()
+        print("Добавлены тестовые магазины")
 
 def login_required(f):
     @functools.wraps(f)
