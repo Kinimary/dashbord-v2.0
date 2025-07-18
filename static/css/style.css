@@ -1995,20 +1995,59 @@ align-items: center;
 .user-management {
     padding: 0;
     margin-top: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.user-management .dashboard-tabs {
+    margin: 0 0 20px 0;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(46, 139, 87, 0.3) transparent;
+}
+
+.user-management .dashboard-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.user-management .dashboard-tabs::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.user-management .dashboard-tabs::-webkit-scrollbar-thumb {
+    background: rgba(46, 139, 87, 0.3);
+    border-radius: 3px;
+}
+
+.user-management .dashboard-tabs::-webkit-scrollbar-thumb:hover {
+    background: rgba(46, 139, 87, 0.5);
 }
 
 .users-page .main-content {
-    padding: 20px 32px;
+    padding: 16px 24px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .users-page .top-bar {
-    padding: 16px 32px;
-    margin-bottom: 0;
+    padding: 12px 24px;
+    margin-bottom: 16px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px var(--shadow-light);
 }
 
 .users-page .top-bar h1 {
-    font-size: 28px;
+    font-size: 24px;
     margin: 0;
+    color: var(--text-primary);
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 15px rgba(46, 139, 87, 0.4);
 }
 
 .compact-card {
@@ -2016,21 +2055,34 @@ align-items: center;
     backdrop-filter: var(--blur);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
     box-shadow: 0 4px 20px var(--shadow-light);
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .compact-card .card-header {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--glass-border);
 }
 
 .compact-card .card-header h3 {
-    font-size: 20px;
+    font-size: 18px;
     margin: 0;
     color: var(--text-primary);
+    text-shadow: 
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(46, 139, 87, 0.4);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.compact-card .card-body {
+    width: 100%;
+    overflow: hidden;
 }
 
 .form-row {
@@ -2053,30 +2105,64 @@ align-items: center;
 .dashboard-tabs {
     display: flex;
     margin-bottom: 20px;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--glass-border);
     overflow-x: auto;
+    gap: 8px;
+    padding: 0 4px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 4px 16px var(--shadow-light);
 }
 
 .dashboard-tabs .tab {
-    padding: 12px 20px;
-    background: none;
-    border: none;
+    padding: 16px 24px;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 12px 12px 0 0;
     color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
-    border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: fit-content;
+    flex-shrink: 0;
+    position: relative;
+    overflow: visible;
+    text-overflow: ellipsis;
+    border-bottom: none;
+}
+
+.dashboard-tabs .tab::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--belwest-green);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    border-radius: 2px;
 }
 
 .dashboard-tabs .tab:hover {
     color: var(--text-primary);
     background: rgba(46, 139, 87, 0.1);
+    border-color: rgba(46, 139, 87, 0.2);
+    transform: translateY(-2px);
 }
 
 .dashboard-tabs .tab.active {
     color: var(--belwest-green);
-    border-bottom-color: var(--belwest-green);
+    background: rgba(46, 139, 87, 0.15);
+    border-color: var(--belwest-green);
+    transform: translateY(-2px);
+}
+
+.dashboard-tabs .tab.active::before {
+    transform: scaleX(1);
 }
 
 .tab-content {
