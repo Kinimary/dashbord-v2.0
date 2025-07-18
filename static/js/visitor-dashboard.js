@@ -1656,6 +1656,8 @@ function initializeCharts() {
     document.addEventListener('DOMContentLoaded', function() {
         initializeDashboard();
         initializeUserMenu();
+        initializeHierarchyFilter();
+        initializeControls();
     });
 
     // Инициализация пользовательского меню
@@ -1708,6 +1710,188 @@ function initializeCharts() {
 
     // Делаем функцию глобальной
     window.logout = logout;
+
+    // Инициализация фильтра иерархии
+    function initializeHierarchyFilter() {
+        const hierarchySelect = document.getElementById('hierarchy-type');
+        const entitySelect = document.getElementById('entity-selector');
+
+        if (hierarchySelect && entitySelect) {
+            hierarchySelect.addEventListener('change', function() {
+                const selectedRole = this.value;
+                
+                if (selectedRole) {
+                    loadUsersByRole(selectedRole);
+                    entitySelect.style.display = 'block';
+                } else {
+                    entitySelect.style.display = 'none';
+                    entitySelect.innerHTML = '<option value="">Выберите пользователя...</option>';
+                }
+            });
+
+            entitySelect.addEventListener('change', function() {
+                const userId = this.value;
+                const role = hierarchySelect.value;
+                
+                if (userId && role) {
+                    loadDataForUser(userId, role);
+                }
+            });
+        }
+    }
+
+    // Загрузка пользователей по роли
+    function loadUsersByRole(role) {
+        const entitySelect = document.getElementById('entity-selector');
+        
+        fetch(`/api/users?role=${role}`)
+            .then(response => response.json())
+            .then(users => {
+                entitySelect.innerHTML = '<option value="">Выберите пользователя...</option>';
+                
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.username} (${user.email})`;
+                    entitySelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки пользователей:', error);
+                entitySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+            });
+    }
+
+    // Загрузка данных для конкретного пользователя
+    function loadDataForUser(userId, role) {
+        console.log(`Загрузка данных для пользователя ${userId} с ролью ${role}`);
+        
+        // Здесь можно добавить логику загрузки данных для конкретного пользователя
+        // Пока что просто обновляем дашборд
+        loadDashboardData();
+    }
+
+    // Инициализация элементов управления
+    function initializeControls() {
+        // Кнопка обновления
+        const refreshBtn = document.getElementById('refresh-data');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                this.classList.add('spinning');
+                loadDashboardData();
+                
+                setTimeout(() => {
+                    this.classList.remove('spinning');
+                }, 1000);
+            });
+        }
+
+        // Фильтры датчиков
+        const sensorFilters = document.querySelectorAll('[data-filter]');
+        sensorFilters.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                
+                // Убираем активный класс у всех кнопок
+                sensorFilters.forEach(b => b.classList.remove('active'));
+                
+                // Добавляем активный класс к текущей кнопке
+                this.classList.add('active');
+                
+                // Применяем фильтр
+                applySensorFilter(filter);
+            });
+        });
+
+        // Кнопки графика
+        const chartBtns = document.querySelectorAll('[data-period]');
+        chartBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const period = this.getAttribute('data-period');
+                
+                // Убираем активный класс у всех кнопок
+                chartBtns.forEach(b => b.classList.remove('active'));
+                
+                // Добавляем активный класс к текущей кнопке
+                this.classList.add('active');
+                
+                // Обновляем график
+                updateChartForPeriod(period);
+            });
+        });
+
+        // Управление активностью
+        const pauseBtn = document.getElementById('pause-activity');
+        const clearBtn = document.getElementById('clear-activity');
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', function() {
+                activityPaused = !activityPaused;
+                const icon = this.querySelector('i');
+                
+                if (activityPaused) {
+                    icon.className = 'fas fa-play';
+                    this.title = 'Возобновить';
+                } else {
+                    icon.className = 'fas fa-pause';
+                    this.title = 'Приостановить';
+                }
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                const activityStream = document.getElementById('activity-stream');
+                if (activityStream) {
+                    activityStream.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Активность очищена</p>';
+                }
+            });
+        }
+    }
+
+    // Применение фильтра датчиков
+    function applySensorFilter(filter) {
+        const sensorsList = document.getElementById('sensors-list');
+        if (!sensorsList) return;
+
+        const sensors = sensorsList.querySelectorAll('.sensor-item');
+        
+        sensors.forEach(sensor => {
+            const status = sensor.getAttribute('data-status');
+            
+            if (filter === 'all' || status === filter) {
+                sensor.style.display = 'block';
+            } else {
+                sensor.style.display = 'none';
+            }
+        });
+    }
+
+    // Обновление графика для периода
+    function updateChartForPeriod(period) {
+        if (!chart) return;
+
+        let labels, data;
+        
+        switch(period) {
+            case 'day':
+                labels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+                data = [45, 23, 187, 342, 489, 267];
+                break;
+            case 'week':
+                labels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+                data = [1200, 1900, 1500, 2100, 2400, 1800, 1600];
+                break;
+            case 'month':
+                labels = ['Нед 1', 'Нед 2', 'Нед 3', 'Нед 4'];
+                data = [8500, 9200, 8800, 9600];
+                break;
+        }
+
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.update();
+    }
 
 // Настройка фильтра по ролям
 function setupRoleFilter() {
