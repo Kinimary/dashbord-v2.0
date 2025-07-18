@@ -584,9 +584,9 @@ body::before {
 /* Метрики карточки */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
     width: 100%;
     max-width: none;
 }
@@ -595,19 +595,20 @@ body::before {
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(46, 139, 87, 0.2);
-    border-radius: 20px;
-    padding: 28px;
+    border-radius: 16px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    aspect-ratio: 1;
+    min-height: 160px;
+    height: auto;
     justify-content: center;
     text-align: center;
 }
@@ -639,17 +640,17 @@ body::before {
 }
 
 .metric-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     background: linear-gradient(135deg, #2E8B57 0%, #3CB371 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 20px;
+    font-size: 18px;
     box-shadow:
-        0 10px 25px rgba(46, 139, 87, 0.3),
+        0 8px 20px rgba(46, 139, 87, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     z-index: 1;
@@ -664,11 +665,11 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .metric-label {
-    font-size: 13px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.6);
     font-weight: 600;
     text-transform: uppercase;
@@ -676,24 +677,77 @@ body::before {
 }
 
 .metric-value {
-    font-size: 36px;
+    font-size: 28px;
     font-weight: 800;
     color: #FFFFFF;
-    letter-spacing: -2px;
+    letter-spacing: -1px;
     line-height: 1;
     text-shadow: 
-        3px 3px 6px rgba(0, 0, 0, 0.9),
-        0 0 20px rgba(46, 139, 87, 0.6),
-        0 0 40px rgba(46, 139, 87, 0.4);
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        2px 2px 4px rgba(0, 0, 0, 0.9),
+        0 0 15px rgba(46, 139, 87, 0.6),
+        0 0 30px rgba(46, 139, 87, 0.4);
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
 }
 
 .metric-subtitle {
-    font-size: 12px;
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.5);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Градиентные классы для иконок */
+.gradient-green {
+    background: linear-gradient(135deg, #2E8B57 0%, #3CB371 100%) !important;
+}
+
+.gradient-blue {
+    background: linear-gradient(135deg, #4FACFE 0%, #00f2fe 100%) !important;
+}
+
+.gradient-orange {
+    background: linear-gradient(135deg, #ff9a56 0%, #ffad56 100%) !important;
+}
+
+.gradient-purple {
+    background: linear-gradient(135deg, #8B45FF 0%, #a855f7 100%) !important;
+}
+
+.gradient-pink {
+    background: linear-gradient(135deg, #ff6b9d 0%, #f06292 100%) !important;
+}
+
+.gradient-teal {
+    background: linear-gradient(135deg, #20B2AA 0%, #48CAE4 100%) !important;
+}
+
+/* Тренды метрик */
+.metric-trend {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.metric-trend.up {
+    color: #4ade80;
+}
+
+.metric-trend.down {
+    color: #f87171;
+}
+
+.metric-trend.neutral {
+    color: #94a3b8;
 }
 
 /* Enhanced Tables */
@@ -1053,8 +1107,8 @@ button {
     }
 
     .metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
     }
 
     .top-bar {
@@ -1070,14 +1124,22 @@ button {
 
 @media (max-width: 480px) {
     .metrics-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 
     .metric-card {
-        padding: 20px;
+        padding: 16px;
+        min-height: 140px;
     }
 
     .metric-value {
-        font-size: 28px;
+        font-size: 24px;
+    }
+
+    .metric-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
     }
 }
