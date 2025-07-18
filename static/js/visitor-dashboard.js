@@ -1373,8 +1373,104 @@ function showErrorState(message) {
     hideLoadingState();
 }
 
-// Глобальные функции
-window.refreshAIInsights = refreshAIInsights;
+// Глобальные функции для экспорта
+window.refreshDashboardData = refreshData;
+window.filterSensorsList = filterSensorsList;
+window.toggleActivityStream = toggleActivityStream;
+window.clearActivityStream = clearActivityStream;
+window.updateStoresData = updateStoresData;
+
+// Функция фильтрации датчиков
+function filterSensorsList(filter) {
+    const sensorItems = document.querySelectorAll('.sensor-item');
+    sensorItems.forEach(item => {
+        const status = item.dataset.status;
+        if (filter === 'all' || status === filter) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Функция переключения потока активности
+function toggleActivityStream() {
+    const btn = document.getElementById('pause-activity');
+    const icon = btn.querySelector('i');
+    
+    if (icon.classList.contains('fa-pause')) {
+        icon.classList.remove('fa-pause');
+        icon.classList.add('fa-play');
+        // Приостановить обновления
+        if (window.activityInterval) {
+            clearInterval(window.activityInterval);
+        }
+    } else {
+        icon.classList.remove('fa-play');
+        icon.classList.add('fa-pause');
+        // Возобновить обновления
+        startActivityUpdates();
+    }
+}
+
+// Функция очистки активности
+function clearActivityStream() {
+    const activityStream = document.getElementById('activity-stream');
+    if (activityStream) {
+        activityStream.innerHTML = '';
+    }
+}
+
+// Функция обновления данных магазинов
+function updateStoresData(period) {
+    // Здесь можно добавить логику обновления данных магазинов
+    console.log('Updating stores data for period:', period);
+}
+
+// Функция запуска обновлений активности
+function startActivityUpdates() {
+    window.activityInterval = setInterval(() => {
+        // Добавляем случайную активность для демонстрации
+        addActivityItem();
+    }, 5000);
+}
+
+// Функция добавления элемента активности
+function addActivityItem() {
+    const activityStream = document.getElementById('activity-stream');
+    if (!activityStream) return;
+
+    const activities = [
+        'Новый посетитель в ТЦ Галерея',
+        'Датчик #5 обновил статус',
+        'Пик активности в BELWEST Dana Mall',
+        'Подключен новый датчик',
+        'Превышен лимит посетителей в VIP зоне'
+    ];
+
+    const activity = activities[Math.floor(Math.random() * activities.length)];
+    const time = new Date().toLocaleTimeString();
+
+    const activityItem = document.createElement('div');
+    activityItem.className = 'activity-item';
+    activityItem.innerHTML = `
+        <div class="activity-icon">
+            <i class="fas fa-circle"></i>
+        </div>
+        <div class="activity-content">
+            <div class="activity-text">${activity}</div>
+            <div class="activity-time">${time}</div>
+        </div>
+    `;
+
+    activityStream.insertBefore(activityItem, activityStream.firstChild);
+
+    // Ограничиваем количество элементов
+    const items = activityStream.querySelectorAll('.activity-item');
+    if (items.length > 10) {
+        items[items.length - 1].remove();
+    }
+}reshAIInsights = refreshAIInsights;
 window.showAIRecommendations = showAIRecommendations;
 window.showAIPredictions = showAIPredictions;
 window.closeAIModal = closeAIModal;

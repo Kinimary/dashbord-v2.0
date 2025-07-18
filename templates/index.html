@@ -18,37 +18,37 @@
             </div>
             <ul class="menu">
                 <li class="active">
-                    <a href="/">
+                    <a href="/" onclick="navigateToPage('/')">
                         <i class="fas fa-th-large"></i>
                         <span>Дашборд</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/users">
+                    <a href="/users" onclick="navigateToPage('/users')">
                         <i class="fas fa-users"></i>
                         <span>Пользователи</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/sensors">
+                    <a href="/sensors" onclick="navigateToPage('/sensors')">
                         <i class="fas fa-robot"></i>
                         <span>Датчики</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/map">
+                    <a href="/map" onclick="navigateToPage('/map')">
                         <i class="fas fa-map-marked-alt"></i>
                         <span>Карта магазинов</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/reports">
+                    <a href="/reports" onclick="navigateToPage('/reports')">
                         <i class="fas fa-file-alt"></i>
                         <span>Отчеты</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/settings">
+                    <a href="/settings" onclick="navigateToPage('/settings')">
                         <i class="fas fa-cog"></i>
                         <span>Настройки</span>
                     </a>
@@ -65,35 +65,35 @@
                 </div>
                 <div class="top-bar-center">
                     <div class="time-filter">
-                        <select id="hierarchy-type" class="modern-select">
+                        <select id="hierarchy-type" class="modern-select" onchange="handleHierarchyChange()">
                             <option value="">Все данные</option>
                             <option value="manager">По менеджеру</option>
                             <option value="rd">По РД</option>
                             <option value="tu">По ТУ</option>
                             <option value="store">По магазину</option>
                         </select>
-                        <select id="entity-selector" class="modern-select" style="display: none;">
+                        <select id="entity-selector" class="modern-select" style="display: none;" onchange="handleEntityChange()">
                             <option value="">Выберите пользователя...</option>
                         </select>
-                        <select id="period-select" class="modern-select">
+                        <select id="period-select" class="modern-select" onchange="refreshData()">
                             <option value="hour">Час</option>
                             <option value="day" selected>День</option>
                             <option value="week">Неделя</option>
                             <option value="month">Месяц</option>
                         </select>
-                        <button class="refresh-btn" id="refresh-data" title="Обновить данные">
+                        <button class="refresh-btn" id="refresh-data" onclick="refreshData()" title="Обновить данные">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
                 </div>
                 <div class="top-bar-right">
                     <div class="user-profile">
-                        <div class="user-info" id="user-menu-btn">
+                        <div class="user-info" id="user-menu-btn" onclick="toggleUserMenu()">
                             <div class="user-avatar">А</div>
                             <span>Админ</span>
                             <div class="user-dropdown" id="user-dropdown">
                                 <div class="user-dropdown-menu">
-                                    <a href="/users" class="dropdown-item">
+                                    <a href="/profile" class="dropdown-item" onclick="navigateToPage('/profile')">
                                         <i class="fas fa-user"></i>
                                         <span>Профиль</span>
                                     </a>
@@ -298,9 +298,9 @@
                     <div class="chart-header">
                         <h3>Динамика посещений</h3>
                         <div class="chart-controls">
-                            <button class="chart-btn active" data-period="day">День</button>
-                            <button class="chart-btn" data-period="week">Неделя</button>
-                            <button class="chart-btn" data-period="month">Месяц</button>
+                            <button class="chart-btn active" data-period="day" onclick="updateChartPeriod('day')">День</button>
+                            <button class="chart-btn" data-period="week" onclick="updateChartPeriod('week')">Неделя</button>
+                            <button class="chart-btn" data-period="month" onclick="updateChartPeriod('month')">Месяц</button>
                         </div>
                     </div>
                     <div class="chart-content">
@@ -316,9 +316,9 @@
                     <div class="section-header">
                         <h3>Состояние датчиков</h3>
                         <div class="status-filter">
-                            <button class="filter-btn active" data-filter="all">Все</button>
-                            <button class="filter-btn" data-filter="online">Онлайн</button>
-                            <button class="filter-btn" data-filter="offline">Офлайн</button>
+                            <button class="filter-btn active" data-filter="all" onclick="filterSensors('all')">Все</button>
+                            <button class="filter-btn" data-filter="online" onclick="filterSensors('online')">Онлайн</button>
+                            <button class="filter-btn" data-filter="offline" onclick="filterSensors('offline')">Офлайн</button>
                         </div>
                     </div>
                     <div class="sensors-list" id="sensors-list">
@@ -331,10 +331,10 @@
                     <div class="section-header">
                         <h3>Активность в реальном времени</h3>
                         <div class="activity-filter-controls">
-                            <button class="filter-btn" id="pause-activity">
+                            <button class="filter-btn" id="pause-activity" onclick="toggleActivityPause()">
                                 <i class="fas fa-pause"></i>
                             </button>
-                            <button class="filter-btn" id="clear-activity">
+                            <button class="filter-btn" id="clear-activity" onclick="clearActivity()">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -349,8 +349,8 @@
                     <div class="section-header">
                         <h3>Топ магазины</h3>
                         <div class="activity-filter-controls">
-                            <button class="filter-btn" data-period="today">Сегодня</button>
-                            <button class="filter-btn active" data-period="week">Неделя</button>
+                            <button class="filter-btn" data-period="today" onclick="updateStoresPeriod('today')">Сегодня</button>
+                            <button class="filter-btn active" data-period="week" onclick="updateStoresPeriod('week')">Неделя</button>
                         </div>
                     </div>
                     <div class="stores-list" id="stores-list">
@@ -366,6 +366,139 @@
         <div class="transition-spinner"></div>
         <div class="transition-text">Загрузка...</div>
     </div>
+
+    <!-- Скрипты -->
+    <script>
+        // Функция для навигации между страницами
+        function navigateToPage(url) {
+            if (window.showPageTransition) {
+                window.showPageTransition();
+            }
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Функция выхода из системы
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            });
+        }
+
+        // Функция для переключения меню пользователя
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Функция для обработки изменения иерархии
+        function handleHierarchyChange() {
+            const hierarchyType = document.getElementById('hierarchy-type').value;
+            const entitySelector = document.getElementById('entity-selector');
+            
+            if (hierarchyType) {
+                entitySelector.style.display = 'block';
+                loadHierarchyOptions(hierarchyType);
+            } else {
+                entitySelector.style.display = 'none';
+                refreshData();
+            }
+        }
+
+        // Функция для загрузки опций иерархии
+        function loadHierarchyOptions(hierarchyType) {
+            fetch(`/api/hierarchy/${hierarchyType}`)
+                .then(response => response.json())
+                .then(data => {
+                    const entitySelector = document.getElementById('entity-selector');
+                    entitySelector.innerHTML = '<option value="">Выберите пользователя...</option>';
+                    
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        entitySelector.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading hierarchy options:', error);
+                });
+        }
+
+        // Функция для обработки выбора сущности
+        function handleEntityChange() {
+            refreshData();
+        }
+
+        // Функция обновления данных
+        function refreshData() {
+            if (window.refreshDashboardData) {
+                window.refreshDashboardData();
+            }
+        }
+
+        // Функции для кнопок графика
+        function updateChartPeriod(period) {
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+            refreshData();
+        }
+
+        // Функции для фильтров датчиков
+        function filterSensors(filter) {
+            document.querySelectorAll('.status-filter .filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+            if (window.filterSensorsList) {
+                window.filterSensorsList(filter);
+            }
+        }
+
+        // Функции для активности
+        function toggleActivityPause() {
+            if (window.toggleActivityStream) {
+                window.toggleActivityStream();
+            }
+        }
+
+        function clearActivity() {
+            if (window.clearActivityStream) {
+                window.clearActivityStream();
+            }
+        }
+
+        // Функции для магазинов
+        function updateStoresPeriod(period) {
+            document.querySelectorAll('.activity-filter-controls .filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+            if (window.updateStoresData) {
+                window.updateStoresData(period);
+            }
+        }
+
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('user-menu-btn');
+            const dropdown = document.getElementById('user-dropdown');
+            
+            if (!userMenu.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
 
     <script src="{{ url_for('static', filename='js/page-transitions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
